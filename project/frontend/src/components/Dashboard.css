@@ -1,0 +1,136 @@
+/* ─── components/Dashboard.css ───────────────────────────────────────────── */
+
+/* Page Layout */
+.page { animation: fadeIn 0.3s ease; }
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.page-subtitle {
+  font-size: 13px;
+  color: var(--text-2);
+  margin-top: 4px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  margin-top: 28px;
+}
+
+/* Stats */
+.dashboard__stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.stat-card { padding: 18px 20px; }
+.stat-card__label { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; }
+.stat-card__value { font-family: var(--font-display); font-size: 34px; font-weight: 800; line-height: 1; }
+.stat-card__value--gold   { color: var(--gold); }
+.stat-card__value--blue   { color: var(--blue); }
+.stat-card__value--purple { color: var(--purple); }
+.stat-card__value--green  { color: var(--green); }
+.stat-card__sub { font-size: 11px; color: var(--text-3); margin-top: 8px; }
+
+/* Quick Actions */
+.dashboard__actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.action-card { padding: 20px 22px; }
+.action-card__icon {
+  width: 42px; height: 42px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; margin-bottom: 14px;
+}
+.action-card__icon--gold   { color: var(--gold);   background: var(--gold-bg); }
+.action-card__icon--blue   { color: var(--blue);   background: var(--blue-bg); }
+.action-card__icon--purple { color: var(--purple); background: var(--purple-bg); }
+.action-card__title { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--text-1); margin-bottom: 6px; }
+.action-card__desc  { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+/* Recent Videos */
+.dashboard__videos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.video-thumb { padding: 0; overflow: hidden; }
+
+.video-thumb__preview {
+  height: 148px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  border-bottom: 1px solid var(--border);
+}
+
+.video-thumb__play {
+  width: 46px; height: 46px; border-radius: 50%;
+  background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: rgba(255,255,255,0.8);
+  cursor: pointer;
+}
+
+.video-thumb__status { position: absolute; top: 10px; right: 10px; }
+
+.video-thumb__meta {
+  position: absolute; bottom: 8px; left: 10px;
+  background: rgba(0,0,0,0.6);
+  padding: 2px 8px; border-radius: 6px;
+  font-size: 10px; color: rgba(255,255,255,0.6);
+}
+
+.video-thumb__body { padding: 12px 14px; }
+.video-thumb__scene { font-size: 12px; font-weight: 500; color: var(--text-1); line-height: 1.5; margin-bottom: 8px; }
+.video-thumb__footer { display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; }
+.video-thumb__ts { color: var(--text-3); font-weight: 400; }
+
+/* Characters Mini */
+.dashboard__chars {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.char-mini-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+}
+
+.char-mini-card__avatar {
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+
+.char-mini-card__info { flex: 1; min-width: 0; }
+
+.char-mini-card__name {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-display);
+  font-size: 14px; font-weight: 700; color: var(--text-1);
+  margin-bottom: 4px;
+}
+
+.char-mini-card__desc {
+  font-size: 11px; color: var(--text-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.char-mini-card__stats { font-size: 10px; color: var(--text-3); margin-top: 4px; }
