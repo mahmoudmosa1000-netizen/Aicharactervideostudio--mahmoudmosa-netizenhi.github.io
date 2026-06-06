@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="AI Character Video Studio – KI-Videos mit konsistenten Charakteren" />
+  <title>AI Character Video Studio</title>
+
+  <!-- ── CDN: React 18 + Babel (kein Build-Schritt nötig) ─────────────────── -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- ── Google Fonts ──────────────────────────────────────────────────────── -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── variables.css ─────────────────────────────────────────────────────── */
+    :root {
+      --bg-0:#07070c; --bg-1:#0c0c15; --bg-2:#11111c; --bg-3:#181826; --bg-4:#1e1e2e;
+      --border:rgba(255,255,255,0.06); --border-md:rgba(255,255,255,0.11); --border-hi:rgba(255,255,255,0.20);
+      --gold:#f59e0b; --gold-light:#fcd34d; --gold-bg:rgba(245,158,11,0.10); --gold-border:rgba(245,158,11,0.28);
+      --blue:#4f9cf9; --blue-bg:rgba(79,156,249,0.10); --blue-border:rgba(79,156,249,0.28);
+      --green:#22d3a5; --green-bg:rgba(34,211,165,0.10);
+      --purple:#a78bfa; --purple-bg:rgba(167,139,250,0.10);
+      --red:#fc8888; --red-bg:rgba(252,136,136,0.10);
+      --t1:#f0f0f5; --t2:#8888a0; --t3:#44445a;
+      --fd:"Syne",system-ui,sans-serif; --fb:"DM Sans",system-ui,sans-serif; --fm:"JetBrains Mono","Fira Code",monospace;
+      --r-sm:8px; --r-md:10px; --r-lg:14px; --r-xl:16px;
+      --tr:all 0.15s ease; --sw:236px;
+    }
+
+    /* ── global.css ────────────────────────────────────────────────────────── */
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;background:var(--bg-0);color:var(--t1);font-family:var(--fb);font-size:14px;-webkit-font-smoothing:antialiased}
+    #root{height:100%}
+    ::-webkit-scrollbar{width:4px;height:4px} ::-webkit-scrollbar-thumb{background:var(--border-md);border-radius:4px}
+    input,textarea,select,button{font-family:var(--fb)}
+    input::placeholder,textarea::placeholder{color:rgba(255,255,255,0.18)}
+    input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold-border)!important;box-shadow:0 0 0 3px rgba(245,158,11,0.08)}
+    h1{font-family:var(--fd);font-size:26px;font-weight:800;color:var(--t1);line-height:1.2}
+    h2{font-family:var(--fd);font-size:17px;font-weight:700;color:var(--t1)}
+    h3{font-family:var(--fd);font-size:15px;font-weight:700;color:var(--t1)}
+
+    /* ── animations.css ────────────────────────────────────────────────────── */
+    @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+    @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
+    @keyframes scaleIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+    .anim-fade{animation:fadeIn .3s ease forwards}
+    .anim-scale{animation:scaleIn .2s ease forwards}
+
+    /* ── Layout ────────────────────────────────────────────────────────────── */
+    .shell{display:flex;min-height:100vh;background:var(--bg-0)}
+    .main{flex:1;overflow-y:auto;padding:32px 36px;max-height:100vh}
+    .page{animation:fadeIn .3s ease}
+    .page-hdr{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:28px}
+    .page-sub{font-size:13px;color:var(--t2);margin-top:4px}
+    .sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;margin-top:28px}
+
+    /* ── Sidebar ───────────────────────────────────────────────────────────── */
+    .sb{width:var(--sw);flex-shrink:0;background:var(--bg-1);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;overflow-y:auto}
+    .sb-logo{display:flex;align-items:center;gap:10px;padding:22px 20px 20px;border-bottom:1px solid var(--border)}
+    .sb-logo-icon{width:38px;height:38px;border-radius:11px;background:var(--gold-bg);border:1px solid var(--gold-border);display:flex;align-items:center;justify-content:center;font-size:17px;color:var(--gold);flex-shrink:0}
+    .sb-logo-t1{font-family:var(--fd);font-size:13px;font-weight:800;color:var(--t1)}
+    .sb-logo-t2{font-family:var(--fd);font-size:10px;color:var(--gold);font-weight:600;letter-spacing:.08em}
+    .sb-nav{padding:14px 10px;flex:1}
+    .sb-item{width:100%;padding:9px 12px;border-radius:var(--r-md);border:none;border-left:2px solid transparent;cursor:pointer;display:flex;align-items:center;gap:10px;text-align:left;font-family:var(--fb);font-size:13px;font-weight:500;margin-bottom:2px;background:transparent;color:var(--t2);transition:var(--tr)}
+    .sb-item:hover{background:var(--bg-3);color:var(--t1)}
+    .sb-item.active{background:var(--gold-bg);color:var(--gold);border-left-color:var(--gold)}
+    .sb-badge{margin-left:auto;font-size:9px;color:var(--purple);background:var(--purple-bg);padding:1px 7px;border-radius:10px;font-weight:700;letter-spacing:.05em}
+    .sb-foot{padding:14px 16px;border-top:1px solid var(--border)}
+    .sb-lock{background:var(--bg-3);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px}
+    .sb-lock.on{background:var(--gold-bg);border-color:var(--gold-border)}
+    .sb-lock-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;color:var(--t3)}
+    .sb-lock.on .sb-lock-lbl{color:var(--gold)}
+    .sb-lock-name{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:2px}
+    .sb-lock-hint{font-size:10px;color:var(--t2)}
+
+    /* ── Card ──────────────────────────────────────────────────────────────── */
+    .card{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-xl);padding:20px 24px;transition:var(--tr)}
+    .card.click{cursor:pointer} .card.click:hover{border-color:var(--border-md);background:var(--bg-3)}
+    .card.gold{border-color:var(--gold-border);background:var(--gold-bg)}
+
+    /* ── Button ────────────────────────────────────────────────────────────── */
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:var(--r-md);font-family:var(--fb);font-weight:500;cursor:pointer;transition:var(--tr);white-space:nowrap;border:none}
+    .btn:disabled{opacity:.45;cursor:not-allowed}
+    .btn.sm{padding:6px 14px;font-size:12px} .btn.md{padding:10px 20px;font-size:14px} .btn.lg{padding:13px 28px;font-size:15px;font-weight:600}
+    .btn.def{background:var(--bg-4);color:var(--t1);border:1px solid var(--border-md)} .btn.def:hover:not(:disabled){border-color:var(--border-hi)}
+    .btn.pri{background:var(--gold);color:#1a0d00;border:1px solid var(--gold);font-weight:700} .btn.pri:hover:not(:disabled){background:var(--gold-light)}
+    .btn.gho{background:transparent;color:var(--t2);border:1px solid transparent} .btn.gho:hover:not(:disabled){background:var(--bg-3);color:var(--t1)}
+    .btn.blu{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
+
+    /* ── Field / Input ─────────────────────────────────────────────────────── */
+    .field{display:flex;flex-direction:column;gap:6px}
+    .field label{font-size:11px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.07em}
+    .finp{width:100%;background:var(--bg-3);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 14px;color:var(--t1);font-size:14px;font-family:var(--fb);outline:none;transition:var(--tr);resize:vertical}
+    .finp:hover{border-color:var(--border-md)}
+    select.finp{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2344445a' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+
+    /* ── StatusPill ────────────────────────────────────────────────────────── */
+    .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+    .pill-dot{width:5px;height:5px;border-radius:50%;display:inline-block}
+    .pill.done{color:var(--green);background:var(--green-bg)} .pill.done .pill-dot{background:var(--green)}
+    .pill.processing{color:var(--gold);background:var(--gold-bg)} .pill.processing .pill-dot{background:var(--gold);animation:pulse 1.5s infinite}
+    .pill.queued{color:var(--t2);background:var(--bg-4)} .pill.queued .pill-dot{background:var(--t2)}
+    .pill.error{color:var(--red);background:var(--red-bg)} .pill.error .pill-dot{background:var(--red)}
+
+    /* ── Badge ─────────────────────────────────────────────────────────────── */
+    .badge{display:inline-flex;align-items:center;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.04em}
+    .b-gold{color:var(--gold);background:var(--gold-bg)} .b-blue{color:var(--blue);background:var(--blue-bg)}
+    .b-purple{color:var(--purple);background:var(--purple-bg)} .b-green{color:var(--green);background:var(--green-bg)}
+
+    /* ── Spinner / Skeleton ────────────────────────────────────────────────── */
+    .spinner{border-radius:50%;border:3px solid var(--bg-4);border-top-color:var(--gold);animation:spin 1s linear infinite}
+    .skeleton{background:var(--bg-2);border-radius:var(--r-lg);border:1px solid var(--border);overflow:hidden;position:relative}
+    .skeleton::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,var(--bg-3) 50%,transparent 100%);animation:shimmer 1.4s ease infinite}
+
+    /* ── Dashboard ─────────────────────────────────────────────────────────── */
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+    .stat-val{font-family:var(--fd);font-size:34px;font-weight:800;line-height:1;margin:10px 0 8px}
+    .stat-lbl,.stat-sub{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em}
+    .stat-sub{text-transform:none}
+    .actions-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .act-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px}
+    .act-title{font-family:var(--fd);font-size:14px;font-weight:700;color:var(--t1);margin-bottom:6px}
+    .act-desc{font-size:12px;color:var(--t2);line-height:1.6}
+    .vid-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .vthumb{padding:0!important;overflow:hidden}
+    .vthumb-pre{height:148px;display:flex;align-items:center;justify-content:center;position:relative;border-bottom:1px solid var(--border)}
+    .vthumb-play{width:46px;height:46px;border-radius:50%;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;font-size:18px;color:rgba(255,255,255,.8);cursor:pointer}
+    .vthumb-stat{position:absolute;top:10px;right:10px}
+    .vthumb-meta{position:absolute;bottom:8px;left:10px;background:rgba(0,0,0,.6);padding:2px 8px;border-radius:6px;font-size:10px;color:rgba(255,255,255,.6)}
+    .vthumb-body{padding:12px 14px}
+    .vthumb-scene{font-size:12px;font-weight:500;color:var(--t1);line-height:1.5;margin-bottom:8px}
+    .vthumb-footer{display:flex;justify-content:space-between;font-size:11px;font-weight:600}
+    .vthumb-ts{color:var(--t3);font-weight:400}
+    .char-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .char-mini{display:flex;align-items:center;gap:14px;padding:14px 18px!important}
+    .char-mini-av{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+    .char-mini-name{display:flex;align-items:center;gap:8px;font-family:var(--fd);font-size:14px;font-weight:700;color:var(--t1);margin-bottom:4px}
+    .char-mini-desc{font-size:11px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .char-mini-stats{font-size:10px;color:var(--t3);margin-top:4px}
+
+    /* ── Character Manager ─────────────────────────────────────────────────── */
+    .char-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    .char-add-fields{display:grid;grid-template-columns:1fr 2fr;gap:14px;margin-bottom:16px}
+    .upload-zone{border:2px dashed var(--border-md);border-radius:var(--r-lg);padding:28px;text-align:center;background:var(--bg-3);cursor:pointer;transition:var(--tr);margin-bottom:18px}
+    .upload-zone:hover{border-color:var(--gold-border);background:var(--gold-bg)}
+    .analysis-box{background:var(--gold-bg);border:1px solid var(--gold-border);border-radius:var(--r-lg);padding:16px 20px;margin-bottom:16px}
+    .analysis-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+    .analysis-item{background:var(--bg-2);border-radius:var(--r-sm);padding:8px 12px}
+    .analysis-key{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px}
+    .analysis-val{font-size:12px;color:var(--t1);font-weight:600}
+    .analysis-note{font-size:12px;color:var(--t2);font-style:italic;background:var(--bg-3);padding:10px 14px;border-radius:var(--r-sm);line-height:1.7;margin-bottom:12px}
+    .char-card-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+    .char-card-id{display:flex;align-items:center;gap:14px}
+    .char-card-av{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+    .char-card-name{font-family:var(--fd);font-size:17px;font-weight:800;color:var(--t1)}
+    .char-card-style{font-size:11px;color:var(--t2);margin-top:2px}
+    .char-card-ctrl{display:flex;gap:8px;align-items:center}
+    .lock-btn{padding:5px 12px;border-radius:20px;font-size:10px;font-weight:700;cursor:pointer;border:none;background:var(--bg-4);color:var(--t3);letter-spacing:.04em;transition:var(--tr)}
+    .lock-btn.on{background:var(--gold-bg);color:var(--gold)}
+    .del-btn{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;padding:4px;line-height:1;transition:var(--tr)}
+    .del-btn:hover{color:var(--red)}
+    .char-card-desc{font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:14px}
+    .trait-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+    .trait-item{background:var(--bg-3);border-radius:var(--r-sm);padding:8px 10px}
+    .trait-key{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px}
+    .trait-val{font-size:11px;color:var(--t1);font-weight:600}
+    .char-card-foot{display:flex;align-items:center;justify-content:space-between}
+    .char-tags{display:flex;gap:5px;flex-wrap:wrap}
+    .char-tag{font-size:10px;padding:2px 9px;border-radius:20px;font-weight:600}
+
+    /* ── Video Creator ─────────────────────────────────────────────────────── */
+    .vc-layout{display:grid;grid-template-columns:1fr 360px;gap:24px}
+    .vc-form{display:flex;flex-direction:column;gap:18px}
+    .char-picker{display:flex;gap:10px;margin-top:2px}
+    .char-btn{flex:1;padding:12px 14px;border-radius:var(--r-lg);cursor:pointer;border:1px solid var(--border);background:var(--bg-3);display:flex;align-items:center;gap:10px;text-align:left;transition:var(--tr)}
+    .char-btn:hover{border-color:var(--border-md)}
+    .char-btn-av{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px}
+    .char-btn-name{font-weight:700;color:var(--t1);font-size:13px;font-family:var(--fd)}
+    .char-btn-lock{font-size:10px;margin-top:1px}
+    .vc-opts{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .vc-preview{background:var(--bg-3);border:1px solid var(--border);border-radius:var(--r-xl);min-height:180px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:var(--t2);font-size:13px}
+    .vc-sidebar{display:flex;flex-direction:column;gap:16px}
+    .vc-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px}
+    .vc-profile-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
+    .vc-profile-row span:first-child{color:var(--t3)} .vc-profile-row span:last-child{color:var(--t1);font-weight:500;text-align:right;max-width:60%}
+    .vc-export-row{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--bg-3);border-radius:var(--r-sm);margin-bottom:6px;font-size:12px}
+    .vc-export-row span:first-child{color:var(--t1);font-weight:500} .vc-export-row span:last-child{font-size:10px;color:var(--t3)}
+    .prompt-prev{font-family:var(--fm);font-size:12px;color:var(--t2);line-height:1.8;background:var(--bg-2);padding:12px 14px;border-radius:var(--r-md);border:1px solid var(--border)}
+
+    /* ── Story Creator ─────────────────────────────────────────────────────── */
+    .story-bar-grid{display:grid;grid-template-columns:200px 1fr auto;gap:14px;align-items:flex-end}
+    .story-list-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .story-list-title{font-family:var(--fd);font-size:15px;font-weight:700;color:var(--t1)}
+    .story-list-title span{color:var(--t2);font-weight:400}
+    .story-scenes{display:flex;flex-direction:column;gap:12px}
+    .scene-card{display:grid!important;grid-template-columns:56px 1fr auto!important;gap:18px;align-items:flex-start;padding:18px 20px!important}
+    .scene-num{width:46px;height:46px;border-radius:var(--r-lg);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;font-family:var(--fd)}
+    .scene-conn{width:1px;height:20px;background:var(--border);margin:6px auto 0}
+    .scene-title{font-family:var(--fd);font-size:14px;font-weight:700;color:var(--t1);margin-bottom:6px}
+    .scene-desc{font-size:12px;color:var(--t2);line-height:1.75;margin-bottom:10px}
+    .scene-tags{display:flex;gap:8px;flex-wrap:wrap}
+    .scene-tag{font-size:11px;padding:3px 10px;border-radius:var(--r-sm)}
+    .scene-tag-gray{color:var(--t3);background:var(--bg-3)}
+    .scene-actions{display:flex;flex-direction:column;gap:7px;flex-shrink:0}
+    .consist-banner{display:flex;align-items:center;gap:14px;background:var(--gold-bg);border:1px solid var(--gold-border);border-radius:var(--r-lg);padding:14px 18px;margin-top:20px}
+    .consist-title{font-size:13px;font-weight:700;color:var(--gold);margin-bottom:3px}
+    .consist-body{font-size:12px;color:var(--t2);line-height:1.6}
+
+    /* ── History ───────────────────────────────────────────────────────────── */
+    .hist-filters{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+    .filter-pills{display:flex;gap:8px}
+    .fpill{padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:var(--fb);transition:var(--tr);background:var(--bg-3);color:var(--t2)}
+    .fpill.on{background:var(--gold);color:#1a0d00}
+    .hist-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+
+    /* ── Settings ──────────────────────────────────────────────────────────── */
+    .settings-wrap{display:flex;flex-direction:column;gap:24px;max-width:640px}
+    .settings-defaults{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .toggle-row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg-3);border-radius:var(--r-md);margin-bottom:8px}
+    .toggle-row span{font-size:13px;color:var(--t1)}
+    .tog{width:40px;height:22px;border-radius:11px;border:none;cursor:pointer;background:var(--bg-4);position:relative;transition:background .2s;flex-shrink:0}
+    .tog.on{background:var(--gold)}
+    .tog-knob{width:16px;height:16px;border-radius:50%;background:white;position:absolute;top:3px;left:3px;transition:left .2s}
+    .tog.on .tog-knob{left:21px}
+
+    /* ── Misc ──────────────────────────────────────────────────────────────── */
+    .error-box{background:var(--red-bg);border:1px solid rgba(252,136,136,.2);border-radius:var(--r-lg);padding:14px 18px;color:var(--red);font-size:13px;margin-bottom:20px}
+    .empty-state{padding:48px 24px;text-align:center}
+    .empty-icon{font-size:40px;opacity:.15;margin-bottom:12px}
+    .empty-state p{font-size:13px;color:var(--t3)}
+    .hint{font-size:11px;color:var(--t3);margin-top:4px}
+    .mb6{margin-bottom:6px} .mb12{margin-bottom:12px} .mb14{margin-bottom:14px} .mb16{margin-bottom:16px} .mb18{margin-bottom:18px} .mb20{margin-bottom:20px}
+    .analyzing-bar{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg-3);border-radius:var(--r-md);margin-bottom:14px;color:var(--t2);font-size:13px}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+// ── React-Hooks aus dem globalen React-Objekt ──────────────────────────────
+const { useState, useEffect, useCallback } = React;
+
+// ── Konstanten ─────────────────────────────────────────────────────────────
+const SCENE_COLORS = ["#f59e0b","#4f9cf9","#a78bfa","#22d3a5","#fc8888"];
+
+const NAV = [
+  {id:"dashboard", label:"Dashboard",     icon:"⬡"},
+  {id:"characters",label:"Characters",    icon:"◈"},
+  {id:"video",     label:"Video Creator", icon:"▶"},
+  {id:"story",     label:"Story Creator", icon:"◇", badge:"AI"},
+  {id:"history",   label:"History",       icon:"⊟"},
+  {id:"settings",  label:"Settings",      icon:"◎"},
+];
+
+const STYLES   = [{v:"studio-ghibli",l:"Studio Ghibli"},{v:"pixar",l:"Pixar 3D"},{v:"anime",l:"Anime"},{v:"2d-cartoon",l:"2D Cartoon"},{v:"watercolor",l:"Watercolor"},{v:"realistic",l:"Realistic"}];
+const DURS     = [{v:"3",l:"3 Sek"},{v:"5",l:"5 Sek"},{v:"8",l:"8 Sek"},{v:"10",l:"10 Sek"},{v:"15",l:"15 Sek"}];
+const RATIOS   = [{v:"9:16",l:"9:16 TikTok"},{v:"16:9",l:"16:9 YouTube"},{v:"1:1",l:"1:1 Square"},{v:"4:5",l:"4:5 Instagram"}];
+const MODELS   = [{v:"kling",l:"Kling AI"},{v:"runway",l:"Runway Gen-3"},{v:"luma",l:"Luma Dream"}];
+
+const INIT_CHARS = [
+  {id:1,name:"Mochi",locked:true,color:"#f59e0b",description:"Orange & white cat in traditional Japanese clothing with floral headscarf and gentle round eyes",traits:["Curious","Warm","Creative"],style:"Studio Ghibli–inspired",coloring:"Orange & white fur",eyes:"Large, round, amber",clothing:"Yukata + floral headscarf",accessories:"Wicker basket, apron",build:"Small, soft proportions",videos:14,series:3},
+  {id:2,name:"Captain Rex",locked:false,color:"#4f9cf9",description:"Navy blue penguin in a captain's coat with gold buttons, peaked cap and tiny brass telescope",traits:["Adventurous","Bold","Loyal"],style:"2D cartoon, flat design",coloring:"Navy & white plumage",eyes:"Sharp, dark, determined",clothing:"Captain's coat + peaked cap",accessories:"Brass telescope, map scroll",build:"Stocky, upright posture",videos:6,series:1},
+];
+
+const INIT_VIDEOS = [
+  {id:1,charId:1,char:"Mochi",charColor:"#f59e0b",scene:"Baking sourdough in a cozy cottage kitchen",dur:"5s",ratio:"9:16",status:"done",model:"Kling",ts:"2h ago"},
+  {id:2,charId:1,char:"Mochi",charColor:"#f59e0b",scene:"Opening a flower market at golden-hour sunrise",dur:"8s",ratio:"16:9",status:"done",model:"Runway",ts:"3h ago"},
+  {id:3,charId:2,char:"Captain Rex",charColor:"#4f9cf9",scene:"Navigating a storm with compass in hand",dur:"6s",ratio:"1:1",status:"processing",model:"Luma",ts:"1h ago"},
+  {id:4,charId:1,char:"Mochi",charColor:"#f59e0b",scene:"Teaching pottery class to small forest creatures",dur:"10s",ratio:"9:16",status:"done",model:"Kling",ts:"1d ago"},
+  {id:5,charId:2,char:"Captain Rex",charColor:"#4f9cf9",scene:"Discovering a treasure map on a remote island",dur:"7s",ratio:"16:9",status:"done",model:"Runway",ts:"2d ago"},
+  {id:6,charId:1,char:"Mochi",charColor:"#f59e0b",scene:"Writing letters at a moonlit wooden desk",dur:"5s",ratio:"9:16",status:"queued",model:"Kling",ts:"30m ago"},
+];
+
+// ── Anthropic API ───────────────────────────────────────────────────────────
+async function callClaude(prompt, max_tokens=1000) {
+  const key = localStorage.getItem("anthropic_key") || "";
+  if (!key) throw new Error("Kein API-Key — bitte in den Einstellungen eintragen.");
+  const res = await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01"},
+    body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens,messages:[{role:"user",content:prompt}]}),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message||"API-Fehler");
+  return data.content?.[0]?.text||"";
+}
+function parseJSON(t){return JSON.parse(t.replace(/```json\n?|\n?```/g,"").trim())}
+
+// ── Primitive Komponenten ───────────────────────────────────────────────────
+const Pill = ({status}) => {
+  const m={done:"Done",processing:"Processing",queued:"Queued",error:"Error"};
+  return <span className={`pill ${status}`}><span className="pill-dot"/>{m[status]||"Queued"}</span>;
+};
+
+const Btn = ({children,variant="def",size="md",onClick,disabled,style:s,className=""}) =>
+  <button className={`btn ${variant} ${size} ${className}`} onClick={onClick} disabled={disabled} style={s}>{children}</button>;
+
+const Field = ({label,children,className=""}) =>
+  <div className={`field ${className}`}>{label&&<label>{label}</label>}{children}</div>;
+
+const Inp = ({label,value,onChange,placeholder,type="text",className=""}) =>
+  <Field label={label} className={className}><input type={type} className="finp" value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder}/></Field>;
+
+const Textarea = ({label,value,onChange,placeholder,rows=3,className=""}) =>
+  <Field label={label} className={className}><textarea className="finp" value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} rows={rows}/></Field>;
+
+const Sel = ({label,value,onChange,options,className=""}) =>
+  <Field label={label} className={className}><select className="finp" value={value} onChange={e=>onChange(e.target.value)}>{options.map(o=><option key={o.v||o.value} value={o.v||o.value}>{o.l||o.label}</option>)}</select></Field>;
+
+const Card = ({children,className="",onClick,style:s}) =>
+  <div className={`card ${onClick?"click":""} ${className}`} onClick={onClick} style={s}>{children}</div>;
+
+const SectionHdr = ({title,action}) =>
+  <div className="sec-hdr"><h2>{title}</h2>{action}</div>;
+
+// ── VideoThumb ──────────────────────────────────────────────────────────────
+const VideoThumb = ({v,showExport}) => (
+  <Card className="vthumb">
+    <div className="vthumb-pre" style={{background:`linear-gradient(140deg,${v.charColor}22 0%,var(--bg-3) 100%)`}}>
+      <div className="vthumb-play">▶</div>
+      <div className="vthumb-stat"><Pill status={v.status}/></div>
+      <div className="vthumb-meta">{v.ratio} · {v.dur}</div>
+    </div>
+    <div className="vthumb-body">
+      <div className="vthumb-scene">{v.scene}</div>
+      <div className="vthumb-footer">
+        <span style={{color:v.charColor,fontWeight:600}}>{v.char}</span>
+        <span className="vthumb-ts">{v.ts}</span>
+      </div>
+      {showExport&&<div style={{display:"flex",gap:6,marginTop:10}}>
+        <Btn size="sm" className="def" style={{flex:1,fontSize:11}}>⬇ MP4</Btn>
+        <Btn size="sm" className="def" style={{flex:1,fontSize:11}}>⬇ Reels</Btn>
+      </div>}
+    </div>
+  </Card>
+);
+
+// ── DASHBOARD ───────────────────────────────────────────────────────────────
+function Dashboard({videos,chars,onNavigate}) {
+  const stats=[
+    {l:"Characters",v:chars.length,sub:`${chars.filter(c=>c.locked).length} locked`,c:"#f59e0b"},
+    {l:"Videos",v:videos.length,sub:"+3 this week",c:"#4f9cf9"},
+    {l:"Story Series",v:chars.reduce((a,c)=>a+(c.series||0),0),sub:"scenes total",c:"#a78bfa"},
+    {l:"Processing",v:videos.filter(v=>v.status==="processing").length,sub:"Est. 2 min",c:"#22d3a5"},
+  ];
+  const acts=[
+    {t:"Create Story Series",d:"Generate 5 connected scenes from one idea",i:"◇",p:"story",c:"#a78bfa",bg:"var(--purple-bg)"},
+    {t:"Add Character",d:"Upload reference images for a new character",i:"◈",p:"characters",c:"#f59e0b",bg:"var(--gold-bg)"},
+    {t:"Generate Video",d:"Create a single scene with precise control",i:"▶",p:"video",c:"#4f9cf9",bg:"var(--blue-bg)"},
+  ];
+  return (
+    <div className="page">
+      <div className="page-hdr">
+        <div><h1>Dashboard</h1><p className="page-sub">Your creative studio at a glance</p></div>
+        <Btn variant="pri" onClick={()=>onNavigate("video")}>+ New Video</Btn>
+      </div>
+      <div className="stats-grid">
+        {stats.map(s=><Card key={s.l} style={{padding:"18px 20px"}}>
+          <div className="stat-lbl">{s.l}</div>
+          <div className="stat-val" style={{color:s.c}}>{s.v}</div>
+          <div className="stat-sub">{s.sub}</div>
+        </Card>)}
+      </div>
+      <SectionHdr title="Quick Actions"/>
+      <div className="actions-grid mb20">
+        {acts.map(a=><Card key={a.t} onClick={()=>onNavigate(a.p)} className="click">
+          <div className="act-icon" style={{color:a.c,background:a.bg}}>{a.i}</div>
+          <div className="act-title">{a.t}</div>
+          <div className="act-desc">{a.d}</div>
+        </Card>)}
+      </div>
+      <SectionHdr title="Recent Videos" action={<Btn variant="gho" size="sm" onClick={()=>onNavigate("history")}>View all →</Btn>}/>
+      <div className="vid-grid mb20">
+        {videos.slice(0,3).map(v=><VideoThumb key={v.id} v={v}/>)}
+      </div>
+      <SectionHdr title="Characters" action={<Btn variant="gho" size="sm" onClick={()=>onNavigate("characters")}>Manage →</Btn>}/>
+      <div className="char-mini-grid">
+        {chars.map(c=><Card key={c.id} className="char-mini">
+          <div className="char-mini-av" style={{background:`${c.color}18`,border:`1px solid ${c.color}33`}}>◈</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div className="char-mini-name">{c.name}{c.locked&&<span className="badge b-gold">LOCKED</span>}</div>
+            <div className="char-mini-desc">{c.description}</div>
+            <div className="char-mini-stats">{c.videos} videos · {c.series} series</div>
+          </div>
+        </Card>)}
+      </div>
+    </div>
+  );
+}
+
+// ── CHARACTER MANAGER ───────────────────────────────────────────────────────
+function CharacterManager({chars,setChars}) {
+  const [showAdd,setShowAdd]=useState(false);
+  const [name,setName]=useState(""); const [desc,setDesc]=useState("");
+  const [analyzing,setAnalyzing]=useState(false);
+  const [analysis,setAnalysis]=useState(null); const [err,setErr]=useState(null);
+
+  const analyze=async()=>{
+    if(!name||!desc)return;
+    setAnalyzing(true);setAnalysis(null);setErr(null);
+    try{
+      const t=await callClaude(`Analyze this character for AI video generation.
+Character: ${name}\nDescription: ${desc}
+Respond ONLY with valid JSON:
+{"coloring":"...","eyes":"...","clothing":"...","accessories":"...","build":"...","style":"...","traits":["t1","t2","t3"],"consistencyNote":"..."}`);
+      setAnalysis(parseJSON(t));
+    }catch(e){setErr(e.message);}
+    setAnalyzing(false);
+  };
+
+  const save=()=>{
+    if(!name||!analysis)return;
+    setChars(p=>[...p,{id:Date.now(),name,description:desc,locked:false,color:"#a78bfa",
+      traits:analysis.traits||[],style:analysis.style||"Animated",
+      coloring:analysis.coloring||"—",eyes:analysis.eyes||"—",
+      clothing:analysis.clothing||"—",accessories:analysis.accessories||"—",
+      build:analysis.build||"—",videos:0,series:0}]);
+    setShowAdd(false);setName("");setDesc("");setAnalysis(null);
+  };
+
+  return (
+    <div className="page">
+      <div className="page-hdr">
+        <div><h1>Character Manager</h1><p className="page-sub">Build and manage AI-consistent character profiles</p></div>
+        <Btn variant="pri" onClick={()=>setShowAdd(p=>!p)}>+ Add Character</Btn>
+      </div>
+
+      {showAdd&&<Card className="gold mb20 anim-scale">
+        <h3 className="mb18">New Character Profile</h3>
+        <div className="upload-zone">
+          <div style={{fontSize:28,opacity:.25,marginBottom:8}}>⬆</div>
+          <p style={{color:"var(--t2)",fontSize:13,marginBottom:4}}>Drop reference images here</p>
+          <span style={{color:"var(--t3)",fontSize:11,display:"block",marginBottom:12}}>PNG, JPG — multiple views recommended</span>
+          <Btn size="sm">Browse Files</Btn>
+        </div>
+        <div className="char-add-fields">
+          <Inp label="Character Name" value={name} onChange={setName} placeholder="e.g. Mochi"/>
+          <Inp label="Visual Description" value={desc} onChange={setDesc} placeholder="Describe appearance, clothing, colors, style in detail…"/>
+        </div>
+        {analyzing&&<div className="analyzing-bar"><div className="spinner" style={{width:18,height:18}}/> Analyzing character traits…</div>}
+        {analysis&&<div className="analysis-box anim-fade">
+          <div style={{fontSize:11,color:"var(--gold)",fontWeight:700,textTransform:"uppercase",letterSpacing:".07em",marginBottom:14}}>✓ Character Analysis Complete</div>
+          <div className="analysis-grid">
+            {[["Coloring",analysis.coloring],["Eyes",analysis.eyes],["Clothing",analysis.clothing],["Accessories",analysis.accessories],["Build",analysis.build],["Style",analysis.style]].map(([k,v])=>
+              <div key={k} className="analysis-item"><div className="analysis-key">{k}</div><div className="analysis-val">{v}</div></div>)}
+          </div>
+          {analysis.consistencyNote&&<div className="analysis-note">"{analysis.consistencyNote}"</div>}
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            {(analysis.traits||[]).map(t=><span key={t} className="badge b-gold">{t}</span>)}
+          </div>
+        </div>}
+        {err&&<div className="error-box">{err}</div>}
+        <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:16}}>
+          <Btn variant="gho" onClick={()=>{setShowAdd(false);setAnalysis(null);setErr(null);}}>Cancel</Btn>
+          <Btn onClick={analyze} disabled={analyzing||!desc||!name}>{analyzing?"⟳ Analyzing…":"◈ Analyze Character"}</Btn>
+          {analysis&&<Btn variant="pri" onClick={save}>Save Character</Btn>}
+        </div>
+      </Card>}
+
+      {chars.length===0&&<div className="empty-state"><div className="empty-icon">◈</div><p>No characters yet — add your first character to begin</p></div>}
+      <div className="char-grid">
+        {chars.map(c=>{
+          const toggleLock=()=>setChars(p=>p.map(x=>x.id===c.id?{...x,locked:!x.locked}:x));
+          const del=()=>setChars(p=>p.filter(x=>x.id!==c.id));
+          return <Card key={c.id} style={{border:`1px solid ${c.locked?c.color+"44":"var(--border)"}`,background:c.locked?`${c.color}06`:"var(--bg-2)"}}>
+            <div className="char-card-hdr">
+              <div className="char-card-id">
+                <div className="char-card-av" style={{background:`${c.color}1a`,border:`1px solid ${c.color}33`}}>◈</div>
+                <div><div className="char-card-name">{c.name}</div><div className="char-card-style">{c.style}</div></div>
+              </div>
+              <div className="char-card-ctrl">
+                <button className={`lock-btn ${c.locked?"on":""}`} onClick={toggleLock}>{c.locked?"🔒 LOCKED":"🔓 LOCK"}</button>
+                <button className="del-btn" onClick={del}>✕</button>
+              </div>
+            </div>
+            <p className="char-card-desc">{c.description}</p>
+            <div className="trait-grid">
+              {[["Coloring",c.coloring],["Eyes",c.eyes],["Clothing",c.clothing]].map(([k,v])=>
+                <div key={k} className="trait-item"><div className="trait-key">{k}</div><div className="trait-val">{v}</div></div>)}
+            </div>
+            <div className="char-card-foot">
+              <div className="char-tags">{(c.traits||[]).slice(0,3).map(t=><span key={t} className="char-tag" style={{color:c.color,background:`${c.color}18`}}>{t}</span>)}</div>
+              <span style={{fontSize:11,color:"var(--t3)"}}>{c.videos} videos</span>
+            </div>
+          </Card>;
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── VIDEO CREATOR ───────────────────────────────────────────────────────────
+function VideoCreator({chars,setVideos}) {
+  const [charId,setCharId]=useState(chars[0]?.id||1);
+  const [scene,setScene]=useState(""); const [camera,setCamera]=useState("");
+  const [style,setStyle]=useState("studio-ghibli"); const [dur,setDur]=useState("5");
+  const [ratio,setRatio]=useState("9:16"); const [model,setModel]=useState("kling");
+  const [gen,setGen]=useState(false); const [result,setResult]=useState(null);
+
+  const sc=chars.find(c=>c.id===Number(charId))||chars[0];
+  const prompt=sc&&scene?`[Character Consistency: ${sc.name} — ${sc.description}. Coloring: ${sc.coloring}. Eyes: ${sc.eyes}. Clothing: ${sc.clothing}, ${sc.accessories}.] Scene: ${scene}${camera?` Camera: ${camera}.`:""} Style: ${style}. Duration: ${dur}s. Ratio: ${ratio}.`:"";
+  const ratioAspect={"16:9":"16/9","9:16":"9/16","1:1":"1/1","4:5":"4/5"}[ratio]||"9/16";
+
+  const generate=async()=>{
+    if(!scene||!sc)return;
+    setGen(true);setResult(null);
+    await new Promise(r=>setTimeout(r,2800));
+    const nv={id:Date.now(),charId:sc.id,char:sc.name,charColor:sc.color,scene,dur:`${dur}s`,ratio,status:"processing",model:MODELS.find(m=>m.v===model)?.l||model,ts:"just now"};
+    setVideos(p=>[nv,...p]);setResult(nv);setGen(false);
+  };
+
+  return (
+    <div className="page">
+      <div className="page-hdr"><div><h1>Video Creator</h1><p className="page-sub">Generate videos with locked character consistency</p></div></div>
+      <div className="vc-layout">
+        <div className="vc-form">
+          <Card>
+            <Field label="Character">
+              <div className="char-picker">
+                {chars.map(c=><button key={c.id} className="char-btn" onClick={()=>setCharId(c.id)}
+                  style={Number(charId)===c.id?{borderColor:c.color,background:`${c.color}0e`}:{}}>
+                  <div className="char-btn-av" style={{background:`${c.color}20`}}>◈</div>
+                  <div><div className="char-btn-name">{c.name}</div>
+                  <div className="char-btn-lock" style={{color:c.locked?"var(--gold)":"var(--t3)"}}>{c.locked?"🔒 Locked":"Unlocked"}</div></div>
+                </button>)}
+              </div>
+            </Field>
+          </Card>
+          <Card>
+            <Textarea label="Scene Description" value={scene} onChange={setScene} rows={4} className="mb14"
+              placeholder="Describe what the character is doing, the setting, mood, lighting… be vivid and specific."/>
+            <Inp label="Camera Instructions (optional)" value={camera} onChange={setCamera} className="mb14"
+              placeholder="e.g. Slow push-in, warm golden-hour light, shallow depth of field"/>
+            <div className="vc-opts">
+              <Sel label="Style"    value={style} onChange={setStyle} options={STYLES}/>
+              <Sel label="Duration" value={dur}   onChange={setDur}   options={DURS}/>
+              <Sel label="Ratio"    value={ratio}  onChange={setRatio} options={RATIOS}/>
+              <Sel label="Model"    value={model}  onChange={setModel} options={MODELS}/>
+            </div>
+          </Card>
+          {prompt&&<Card style={{background:"var(--bg-3)"}}>
+            <div className="vc-lbl" style={{marginBottom:8}}>Auto-built Prompt</div>
+            <div className="prompt-prev">{prompt}</div>
+          </Card>}
+          <Btn variant="pri" size="lg" onClick={generate} disabled={gen||!scene} style={{width:"100%"}}>
+            {gen?"⟳ Submitting to AI…":"▶ Generate Video"}
+          </Btn>
+        </div>
+        <div className="vc-sidebar">
+          <div className="vc-preview" style={{aspectRatio:ratioAspect}}>
+            {gen?<><div className="spinner"/><span>Submitting to {model}…</span></>
+              :result?<><div style={{width:56,height:56,borderRadius:"50%",background:"var(--gold-bg)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,color:"var(--gold)"}}>▶</div>
+                <div style={{fontWeight:600,color:"var(--t1)",fontSize:13}}>Video queued!</div>
+                <Pill status="processing"/>
+                <span style={{fontSize:11,color:"var(--t3)"}}>Est. 2–4 minutes</span></>
+              :<><div style={{fontSize:36,opacity:.1}}>▶</div><span>Preview will appear here</span></>}
+          </div>
+          {sc&&<Card>
+            <div className="vc-lbl">Character Profile</div>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+              <div style={{width:38,height:38,borderRadius:10,background:`${sc.color}1a`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>◈</div>
+              <div><div style={{fontWeight:700,color:"var(--t1)",fontSize:14,fontFamily:"var(--fd)"}}>{sc.name}</div>
+              {sc.locked&&<div style={{fontSize:10,color:"var(--gold)"}}>🔒 Consistency locked</div>}</div>
+            </div>
+            {[["Coloring",sc.coloring],["Eyes",sc.eyes],["Clothing",sc.clothing],["Accessories",sc.accessories]].map(([k,v])=>
+              <div key={k} className="vc-profile-row"><span>{k}</span><span>{v}</span></div>)}
+          </Card>}
+          <Card>
+            <div className="vc-lbl">Export Targets</div>
+            {[["MP4 (1080p)","Universal"],["TikTok","9:16 optimised"],["Instagram Reels","4:5 crop"],["YouTube Shorts","With subtitles"]].map(([f,h])=>
+              <div key={f} className="vc-export-row"><span>{f}</span><span>{h}</span></div>)}
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── STORY CREATOR ───────────────────────────────────────────────────────────
+function StoryCreator({chars}) {
+  const [charId,setCharId]=useState(String(chars[0]?.id||1));
+  const [idea,setIdea]=useState(""); const [scenes,setScenes]=useState([]);
+  const [loading,setLoading]=useState(false); const [err,setErr]=useState(null);
+  const [editIdx,setEditIdx]=useState(null);
+
+  const sc=chars.find(c=>c.id===Number(charId))||chars[0];
+
+  const generate=async()=>{
+    if(!idea||!sc)return;
+    setLoading(true);setErr(null);setScenes([]);
+    try{
+      const t=await callClaude(`You are an AI video story writer for animated short-form content.
+Character: ${sc.name} — ${sc.description}
+Story idea: "${idea}"
+${sc.name} must appear identically in ALL 5 scenes.
+Respond ONLY with a raw JSON array (no markdown):
+[{"scene":1,"title":"...","description":"2-3 vivid sentences","camera":"...","mood":"...","duration":"5s"}]`,1200);
+      setScenes(parseJSON(t));
+    }catch(e){setErr(e.message);}
+    setLoading(false);
+  };
+
+  const upd=(i,f,v)=>setScenes(p=>p.map((s,j)=>j===i?{...s,[f]:v}:s));
+
+  return (
+    <div className="page">
+      <div className="page-hdr"><div><h1>Story Creator</h1><p className="page-sub">One idea → five connected scenes, same character throughout</p></div></div>
+      <Card className="mb20">
+        <div className="story-bar-grid">
+          <Sel label="Character" value={charId} onChange={setCharId} options={chars.map(c=>({v:String(c.id),l:`${c.name}${c.locked?" 🔒":""}`}))}/>
+          <Inp label="Story Idea" value={idea} onChange={setIdea} placeholder='"Mochi opens a bakery and befriends the whole neighbourhood" — one line is enough'/>
+          <Btn variant="pri" size="lg" onClick={generate} disabled={loading||!idea} style={{alignSelf:"flex-end",whiteSpace:"nowrap"}}>
+            {loading?"⟳ Generating…":"◇ Create Story"}
+          </Btn>
+        </div>
+      </Card>
+      {err&&<div className="error-box">{err}</div>}
+      {loading&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+        {[1,2,3,4,5].map(i=><div key={i} className="skeleton" style={{height:96}}/>)}
+      </div>}
+      {scenes.length>0&&<>
+        <div className="story-list-hdr">
+          <div className="story-list-title">Story: <span>"{idea}"</span></div>
+          <div style={{display:"flex",gap:10}}>
+            <Btn size="sm">⬇ Export Prompts</Btn>
+            <Btn variant="pri" size="sm">▶ Generate All 5 Videos</Btn>
+          </div>
+        </div>
+        <div className="story-scenes">
+          {scenes.map((s,i)=><Card key={i} className="scene-card">
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
+              <div className="scene-num" style={{color:SCENE_COLORS[i],background:`${SCENE_COLORS[i]}18`,border:`1px solid ${SCENE_COLORS[i]}33`}}>{s.scene}</div>
+              {i<scenes.length-1&&<div className="scene-conn"/>}
+            </div>
+            <div>
+              {editIdx===i?<div style={{display:"flex",flexDirection:"column",gap:10}}>
+                <Inp value={s.title} onChange={v=>upd(i,"title",v)}/>
+                <Textarea value={s.description} onChange={v=>upd(i,"description",v)} rows={3}/>
+                <Btn size="sm" onClick={()=>setEditIdx(null)}>✓ Done</Btn>
+              </div>:<>
+                <div className="scene-title">{s.title}</div>
+                <div className="scene-desc">{s.description}</div>
+                <div className="scene-tags">
+                  <span className="scene-tag scene-tag-gray">📷 {s.camera}</span>
+                  <span className="scene-tag" style={{color:SCENE_COLORS[i],background:`${SCENE_COLORS[i]}12`}}>✦ {s.mood}</span>
+                  <span className="scene-tag scene-tag-gray">⏱ {s.duration}</span>
+                </div>
+              </>}
+            </div>
+            <div className="scene-actions">
+              <Btn variant="pri" size="sm">▶ Generate</Btn>
+              <Btn size="sm" onClick={()=>setEditIdx(editIdx===i?null:i)}>✎ Edit</Btn>
+            </div>
+          </Card>)}
+        </div>
+        <div className="consist-banner">
+          <span style={{fontSize:22}}>🔒</span>
+          <div><div className="consist-title">Character Consistency Active</div>
+          <div className="consist-body">{sc?.name}'s full visual profile is embedded in every scene prompt — same face, clothing, and style across all 5 videos.</div></div>
+        </div>
+      </>}
+    </div>
+  );
+}
+
+// ── HISTORY ─────────────────────────────────────────────────────────────────
+function History({videos,chars}) {
+  const [filter,setFilter]=useState("all");
+  const [sort,setSort]=useState("newest");
+  const filtered=videos.filter(v=>filter==="all"||v.char===filter).sort((a,b)=>sort==="newest"?b.id-a.id:a.id-b.id);
+  return (
+    <div className="page">
+      <div className="page-hdr"><div><h1>Video History</h1><p className="page-sub">{videos.length} videos generated</p></div></div>
+      <div className="hist-filters">
+        <div className="filter-pills">
+          {["all",...chars.map(c=>c.name)].map(f=><button key={f} className={`fpill ${filter===f?"on":""}`} onClick={()=>setFilter(f)}>{f==="all"?"All Videos":f}</button>)}
+        </div>
+        <Sel value={sort} onChange={setSort} options={[{v:"newest",l:"Newest first"},{v:"oldest",l:"Oldest first"}]} className="" style={{width:160}}/>
+      </div>
+      {filtered.length===0&&<div className="empty-state"><div className="empty-icon">▶</div><p>No videos yet</p></div>}
+      <div className="hist-grid">{filtered.map(v=><VideoThumb key={v.id} v={v} showExport/>)}</div>
+    </div>
+  );
+}
+
+// ── TOGGLE ───────────────────────────────────────────────────────────────────
+function Toggle({label,def}) {
+  const [on,setOn]=useState(def);
+  return <div className="toggle-row"><span>{label}</span>
+    <button className={`tog ${on?"on":""}`} onClick={()=>setOn(p=>!p)}><div className="tog-knob"/></button>
+  </div>;
+}
+
+// ── SETTINGS ─────────────────────────────────────────────────────────────────
+function Settings() {
+  const [keys,setKeys]=useState({kling:"",runway:"",luma:"",openai:"",anthropic:localStorage.getItem("anthropic_key")||""});
+  const [model,setModel]=useState("kling"); const [ratio,setRatio]=useState("9:16");
+  const [saved,setSaved]=useState(false);
+
+  const save=()=>{
+    localStorage.setItem("anthropic_key",keys.anthropic);
+    setSaved(true);setTimeout(()=>setSaved(false),2200);
+  };
+
+  return (
+    <div className="page">
+      <div className="page-hdr"><div><h1>Settings</h1><p className="page-sub">API keys, defaults, and consistency engine</p></div></div>
+      <div className="settings-wrap">
+        <Card>
+          <h3 className="mb20">API Keys</h3>
+          {[
+            {k:"anthropic",l:"Anthropic API Key ✦",h:"console.anthropic.com — für Character Analysis & Story Generator"},
+            {k:"kling",    l:"Kling AI API Key",h:"kling.kuaishou.com — Developer Dashboard"},
+            {k:"runway",   l:"Runway Gen-3 API Key",h:"app.runwayml.com — API Settings"},
+            {k:"luma",     l:"Luma Dream Machine Key",h:"lumalabs.ai — API Access"},
+            {k:"openai",   l:"OpenAI API Key",h:"platform.openai.com/api-keys"},
+          ].map(({k,l,h})=><div key={k} className="mb16">
+            <Inp label={l} type="password" value={keys[k]} onChange={v=>setKeys(p=>({...p,[k]:v}))} placeholder="sk-•••••••••••••••••••••••••"/>
+            <p className="hint">{h}</p>
+          </div>)}
+        </Card>
+        <Card>
+          <h3 className="mb20">Generation Defaults</h3>
+          <div className="settings-defaults">
+            <Sel label="Default AI Model"    value={model} onChange={setModel} options={MODELS}/>
+            <Sel label="Default Aspect Ratio" value={ratio} onChange={setRatio} options={RATIOS}/>
+          </div>
+        </Card>
+        <Card>
+          <h3 className="mb12">Character Consistency Engine</h3>
+          <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.8,marginBottom:18}}>When Character Lock is enabled, the engine embeds a full visual block into every prompt — same face, colours, and clothing across every video.</p>
+          <Toggle label="Auto-embed character profile in all prompts"      def={true}/>
+          <Toggle label="Warn when generating without a locked character"  def={true}/>
+          <Toggle label="Include style consistency clause in prompt"       def={true}/>
+          <Toggle label="Auto-lock characters after first generated video" def={false}/>
+          <Toggle label="Show prompt preview before each generation"       def={true}/>
+        </Card>
+        <Card>
+          <h3 className="mb12">Export Preferences</h3>
+          <Toggle label="Auto-generate subtitles on export" def={false}/>
+          <Toggle label="Watermark with studio logo"        def={false}/>
+          <Toggle label="Save source prompts with export"   def={true}/>
+        </Card>
+        <Btn variant="pri" size="lg" onClick={save} style={{width:240}}>{saved?"✓ Gespeichert!":"Einstellungen speichern"}</Btn>
+      </div>
+    </div>
+  );
+}
+
+// ── SIDEBAR ──────────────────────────────────────────────────────────────────
+function Sidebar({page,onNavigate,lockedChar}) {
+  return (
+    <aside className="sb">
+      <div className="sb-logo">
+        <div className="sb-logo-icon">▶</div>
+        <div><div className="sb-logo-t1">AI Character</div><div className="sb-logo-t2">VIDEO STUDIO</div></div>
+      </div>
+      <nav className="sb-nav">
+        {NAV.map(item=><button key={item.id} className={`sb-item ${page===item.id?"active":""}`} onClick={()=>onNavigate(item.id)}>
+          <span style={{fontSize:15,opacity:page===item.id?1:.6}}>{item.icon}</span>
+          <span>{item.label}</span>
+          {item.badge&&<span className="sb-badge">{item.badge}</span>}
+        </button>)}
+      </nav>
+      <div className="sb-foot">
+        <div className={`sb-lock ${lockedChar?"on":""}`}>
+          <div className="sb-lock-lbl">{lockedChar?"🔒 Active Lock":"No character locked"}</div>
+          {lockedChar&&<div className="sb-lock-name">{lockedChar.name}</div>}
+          <div className="sb-lock-hint">{lockedChar?"Embedded in all prompts":"Lock a character for consistency"}</div>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+// ── APP ROOT ─────────────────────────────────────────────────────────────────
+function App() {
+  const [page,setPage]   = useState("dashboard");
+  const [chars,setChars] = useState(INIT_CHARS);
+  const [videos,setVideos] = useState(INIT_VIDEOS);
+  const lockedChar = chars.find(c=>c.locked)||null;
+
+  const props = {chars,setChars,videos,setVideos,onNavigate:setPage};
+
+  const pages = {
+    dashboard:  <Dashboard   {...props}/>,
+    characters: <CharacterManager {...props}/>,
+    video:      <VideoCreator {...props}/>,
+    story:      <StoryCreator {...props}/>,
+    history:    <History      {...props}/>,
+    settings:   <Settings/>,
+  };
+
+  return (
+    <div className="shell">
+      <Sidebar page={page} onNavigate={setPage} lockedChar={lockedChar}/>
+      <main className="main">{pages[page]||pages.dashboard}</main>
+    </div>
+  );
+}
+
+// ── Rendern ───────────────────────────────────────────────────────────────────
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App/>);
+</script>
+</body>
+</html>
