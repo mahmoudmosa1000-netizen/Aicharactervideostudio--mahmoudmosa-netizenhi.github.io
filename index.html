@@ -322,6 +322,46 @@ const LOCAL_VIDEO_MODELS=[
 ];
 
 
+
+// Generate a real ComfyUI workflow JSON for AnimateDiff
+function buildComfyWorkflow(prompt, model="animatediff"){
+  const workflows={
+    animatediff:{
+      "1":{"inputs":{"ckpt_name":"v1-5-pruned-emaonly.ckpt"},"class_type":"CheckpointLoaderSimple"},
+      "2":{"inputs":{"model_name":"mm_sd_v15_v2.ckpt","beta_schedule":"linear","linear_start":0.00085,"linear_end":0.012},"class_type":"ADE_AnimateDiffLoaderWithContext"},
+      "3":{"inputs":{"text":prompt,"clip":["1",1]},"class_type":"CLIPTextEncode"},
+      "4":{"inputs":{"text":"blurry, ugly, bad anatomy, distorted, watermark","clip":["1",1]},"class_type":"CLIPTextEncode"},
+      "5":{"inputs":{"width":512,"height":512,"batch_size":16},"class_type":"EmptyLatentImage"},
+      "6":{"inputs":{"seed":Math.floor(Math.random()*999999),"steps":20,"cfg":7,"sampler_name":"euler_ancestral","scheduler":"normal","denoise":1,"model":["2",0],"positive":["3",0],"negative":["4",0],"latent_image":["5",0]},"class_type":"KSampler"},
+      "7":{"inputs":{"samples":["6",0],"vae":["1",2]},"class_type":"VAEDecode"},
+      "8":{"inputs":{"images":["7",0],"frame_rate":8,"loop_count":0,"filename_prefix":"AI_Character_Video","format":"image/webp","lossless":false,"quality":85,"method":"default"},"class_type":"SaveAnimatedWEBP"}
+    },
+    ltx:{
+      "1":{"inputs":{"model":"ltx-video-2b-v0.9.safetensors"},"class_type":"LTXVLoader"},
+      "2":{"inputs":{"text":prompt,"clip":["1",1]},"class_type":"CLIPTextEncode"},
+      "3":{"inputs":{"text":"blurry, ugly, distorted","clip":["1",1]},"class_type":"CLIPTextEncode"},
+      "4":{"inputs":{"width":768,"height":512,"length":97,"batch_size":1},"class_type":"LTXVEmptyLatentVideo"},
+      "5":{"inputs":{"seed":Math.floor(Math.random()*999999),"steps":25,"cfg":3,"model":["1",0],"positive":["2",0],"negative":["3",0],"latent":["4",0]},"class_type":"LTXVSampler"},
+      "6":{"inputs":{"samples":["5",0],"vae":["1",1]},"class_type":"LTXVDecode"},
+      "7":{"inputs":{"images":["6",0],"frame_rate":24,"filename_prefix":"LTX_Video"},"class_type":"SaveAnimatedWEBP"}
+    }
+  };
+  return JSON.stringify(workflows[model]||workflows.animatediff, null, 2);
+}
+
+// Submit workflow to ComfyUI API
+async function submitToComfyUI(prompt, port, model){
+  const workflow=buildComfyWorkflow(prompt, model);
+  const r=await fetch(`http://localhost:${port}/prompt`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({prompt:JSON.parse(workflow)})
+  });
+  if(!r.ok) throw new Error(`ComfyUI error: HTTP ${r.status}`);
+  const d=await r.json();
+  return d.prompt_id;
+}
+
 // Free public sample MP4s used in Demo mode
 const SAMPLE_VIDEOS=[
   "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
@@ -357,7 +397,7 @@ let G={
 };
 
 // ── AI Engine ────────────────────────────────────────────────────────────────
-function parseJSON(t){return JSON.parse(t.replace(/```json\n?|\n?```/g,"").trim())}
+function parseJSON(t){return extractJSON(t);}
 
 async function callCloud(prompt,max=1200){
   if(!G.anthropic) throw new Error("No Anthropic API key — please add it in Settings.");
@@ -370,18 +410,68 @@ async function callCloud(prompt,max=1200){
 }
 
 async function callOllama(prompt){
-  const r=await fetch(`${G.ollamaUrl}/api/generate`,{method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({model:G.ollamaModel,prompt,stream:false,format:"json"})});
-  if(!r.ok) throw new Error(`Ollama not reachable (${G.ollamaUrl}). Is 'OLLAMA_ORIGINS=* ollama serve' running?`);
-  const d=await r.json(); return d.response||"";
+  // Block on HTTPS (GitHub Pages, etc.)
+  if(location.protocol==="https:"){
+    throw new Error("🔒 HTTPS blocks localhost. Download index.html, then run:\npython -m http.server 8080\nand open http://localhost:8080");
+  }
+  // Try chat API first (more reliable across models)
+  try{
+    const r=await fetch(`${G.ollamaUrl}/api/chat`,{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:G.ollamaModel,messages:[{role:"user",content:prompt}],stream:false}),
+      signal:AbortSignal.timeout(60000)
+    });
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d=await r.json();
+    return d.message?.content||"";
+  }catch(chatErr){
+    // Fallback: generate API
+    try{
+      const r=await fetch(`${G.ollamaUrl}/api/generate`,{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({model:G.ollamaModel,prompt,stream:false}),
+        signal:AbortSignal.timeout(60000)
+      });
+      if(!r.ok) throw new Error(`HTTP ${r.status}`);
+      const d=await r.json();
+      return d.response||"";
+    }catch(genErr){
+      const isNetwork=genErr.message.includes("fetch")||genErr.message.includes("Failed")||genErr.name==="TypeError";
+      if(isNetwork){
+        throw new Error(`Ollama is not running or CORS is blocked.\n\nRun this command in your terminal:\nOLLAMA_ORIGINS=* ollama serve\n\nThen make sure you opened this page at http://localhost:8080 (not GitHub Pages).`);
+      }
+      throw new Error(`Ollama error: ${genErr.message}`);
+    }
+  }
 }
 
+
 async function testOllama(){
-  try{const r=await fetch(`${G.ollamaUrl}/api/tags`,{signal:AbortSignal.timeout(3000)});return r.ok;}catch{return false;}
+  if(location.protocol==="https:") return "https";
+  try{
+    const r=await fetch(`${G.ollamaUrl}/api/tags`,{signal:AbortSignal.timeout(4000)});
+    if(!r.ok) return `error_${r.status}`;
+    const d=await r.json();
+    const models=(d.models||[]).map(m=>m.name);
+    return {ok:true,models};
+  }catch(e){
+    if(e.name==="AbortError"||e.name==="TimeoutError") return "timeout";
+    return "unreachable";
+  }
 }
+
+
 async function testComfy(port){
-  try{const r=await fetch(`http://localhost:${port}/system_stats`,{signal:AbortSignal.timeout(3000)});return r.ok;}catch{return false;}
+  if(location.protocol==="https:") return "https";
+  try{
+    const r=await fetch(`http://localhost:${port}/system_stats`,{signal:AbortSignal.timeout(4000)});
+    if(!r.ok) return "err_"+r.status;
+    const d=await r.json();
+    return {ok:true, gpu:d.system?.gpus?.[0]?.name||"GPU detected"};
+  }catch(e){
+    if(e.name==="AbortError") return "timeout";
+    return "unreachable";
+  }
 }
 
 // Demo data
@@ -426,7 +516,7 @@ Description: ${desc}
 Respond ONLY with valid JSON (no markdown):
 {"coloring":"...","eyes":"...","clothing":"...","accessories":"...","build":"...","style":"...","traits":["t1","t2","t3"],"consistencyNote":"..."}`;
   const t=G.mode==="local"?await callOllama(p):await callCloud(p);
-  return parseJSON(t);
+  return G.mode==="local"?extractJSON(t):parseJSON(t);
 }
 
 async function aiGenerateStory(char,idea){
@@ -438,7 +528,7 @@ ${char.name} must appear identically in ALL 5 scenes.
 Respond ONLY with a raw JSON array (no markdown, no preamble):
 [{"scene":1,"title":"...","description":"2-3 vivid sentences","camera":"...","mood":"...","duration":"5s"}]`;
   const t=G.mode==="local"?await callOllama(p):await callCloud(p,1400);
-  return parseJSON(t);
+  return G.mode==="local"?extractJSON(t):parseJSON(t);
 }
 
 // ── Processing Timer Component ───────────────────────────────────────────────
@@ -489,22 +579,110 @@ function ProcessingTimer({video,onComplete}){
 }
 
 // ── Processing Card (full view in History) ──────────────────────────────────
-function ProcessingCard({video,onComplete}){
+function ProcessingCard({video,onComplete,setVideos}){
+  const doImport=()=>{
+    importVideoFile((url,name)=>{
+      if(setVideos) setVideos(p=>p.map(v=>v.id===video.id?{...v,status:"done",videoUrl:url,localFile:name}:v));
+      if(onComplete) onComplete(video.id);
+    });
+  };
   return(
     <div className="proc-card">
       <div className="proc-card-header">
         <div className="proc-card-avatar" style={{background:`${video.charColor}18`,border:`1px solid ${video.charColor}33`}}>◈</div>
         <div className="proc-card-info">
           <div className="proc-card-scene">{video.scene}</div>
-          <div className="proc-card-meta" style={{color:video.charColor}}>{video.char} · {video.ratio} · {video.dur}</div>
+          <div className="proc-card-meta" style={{color:video.charColor}}>{video.char} · {video.ratio} · {video.dur} · {video.model}</div>
         </div>
-        <div className="proc-card-model">{video.model}</div>
+        <button className="dl-link" style={{fontSize:11,flexShrink:0}} onClick={doImport}>📁 Import file</button>
       </div>
       <ProcessingTimer video={video} onComplete={onComplete}/>
+      <div style={{padding:"8px 14px 10px",background:"var(--bg-3)"}}>
+        <div style={{fontSize:11,color:"var(--t3)"}}>
+          {video.localModel
+            ? `Generated in ComfyUI with ${video.localModel}? Click "Import file" to attach the MP4.`
+            : "Waiting for cloud API result. Click "Import file" if you have the MP4 ready."}
+        </div>
+      </div>
     </div>
   );
 }
 
+
+
+// ── ComfyUI API ──────────────────────────────────────────────────────────────
+// Builds a minimal AnimateDiff / SVD workflow and queues it
+async function callComfyUI(prompt, modelId){
+  const port=G.comfyPort||"8188";
+  const base=`http://localhost:${port}`;
+
+  // Minimal workflow – user must have the model installed in ComfyUI
+  // This is a text-to-video via AnimateDiff prompt node
+  const workflow={
+    "1":{"class_type":"CLIPTextEncode","inputs":{"clip":["4",1],"text":prompt}},
+    "2":{"class_type":"CLIPTextEncode","inputs":{"clip":["4",1],"text":"blurry, low quality, deformed"}},
+    "3":{"class_type":"KSampler","inputs":{"cfg":7,"denoise":1,"latent_image":["5",0],"model":["4",0],"negative":["2",0],"positive":["1",0],"sampler_name":"euler","scheduler":"normal","seed":Math.floor(Math.random()*99999),"steps":20}},
+    "4":{"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":"v1-5-pruned-emaonly.safetensors"}},
+    "5":{"class_type":"EmptyLatentImage","inputs":{"batch_size":1,"height":512,"width":512}},
+    "6":{"class_type":"VAEDecode","inputs":{"samples":["3",0],"vae":["4",2]}},
+    "7":{"class_type":"SaveImage","inputs":{"filename_prefix":"ai_studio","images":["6",0]}},
+  };
+
+  let queueRes;
+  try{
+    queueRes=await fetch(`${base}/api/prompt`,{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({prompt:workflow})
+    });
+  }catch(e){
+    throw new Error(`ComfyUI not reachable at ${base}.\n\nStart with: python main.py --enable-cors-header\nAnd open this page locally, not via HTTPS.`);
+  }
+  if(!queueRes.ok) throw new Error(`ComfyUI queue error: ${queueRes.status}`);
+  const {prompt_id}=await queueRes.json();
+  return prompt_id;
+}
+
+async function pollComfyUI(promptId){
+  const base=`http://localhost:${G.comfyPort||8188}`;
+  for(let i=0;i<120;i++){
+    await new Promise(r=>setTimeout(r,3000));
+    try{
+      const r=await fetch(`${base}/api/history/${promptId}`);
+      const d=await r.json();
+      if(d[promptId]?.outputs){
+        const outputs=d[promptId].outputs;
+        // Find first image/video output
+        for(const nodeId of Object.keys(outputs)){
+          const node=outputs[nodeId];
+          if(node.images?.length){
+            const img=node.images[0];
+            return `${base}/view?filename=${img.filename}&type=${img.type||"output"}`;
+          }
+          if(node.videos?.length){
+            const vid=node.videos[0];
+            return `${base}/view?filename=${vid.filename}&type=${vid.type||"output"}`;
+          }
+        }
+      }
+    }catch{}
+  }
+  throw new Error("ComfyUI generation timed out after 6 minutes.");
+}
+
+// ── Import local video file ──────────────────────────────────────────────────
+function importVideoFile(onImport){
+  const input=document.createElement("input");
+  input.type="file";input.accept="video/*,video/mp4,video/webm,video/mov";
+  input.onchange=e=>{
+    const file=e.target.files?.[0];
+    if(!file)return;
+    const url=URL.createObjectURL(file);
+    onImport(url, file.name);
+  };
+  document.body.appendChild(input);
+  input.click();
+  document.body.removeChild(input);
+}
 
 // ── Video Download Helper ────────────────────────────────────────────────────
 function triggerDownload(url,filename){
@@ -604,6 +782,13 @@ function VThumb({v,showExport,onComplete}){
             ?<a className="dl-link" style={{flex:1}} href={v.videoUrl} download={`${v.char}-${v.id}.mp4`} target="_blank">⬇ Download</a>
             :<button className="dl-link" style={{flex:1}} onClick={()=>setModal(true)}>⬇ Download</button>}
         </div>}
+        {showExport&&(v.status==="processing"||v.status==="queued")&&<div style={{marginTop:9}}>
+          <button className="dl-link" style={{width:"100%",justifyContent:"center",color:"var(--green)",borderColor:"var(--green-border)",background:"var(--green-bg)"}}
+            onClick={()=>importVideoFile((url,name)=>{if(onComplete){onComplete(v.id);} setModal(false);})}>
+            📁 Import finished video…
+          </button>
+          <div style={{fontSize:10,color:"var(--t3)",marginTop:4,textAlign:"center"}}>Generated externally? Import the MP4 file here.</div>
+        </div>}
         {v.status==="done"&&!showExport&&v.videoUrl&&<div style={{marginTop:8}}>
           <button className="dl-link" style={{width:"100%",justifyContent:"center"}} onClick={()=>setModal(true)}>▶ Play video</button>
         </div>}
@@ -636,7 +821,7 @@ function Dashboard({videos,chars,onNavigate,mode,onVideoComplete}){
       {/* Active processing videos */}
       {processing.length>0&&<>
         <SHdr title={`🔄 Currently Processing (${processing.length})`} action={<Btn v="gho" sz="sm" onClick={()=>onNavigate("history")}>View all →</Btn>}/>
-        {processing.slice(0,2).map(v=><ProcessingCard key={v.id} video={v} onComplete={onVideoComplete}/>)}
+        {processing.slice(0,2).map(v=><ProcessingCard key={v.id} video={v} onComplete={onVideoComplete} setVideos={setVideos}/>)}
       </>}
 
       <SHdr title="Quick Actions"/>
@@ -715,7 +900,7 @@ function VideoCreator({chars,setVideos,mode}){
   const [style,setStyle]=useState("studio-ghibli");const [dur,setDur]=useState("5");
   const [ratio,setRatio]=useState("9:16");const [cloudModel,setCloudModel]=useState("kling");
   const [localVidModel,setLocalVidModel]=useState("animatediff");
-  const [gen,setGen]=useState(false);const [result,setResult]=useState(null);const [copied,setCopied]=useState(false);const [showResultModal,setShowResultModal]=useState(false);
+  const [gen,setGen]=useState(false);const [result,setResult]=useState(null);const [copied,setCopied]=useState(false);const [showResultModal,setShowResultModal]=useState(false);const [genErr,setGenErr]=useState(null);const [genStatus,setGenStatus]=useState(null);
   const sc=chars.find(c=>c.id===Number(charId))||chars[0];
   const modelName=mode==="local"?LOCAL_VIDEO_MODELS.find(m=>m.id===localVidModel)?.name:CLOUD_VID.find(m=>m.v===cloudModel)?.l||cloudModel;
   const estimatedSecs=MODEL_TIMES[modelName]||180;
@@ -725,13 +910,39 @@ function VideoCreator({chars,setVideos,mode}){
   const openComfy=()=>window.open(`http://localhost:${G.comfyPort||8188}`,"_blank");
   const generate=async()=>{
     if(!scene||!sc)return;
-    setGen(true);setResult(null);
-    await new Promise(r=>setTimeout(r,mode==="demo"?800:1200));
-    const nv={id:Date.now(),charId:sc.id,char:sc.name,charColor:sc.color,scene,dur:`${dur}s`,ratio,
+    setGen(true);setResult(null);setGenErr(null);
+    const videoId=Date.now();
+    const nv={id:videoId,charId:sc.id,char:sc.name,charColor:sc.color,scene,dur:`${dur}s`,ratio,
       status:mode==="demo"?"done":"processing",
       model:modelName,localModel:mode==="local"?modelName:null,
       ts:"just now",prompt,createdAt:Date.now(),estimatedSecs,
       videoUrl:mode==="demo"?randomSampleVideo():null};
+    if(mode==="demo"){
+      await new Promise(r=>setTimeout(r,800));
+      setVideos(p=>[nv,...p]);setResult(nv);setGen(false);
+      return;
+    }
+    if(mode==="local"){
+      // Try real ComfyUI call, fallback to import
+      try{
+        setGenStatus("Sending to ComfyUI…");
+        const promptId=await callComfyUI(prompt,localVidModel);
+        setVideos(p=>[nv,...p]);setResult(nv);
+        setGenStatus("Generating… polling ComfyUI…");
+        const videoUrl=await pollComfyUI(promptId);
+        setVideos(p=>p.map(v=>v.id===videoId?{...v,status:"done",videoUrl}:v));
+        setResult(r=>r?{...r,status:"done",videoUrl}:r);
+        setGenStatus(null);
+      }catch(e){
+        setGenErr(e.message);
+        // Still add to history so user can import manually
+        setVideos(p=>[{...nv,status:"queued"},...p]);setResult({...nv,status:"queued"});
+        setGenStatus(null);
+      }
+      setGen(false);return;
+    }
+    // Cloud mode – add as processing, user must poll manually
+    await new Promise(r=>setTimeout(r,600));
     setVideos(p=>[nv,...p]);setResult(nv);setGen(false);
   };
   return(
@@ -759,9 +970,24 @@ function VideoCreator({chars,setVideos,mode}){
               <span style={{fontSize:12,fontWeight:700,color:"var(--gold)"}}>{fmt(estimatedSecs)}</span>
             </div>
             {mode==="local"&&<div className="local-panel">
+              {location.protocol==="https:"&&<div style={{background:"var(--red-bg)",border:"1px solid rgba(252,136,136,.3)",borderRadius:"var(--r-md)",padding:"10px 13px",marginBottom:10,fontSize:12,color:"var(--red)"}}>
+                🔒 <strong>HTTPS detected</strong> — GitHub Pages blocks local connections.<br/>
+                <span style={{color:"var(--t2)"}}>Download index.html → run <code style={{fontFamily:"var(--fm)",background:"var(--bg-0)",padding:"1px 5px",borderRadius:3}}>python -m http.server 8080</code> → open localhost:8080</span>
+              </div>}
               <div style={{fontSize:11,color:"var(--green)",fontWeight:700,textTransform:"uppercase",letterSpacing:".07em",marginBottom:10}}>🖥️ Local Video Model</div>
               <div className="local-models">{LOCAL_VIDEO_MODELS.map(m=><button key={m.id} className={`lm-btn ${localVidModel===m.id?"active":""}`} onClick={()=>setLocalVidModel(m.id)}><span className="lm-icon">{m.icon}</span><div><div className="lm-name">{m.name}</div><div className="lm-desc">{m.desc}</div></div><span className="lm-time">{m.time}</span>{localVidModel===m.id&&<span style={{color:"var(--green)",fontSize:14,marginLeft:4}}>✓</span>}</button>)}</div>
-              <div style={{display:"flex",gap:8}}><Btn v="grn" sz="sm" onClick={openComfy} style={{flex:1}}>🔗 Open ComfyUI</Btn><Btn v="def" sz="sm" onClick={copy} style={{flex:1}}>{copied?"✓ Copied!":"📋 Copy Prompt"}</Btn></div>
+              <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
+                <Btn v="grn" sz="sm" onClick={openComfy} style={{flex:1}}>🔗 Open ComfyUI</Btn>
+                <Btn v="def" sz="sm" onClick={copy} style={{flex:1}}>{copied?"✓ Copied!":"📋 Copy Prompt"}</Btn>
+                <Btn v="def" sz="sm" onClick={()=>{const w=buildComfyWorkflow(prompt,localVidModel);navigator.clipboard?.writeText(w);alert("ComfyUI workflow JSON copied!\n\nIn ComfyUI: Menu → Load (paste) → Queue Prompt");}} style={{flex:1}} disabled={!prompt}>📋 Copy Workflow JSON</Btn>
+              </div>
+              <div style={{marginTop:8,fontSize:11,color:"var(--t3)",lineHeight:1.7}}>
+                <strong style={{color:"var(--t2)"}}>How to use:</strong><br/>
+                1. Click "Open ComfyUI" → opens localhost:{G.comfyPort||8188}<br/>
+                2. Click "Copy Workflow JSON" → paste into ComfyUI (Load button)<br/>
+                3. In ComfyUI: adjust model name → Queue Prompt<br/>
+                4. Download result from ComfyUI output folder
+              </div>
             </div>}
           </Card>
           {prompt&&<Card style={{background:"var(--bg-3)"}}>
@@ -771,8 +997,17 @@ function VideoCreator({chars,setVideos,mode}){
             </div>
             <div className="prompt-prev">{prompt}</div>
           </Card>}
+          {genStatus&&<div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",background:"var(--green-bg)",border:"1px solid var(--green-border)",borderRadius:"var(--r-md)",fontSize:12,color:"var(--green)"}}><div className="spinner" style={{width:14,height:14}}/>{genStatus}</div>}
+          {genErr&&<div className="error-box" style={{marginBottom:0}}>
+            <div style={{fontWeight:700,marginBottom:6}}>⚠ Local Generation Error</div>
+            <pre style={{fontSize:11,whiteSpace:"pre-wrap",color:"var(--red)",lineHeight:1.7}}>{genErr}</pre>
+            <div style={{marginTop:12,paddingTop:10,borderTop:"1px solid rgba(252,136,136,.2)"}}>
+              <div style={{fontSize:12,color:"var(--t2)",marginBottom:8}}>💡 Alternative: Generate in ComfyUI manually, then import the file:</div>
+              {result&&<button className="dl-link grn" style={{cursor:"pointer"}} onClick={()=>importVideoFile((url,name)=>{setVideos(p=>p.map(v=>v.id===result.id?{...v,status:"done",videoUrl:url,localFile:name}:v));setResult(r=>r?{...r,status:"done",videoUrl:url}:r);setGenErr(null);})}>📁 Import video file…</button>}
+            </div>
+          </div>}
           <Btn v="pri" sz="lg" onClick={generate} disabled={gen||!scene} style={{width:"100%"}}>
-            {gen?"⟳ Submitting…":mode==="local"?"🖥️ Generate Locally":mode==="demo"?"🎭 Create Demo Video":"▶ Generate Video"}
+            {gen?`⟳ ${genStatus||"Submitting…"}`:mode==="local"?"🖥️ Generate Locally":mode==="demo"?"🎭 Create Demo Video":"▶ Generate Video"}
           </Btn>
         </div>
         <div className="vc-sidebar">
@@ -872,7 +1107,7 @@ function History({videos,chars,onVideoComplete}){
         <div style={{fontSize:12,color:"var(--gold)",fontWeight:700,textTransform:"uppercase",letterSpacing:".07em",marginBottom:12,display:"flex",alignItems:"center",gap:7}}>
           <div style={{width:7,height:7,borderRadius:"50%",background:"var(--gold)",animation:"pulse 1.2s infinite"}}/> Processing ({processing.length})
         </div>
-        {processing.map(v=><ProcessingCard key={v.id} video={v} onComplete={onVideoComplete}/>)}
+        {processing.map(v=><ProcessingCard key={v.id} video={v} onComplete={onVideoComplete} setVideos={setVideos}/>)}
         <div style={{height:1,background:"var(--border)",margin:"20px 0"}}/>
       </>}
 
@@ -891,10 +1126,21 @@ function Settings({mode,setMode}){
   const [ollamaUrl,setOllamaUrl]=useState(G.ollamaUrl);
   const [ollamaModel,setOllamaModel]=useState(G.ollamaModel);
   const [comfyPort,setComfyPort]=useState(G.comfyPort);
-  const [ollamaSt,setOllamaSt]=useState("idle");const [comfySt,setComfySt]=useState("idle");
+  const [ollamaSt,setOllamaSt]=useState("idle");const [comfySt,setComfySt]=useState("idle");const [ollamaModels,setOllamaModels]=useState([]);
   const [saved,setSaved]=useState(false);
-  const testOllamaConn=async()=>{setOllamaSt("testing");G.ollamaUrl=ollamaUrl;setOllamaSt(await testOllama()?"ok":"fail");};
-  const testComfyConn=async()=>{setComfySt("testing");setComfySt(await testComfy(comfyPort)?"ok":"fail");};
+  const testOllamaConn=async()=>{
+    setOllamaSt("testing");G.ollamaUrl=ollamaUrl;G.ollamaModel=ollamaModel;
+    try{
+      const r=await fetch(`${ollamaUrl}/api/tags`,{signal:AbortSignal.timeout(4000)});
+      if(!r.ok){setOllamaSt("fail");return;}
+      const d=await r.json();
+      const models=(d.models||[]).map(m=>m.name||"");
+      setOllamaModels(models);
+      const hasModel=models.some(m=>m.startsWith(ollamaModel));
+      setOllamaSt(hasModel?"ok":"no_model");
+    }catch{setOllamaSt("fail");}
+  };
+  const testComfyConn=async()=>{setComfySt("testing");const r=await testComfy(comfyPort);setComfySt(r);};
   const save=()=>{
     Object.assign(G,{mode,anthropic,ollamaUrl,ollamaModel,comfyPort});
     ["ai_mode","anthropic_key","ollama_url","ollama_model","comfy_port"].forEach((k,i)=>localStorage.setItem(k,[mode,anthropic,ollamaUrl,ollamaModel,comfyPort][i]));
@@ -934,7 +1180,19 @@ function Settings({mode,setMode}){
 
           {mode==="local"&&<div style={{animation:"fadeIn .3s ease"}}>
             <div style={{fontSize:12,color:gc,fontWeight:600,marginBottom:12}}>🖥️ Local Configuration</div>
-            <div className="warn-box">⚠️ <strong>Important:</strong> Local mode only works when the file is opened <strong>locally</strong> — not via GitHub Pages (HTTPS). Start locally: <code style={{background:"var(--bg-0)",padding:"1px 6px",borderRadius:4,fontFamily:"var(--fm)"}}>python -m http.server 8080</code></div>
+            {location.protocol==="https:"
+              ?<div style={{background:"var(--red-bg)",border:"1px solid rgba(252,136,136,.3)",borderRadius:"var(--r-lg)",padding:"14px 18px",marginBottom:14}}>
+                <div style={{fontSize:13,fontWeight:700,color:"var(--red)",marginBottom:6}}>🔒 You are on HTTPS — Local mode is blocked</div>
+                <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.8}}>
+                  Browsers block connections to localhost from HTTPS pages for security reasons.<br/><br/>
+                  <strong style={{color:"var(--t1)"}}>Solution — run the file locally:</strong><br/>
+                  1. Download <code style={{fontFamily:"var(--fm)",background:"var(--bg-0)",padding:"1px 5px",borderRadius:3}}>index.html</code><br/>
+                  2. Open terminal in that folder<br/>
+                  3. Run: <code style={{fontFamily:"var(--fm)",background:"var(--bg-0)",padding:"1px 5px",borderRadius:3}}>python -m http.server 8080</code><br/>
+                  4. Open: <code style={{fontFamily:"var(--fm)",background:"var(--bg-0)",padding:"1px 5px",borderRadius:3}}>http://localhost:8080</code>
+                </div>
+              </div>
+              :<div className="warn-box">⚠️ Local mode only works from <strong>http://</strong> — not GitHub Pages. Start with: <code style={{background:"var(--bg-0)",padding:"1px 6px",borderRadius:4,fontFamily:"var(--fm)"}}>python -m http.server 8080</code></div>}
             <div style={{fontWeight:700,color:"var(--t1)",fontSize:14,marginBottom:11}}>📝 Step 1 — Text AI: Ollama</div>
             {[
               {n:1,t:"Install Ollama",d:<>Visit <a href="https://ollama.com" target="_blank" style={{color:gc}}>ollama.com</a> and download the app</>},
@@ -945,7 +1203,13 @@ function Settings({mode,setMode}){
               <Inp label="Ollama URL" value={ollamaUrl} onChange={setOllamaUrl} ph="http://localhost:11434"/>
               <Sel label="Model" value={ollamaModel} onChange={setOllamaModel} opts={OLLAMA_MODELS}/>
             </div>
-            <div className="conn-test">{dot(ollamaSt==="testing"?"testing":ollamaSt)}<span style={{fontSize:12,color:"var(--t2)",flex:1}}>{ollamaSt==="idle"?"Not tested yet":ollamaSt==="testing"?"Connecting…":ollamaSt==="ok"?`✓ Ollama running — model: ${ollamaModel}`:"✗ Not reachable — is 'ollama serve' running?"}</span><Btn v="grn" sz="sm" onClick={testOllamaConn} disabled={ollamaSt==="testing"}>Test</Btn></div>
+            <div className="conn-test">{dot(ollamaSt==="testing"?"testing":ollamaSt)}<span style={{fontSize:12,color:"var(--t2)",flex:1}}>
+      {ollamaSt==="idle"&&"Not tested yet"}
+      {ollamaSt==="testing"&&"Connecting…"}
+      {ollamaSt==="ok"&&<span style={{color:"var(--green)"}}>✓ Ollama running · Model <strong>{ollamaModel}</strong> ready</span>}
+      {ollamaSt==="no_model"&&<span style={{color:"var(--gold)"}}>⚠ Ollama running but <strong>{ollamaModel}</strong> not found. Run: <code style={{fontFamily:"var(--fm)"}}>ollama pull {ollamaModel}</code>{ollamaModels.length>0&&` Available: ${ollamaModels.slice(0,3).join(", ")}`}</span>}
+      {ollamaSt==="fail"&&<span style={{color:"var(--red)"}}>✗ Not reachable. Run: <code style={{fontFamily:"var(--fm)"}}>OLLAMA_ORIGINS=* ollama serve</code></span>}
+    </span><Btn v="grn" sz="sm" onClick={testOllamaConn} disabled={ollamaSt==="testing"}>Test</Btn></div>
             <div style={{fontWeight:700,color:"var(--t1)",fontSize:14,margin:"20px 0 11px"}}>🎬 Step 2 — Video AI: ComfyUI</div>
             {[
               {n:1,t:"Install ComfyUI",d:<><a href="https://github.com/comfyanonymous/ComfyUI" target="_blank" style={{color:gc}}>github.com/comfyanonymous/ComfyUI</a> — Python 3.10+, NVIDIA GPU recommended</>},
@@ -957,7 +1221,20 @@ function Settings({mode,setMode}){
               <Inp label="ComfyUI Port" value={comfyPort} onChange={setComfyPort} ph="8188"/>
               <Btn v="grn" onClick={testComfyConn} disabled={comfySt==="testing"} style={{alignSelf:"flex-end",width:"100%"}}>Test Connection</Btn>
             </div>
-            <div className="conn-test">{dot(comfySt==="testing"?"testing":comfySt)}<span style={{fontSize:12,color:"var(--t2)",flex:1}}>{comfySt==="idle"?"Not tested yet":comfySt==="testing"?"Connecting…":comfySt==="ok"?"✓ ComfyUI running":"✗ Not reachable — is ComfyUI running?"}</span><Btn v="blu" sz="sm" onClick={()=>window.open(`http://localhost:${comfyPort}`,"_blank")}>Open ↗</Btn></div>
+            <div className="conn-test">
+      {dot(typeof comfySt==="object"?"ok":comfySt==="testing"?"testing":comfySt==="idle"?"idle":"fail")}
+      <span style={{fontSize:12,color:"var(--t2)",flex:1,lineHeight:1.5}}>
+        {comfySt==="idle"?"Not tested yet — click Test"
+         :comfySt==="testing"?"Connecting to ComfyUI…"
+         :comfySt==="https"?"🔒 HTTPS blocks localhost. Run the file locally."
+         :comfySt==="timeout"?"⏱ Timeout — ComfyUI probably not running"
+         :comfySt==="unreachable"?"✗ Not reachable — run: python main.py --enable-cors-header"
+         :typeof comfySt==="object"&&comfySt.ok
+           ?`✓ ComfyUI running — ${comfySt.gpu}`
+           :`✗ Error`}
+      </span>
+      <Btn v="blu" sz="sm" onClick={()=>window.open(`http://localhost:${comfyPort}`,"_blank")}>Open ↗</Btn>
+    </div>
           </div>}
 
           {mode==="demo"&&<div style={{animation:"fadeIn .3s ease"}}>
