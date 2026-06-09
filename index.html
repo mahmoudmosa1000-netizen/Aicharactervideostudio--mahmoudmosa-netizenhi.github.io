@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -38,6 +38,7 @@
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
     @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
     @keyframes scaleIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+    @keyframes progressGlow{0%,100%{opacity:.8}50%{opacity:1}}
 
     /* Layout */
     .shell{display:flex;min-height:100vh}
@@ -70,6 +71,10 @@
     .sb-mode-btn.local{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
     .sb-mode-btn.demo{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)}
 
+    /* Processing counter badge on sidebar */
+    .sb-processing{display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:var(--r-md);background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);font-size:11px;font-weight:600;color:var(--gold)}
+    .sb-processing-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);animation:pulse 1.2s infinite;flex-shrink:0}
+
     /* Card */
     .card{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-xl);padding:20px 24px;transition:var(--tr)}
     .card.click{cursor:pointer}.card.click:hover{border-color:var(--border-md);background:var(--bg-3)}
@@ -88,7 +93,7 @@
     .btn.blu{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
     .btn.pur{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)}
 
-    /* Field / Input */
+    /* Field */
     .field{display:flex;flex-direction:column;gap:6px}
     .field label{font-size:11px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.07em}
     .finp{width:100%;background:var(--bg-3);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 14px;color:var(--t1);font-size:14px;font-family:var(--fb);outline:none;transition:var(--tr);resize:vertical}
@@ -104,6 +109,26 @@
     .pill.error{color:var(--red);background:var(--red-bg)}.pill.error .pill-dot{background:var(--red)}
     .badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700}
     .b-gold{color:var(--gold);background:var(--gold-bg)}.b-green{color:var(--green);background:var(--green-bg)}.b-purple{color:var(--purple);background:var(--purple-bg)}
+
+    /* ── Processing Timer ─────────────────────────────────────── */
+    .pt{padding:12px 14px;background:var(--bg-0);border-top:1px solid var(--border)}
+    .pt-stage{font-size:11px;font-weight:600;color:var(--gold);margin-bottom:7px;display:flex;align-items:center;gap:6px}
+    .pt-stage-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pulse 1.2s infinite;flex-shrink:0}
+    .pt-track{height:4px;background:var(--bg-4);border-radius:4px;overflow:hidden;margin-bottom:6px}
+    .pt-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--gold),var(--gold-light));transition:width .8s ease;animation:progressGlow 2s infinite}
+    .pt-meta{display:flex;justify-content:space-between;font-size:10px}
+    .pt-pct{color:var(--gold);font-weight:700}
+    .pt-remain{color:var(--t2)}
+    .pt-elapsed{color:var(--t3);font-size:10px;margin-top:2px}
+
+    /* Processing card (full view in History) */
+    .proc-card{background:var(--bg-2);border:1px solid var(--gold-border);border-radius:var(--r-xl);overflow:hidden;margin-bottom:12px}
+    .proc-card-header{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border)}
+    .proc-card-avatar{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+    .proc-card-info{flex:1;min-width:0}
+    .proc-card-scene{font-size:13px;font-weight:500;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .proc-card-meta{font-size:11px;color:var(--t2);margin-top:2px}
+    .proc-card-model{font-size:11px;color:var(--t3);padding:2px 8px;background:var(--bg-3);border-radius:6px;flex-shrink:0}
 
     /* Misc */
     .spinner{border-radius:50%;border:3px solid var(--bg-4);border-top-color:var(--gold);animation:spin 1s linear infinite}
@@ -122,7 +147,7 @@
     .mode-banner.local{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
     .mode-banner.demo{background:var(--purple-bg);border-color:var(--purple-border);color:var(--purple)}
 
-    /* Mode Selector (Settings) */
+    /* Mode Selector */
     .mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
     .mode-card{padding:16px 14px;border-radius:var(--r-lg);border:2px solid var(--border);background:var(--bg-3);cursor:pointer;text-align:center;transition:var(--tr)}
     .mode-card:hover{border-color:var(--border-md)}
@@ -136,23 +161,21 @@
     /* Setup Steps */
     .setup-step{display:flex;gap:12px;align-items:flex-start;padding:12px;background:var(--bg-3);border-radius:var(--r-md);margin-bottom:8px}
     .step-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;font-family:var(--fd)}
-    .step-body{flex:1}
-    .step-title{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:3px}
+    .step-body{flex:1}.step-title{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:3px}
     .step-desc{font-size:12px;color:var(--t2);line-height:1.6}
     .code-line{font-family:var(--fm);font-size:11px;color:var(--green);background:var(--bg-0);padding:6px 10px;border-radius:var(--r-sm);margin-top:5px;display:block}
-
-    /* Connection test */
     .conn-test{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg-3);border-radius:var(--r-md);margin-top:10px}
     .conn-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
     .conn-dot.ok{background:var(--green)}.conn-dot.fail{background:var(--red)}.conn-dot.idle{background:var(--t3)}.conn-dot.testing{background:var(--gold);animation:pulse 1s infinite}
 
-    /* Local video models */
+    /* Local models */
     .local-models{display:flex;flex-direction:column;gap:8px;margin:12px 0}
     .lm-btn{width:100%;padding:10px 14px;border-radius:var(--r-md);border:1px solid var(--border);background:var(--bg-2);cursor:pointer;display:flex;align-items:center;gap:12px;text-align:left;transition:var(--tr)}
     .lm-btn:hover{border-color:var(--border-md)}.lm-btn.active{border-color:var(--green);background:var(--green-bg)}
     .lm-icon{font-size:20px;flex-shrink:0}
     .lm-name{font-size:13px;font-weight:600;color:var(--t1);font-family:var(--fd)}
     .lm-desc{font-size:11px;color:var(--t2)}
+    .lm-time{font-size:10px;color:var(--t3);margin-left:auto;flex-shrink:0}
 
     /* Dashboard */
     .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
@@ -256,7 +279,6 @@
 
     /* Settings */
     .settings-wrap{display:flex;flex-direction:column;gap:22px;max-width:680px}
-    .settings-2col{display:grid;grid-template-columns:1fr 1fr;gap:13px}
     .toggle-row{display:flex;justify-content:space-between;align-items:center;padding:10px 13px;background:var(--bg-3);border-radius:var(--r-md);margin-bottom:7px}
     .toggle-row span{font-size:13px;color:var(--t1)}
     .tog{width:40px;height:22px;border-radius:11px;border:none;cursor:pointer;background:var(--bg-4);position:relative;transition:background .2s;flex-shrink:0}
@@ -267,9 +289,10 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect } = React;
-const SC = ["#f59e0b","#4f9cf9","#a78bfa","#22d3a5","#fc8888"];
-const NAV = [
+const { useState, useEffect, useRef } = React;
+
+const SC=["#f59e0b","#4f9cf9","#a78bfa","#22d3a5","#fc8888"];
+const NAV=[
   {id:"dashboard",label:"Dashboard",icon:"⬡"},
   {id:"characters",label:"Characters",icon:"◈"},
   {id:"video",label:"Video Creator",icon:"▶"},
@@ -278,49 +301,58 @@ const NAV = [
   {id:"settings",label:"Settings",icon:"◎"},
 ];
 const STYLES=[{v:"studio-ghibli",l:"Studio Ghibli"},{v:"pixar",l:"Pixar 3D"},{v:"anime",l:"Anime"},{v:"2d-cartoon",l:"2D Cartoon"},{v:"watercolor",l:"Watercolor"},{v:"realistic",l:"Realistic"}];
-const DURS=[{v:"3",l:"3 Sek"},{v:"5",l:"5 Sek"},{v:"8",l:"8 Sek"},{v:"10",l:"10 Sek"},{v:"15",l:"15 Sek"}];
-const RATIOS=[{v:"9:16",l:"9:16 TikTok"},{v:"16:9",l:"16:9 YouTube"},{v:"1:1",l:"1:1 Square"},{v:"4:5",l:"4:5 Insta"}];
+const DURS=[{v:"3",l:"3 sec"},{v:"5",l:"5 sec"},{v:"8",l:"8 sec"},{v:"10",l:"10 sec"},{v:"15",l:"15 sec"}];
+const RATIOS=[{v:"9:16",l:"9:16 TikTok"},{v:"16:9",l:"16:9 YouTube"},{v:"1:1",l:"1:1 Square"},{v:"4:5",l:"4:5 Instagram"}];
 const CLOUD_VID=[{v:"kling",l:"Kling AI"},{v:"runway",l:"Runway Gen-3"},{v:"luma",l:"Luma Dream"}];
 const OLLAMA_MODELS=[{v:"llama3.2",l:"Llama 3.2"},{v:"mistral",l:"Mistral 7B"},{v:"gemma2",l:"Gemma 2"},{v:"phi3",l:"Phi-3 Mini"},{v:"qwen2.5",l:"Qwen 2.5"}];
+
+// Estimated generation time in seconds per model
+const MODEL_TIMES={
+  "Kling AI":180,"Runway Gen-3":150,"Luma Dream":240,
+  "AnimateDiff":480,"Stable Video Diffusion":600,
+  "CogVideoX (5B)":900,"LTX-Video":300,"Wan2.1":1200,
+};
+
 const LOCAL_VIDEO_MODELS=[
-  {id:"animatediff",name:"AnimateDiff",desc:"ComfyUI — GPU empfohlen",icon:"🎞️"},
-  {id:"svd",name:"Stable Video Diffusion",desc:"ComfyUI SVD Workflow",icon:"📽️"},
-  {id:"cogvideox",name:"CogVideoX (5B)",desc:"Open-Source, hohe Qualität",icon:"🎬"},
-  {id:"ltx",name:"LTX-Video",desc:"Sehr schnell, wenig VRAM",icon:"⚡"},
-  {id:"wanvideo",name:"Wan2.1",desc:"14B — beste lokale Qualität",icon:"🌊"},
+  {id:"animatediff",name:"AnimateDiff",desc:"ComfyUI — GPU recommended",icon:"🎞️",time:"~8 min"},
+  {id:"svd",name:"Stable Video Diffusion",desc:"ComfyUI SVD Workflow",icon:"📽️",time:"~10 min"},
+  {id:"cogvideox",name:"CogVideoX (5B)",desc:"Open-source, high quality",icon:"🎬",time:"~15 min"},
+  {id:"ltx",name:"LTX-Video",desc:"Fast, low VRAM",icon:"⚡",time:"~5 min"},
+  {id:"wanvideo",name:"Wan2.1",desc:"14B — best local quality",icon:"🌊",time:"~20 min"},
 ];
 
 const INIT_CHARS=[
   {id:1,name:"Mochi",locked:true,color:"#f59e0b",description:"Orange & white cat in traditional Japanese clothing with floral headscarf",traits:["Curious","Warm","Creative"],style:"Studio Ghibli–inspired",coloring:"Orange & white fur",eyes:"Large amber, round",clothing:"Yukata + floral headscarf",accessories:"Wicker basket, apron",build:"Small, soft proportions",videos:14,series:3},
   {id:2,name:"Captain Rex",locked:false,color:"#4f9cf9",description:"Navy blue penguin in captain's coat with gold buttons and tiny brass telescope",traits:["Adventurous","Bold","Loyal"],style:"2D cartoon, flat design",coloring:"Navy & white plumage",eyes:"Sharp, dark, determined",clothing:"Captain's coat + peaked cap",accessories:"Brass telescope, map scroll",build:"Stocky, upright posture",videos:6,series:1},
 ];
+
+const now = Date.now();
 const INIT_VIDEOS=[
-  {id:1,charId:1,char:"Mochi",charColor:"#f59e0b",scene:"Baking sourdough in a cozy cottage kitchen",dur:"5s",ratio:"9:16",status:"done",model:"Kling",ts:"2h ago"},
-  {id:2,charId:1,char:"Mochi",charColor:"#f59e0b",scene:"Opening a flower market at golden-hour sunrise",dur:"8s",ratio:"16:9",status:"done",model:"Runway",ts:"3h ago"},
-  {id:3,charId:2,char:"Captain Rex",charColor:"#4f9cf9",scene:"Navigating a storm with compass in hand",dur:"6s",ratio:"1:1",status:"processing",model:"Luma",ts:"1h ago"},
-  {id:4,charId:1,char:"Mochi",charColor:"#f59e0b",scene:"Teaching pottery class to small forest creatures",dur:"10s",ratio:"9:16",status:"done",model:"Kling",ts:"1d ago"},
-  {id:5,charId:2,char:"Captain Rex",charColor:"#4f9cf9",scene:"Discovering a treasure map on a remote island",dur:"7s",ratio:"16:9",status:"done",model:"Runway",ts:"2d ago"},
+  {id:1,charId:1,char:"Mochi",charColor:"#f59e0b",scene:"Baking sourdough in a cozy cottage kitchen",dur:"5s",ratio:"9:16",status:"done",model:"Kling AI",ts:"2h ago",createdAt:now-7200000,estimatedSecs:180},
+  {id:2,charId:1,char:"Mochi",charColor:"#f59e0b",scene:"Opening a flower market at golden-hour sunrise",dur:"8s",ratio:"16:9",status:"done",model:"Runway Gen-3",ts:"3h ago",createdAt:now-10800000,estimatedSecs:150},
+  {id:3,charId:2,char:"Captain Rex",charColor:"#4f9cf9",scene:"Navigating a storm with compass in hand",dur:"6s",ratio:"1:1",status:"processing",model:"Luma Dream",ts:"1h ago",createdAt:now-210000,estimatedSecs:240},
+  {id:4,charId:1,char:"Mochi",charColor:"#f59e0b",scene:"Teaching pottery class to small forest creatures",dur:"10s",ratio:"9:16",status:"done",model:"Kling AI",ts:"1d ago",createdAt:now-86400000,estimatedSecs:180},
+  {id:5,charId:2,char:"Captain Rex",charColor:"#4f9cf9",scene:"Discovering a treasure map on a remote island",dur:"7s",ratio:"16:9",status:"done",model:"Runway Gen-3",ts:"2d ago",createdAt:now-172800000,estimatedSecs:150},
 ];
 
-// ─── Global mutable refs (updated on save) ──────────────────────────────────
-let G = {
-  mode: localStorage.getItem("ai_mode")||"demo",
-  anthropic: localStorage.getItem("anthropic_key")||"",
-  ollamaUrl: localStorage.getItem("ollama_url")||"http://localhost:11434",
-  ollamaModel: localStorage.getItem("ollama_model")||"llama3.2",
-  comfyPort: localStorage.getItem("comfy_port")||"8188",
+let G={
+  mode:localStorage.getItem("ai_mode")||"demo",
+  anthropic:localStorage.getItem("anthropic_key")||"",
+  ollamaUrl:localStorage.getItem("ollama_url")||"http://localhost:11434",
+  ollamaModel:localStorage.getItem("ollama_model")||"llama3.2",
+  comfyPort:localStorage.getItem("comfy_port")||"8188",
 };
 
-// ─── AI Engine ───────────────────────────────────────────────────────────────
+// ── AI Engine ────────────────────────────────────────────────────────────────
 function parseJSON(t){return JSON.parse(t.replace(/```json\n?|\n?```/g,"").trim())}
 
 async function callCloud(prompt,max=1200){
-  if(!G.anthropic) throw new Error("Kein Anthropic API-Key — bitte in Einstellungen eintragen.");
+  if(!G.anthropic) throw new Error("No Anthropic API key — please add it in Settings.");
   const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",
     headers:{"Content-Type":"application/json","x-api-key":G.anthropic,"anthropic-version":"2023-06-01"},
     body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:max,messages:[{role:"user",content:prompt}]})});
   const d=await r.json();
-  if(!r.ok) throw new Error(d.error?.message||"Anthropic API Fehler");
+  if(!r.ok) throw new Error(d.error?.message||"Anthropic API error");
   return d.content?.[0]?.text||"";
 }
 
@@ -328,7 +360,7 @@ async function callOllama(prompt){
   const r=await fetch(`${G.ollamaUrl}/api/generate`,{method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({model:G.ollamaModel,prompt,stream:false,format:"json"})});
-  if(!r.ok) throw new Error(`Ollama nicht erreichbar (${G.ollamaUrl}). Läuft 'OLLAMA_ORIGINS=* ollama serve'?`);
+  if(!r.ok) throw new Error(`Ollama not reachable (${G.ollamaUrl}). Is 'OLLAMA_ORIGINS=* ollama serve' running?`);
   const d=await r.json(); return d.response||"";
 }
 
@@ -342,35 +374,35 @@ async function testComfy(port){
 // Demo data
 const DEMO_AN=[
   {coloring:"Rich orange & white fur",eyes:"Large amber eyes, gentle gaze",clothing:"Traditional floral yukata",accessories:"Wicker basket, headscarf",build:"Small, rounded, soft",style:"Studio Ghibli 2D animation",traits:["Curious","Warm","Gentle"],consistencyNote:"Always show the orange-white cat with floral headscarf in warm golden lighting"},
-  {coloring:"Navy blue plumage, white belly",eyes:"Sharp round black eyes",clothing:"Navy captain's coat, brass buttons",accessories:"Brass telescope, map scroll",build:"Stocky upright penguin",style:"2D cartoon bold flat design",traits:["Bold","Adventurous","Loyal"],consistencyNote:"Always show the navy penguin captain in crisp high-contrast light with clear silhouette"},
-  {coloring:"Soft lavender fur, white tips",eyes:"Wide purple eyes, sleepy",clothing:"Oversized knitted sweater, tiny glasses",accessories:"Stack of books, steaming tea cup",build:"Tiny, round, cozy",style:"Pastel watercolor illustration",traits:["Thoughtful","Cozy","Wise"],consistencyNote:"Always show the lavender character in warm soft light with dreamy pastel background"},
+  {coloring:"Navy blue plumage, white belly",eyes:"Sharp round black eyes",clothing:"Navy captain's coat, brass buttons",accessories:"Brass telescope, map scroll",build:"Stocky upright penguin",style:"2D cartoon bold flat design",traits:["Bold","Adventurous","Loyal"],consistencyNote:"Always show the navy penguin in crisp high-contrast light with clear silhouette"},
+  {coloring:"Soft lavender fur, white tips",eyes:"Wide purple eyes, sleepy look",clothing:"Oversized knitted sweater, tiny glasses",accessories:"Stack of books, steaming tea cup",build:"Tiny, round, cozy",style:"Pastel watercolor illustration",traits:["Thoughtful","Cozy","Wise"],consistencyNote:"Always show the lavender character in warm soft light with dreamy pastel background"},
 ];
 
-const DEMO_STORIES = [
-  [{title:"Der erste Morgen",desc:"Der Charakter wacht früh auf, voller Aufregung. Die Küche duftet nach frischem Teig, während er die Schürze bindet und die ersten Zutaten vorbereitet.",camera:"Wide shot, warm morning sunlight through window",mood:"Hopeful",duration:"5s"},
-   {title:"Die erste Herausforderung",desc:"Der erste Versuch geht schief. Teig klebt, das Rezept ist schwer zu lesen. Er runzelt die Stirn, gibt aber nicht auf.",camera:"Medium close-up, soft frustrated expression",mood:"Determined",duration:"5s"},
-   {title:"Ein unerwarteter Helfer",desc:"Eine alte Nachbarin bringt ein Familienrezept. Der Charakter hört aufmerksam zu, die Augen leuchten vor Dankbarkeit.",camera:"Over-shoulder shot, warm candlelight",mood:"Grateful",duration:"5s"},
-   {title:"Der Durchbruch",desc:"Der Ofen öffnet sich – goldbraune, perfekte Ergebnisse. Der Charakter strahlt und hebt beide Arme vor Freude.",camera:"Low angle, steam rising, warm amber light",mood:"Triumphant",duration:"5s"},
-   {title:"Gemeinsam feiern",desc:"Die ganze Nachbarschaft versammelt sich. Der Charakter teilt frisches Brot und lächelt glücklich in die Runde.",camera:"Wide pull-back, golden hour, all characters",mood:"Joyful",duration:"6s"}],
-  [{title:"Aufbruch ins Unbekannte",desc:"Am Hafen mit kleinem Rucksack — weite See, offener Horizont, der Wind weht zurück.",camera:"Wide establishing shot, dramatic sky",mood:"Adventurous",duration:"5s"},
-   {title:"Sturm auf See",desc:"Dunkle Wolken ziehen auf. Der Charakter greift das Steuer fest, navigiert durch tosende Wellen mit ruhigen Augen.",camera:"Dynamic tracking shot, handheld style",mood:"Tense",duration:"5s"},
-   {title:"Die geheimnisvolle Insel",desc:"Nebel lichtet sich — üppige unbekannte Insel. Er springt ins flache Wasser und watet an den Strand.",camera:"Slow push-in, morning mist",mood:"Awed",duration:"6s"},
-   {title:"Der verborgene Schatz",desc:"Mit Händen gräbt er unter einem alten Baum und stößt auf eine verrostete Truhe mit goldenem Schimmer.",camera:"Close-up on hands, treasure reveal",mood:"Excited",duration:"5s"},
-   {title:"Heimkehr als Held",desc:"Er kehrt zurück, die Truhe unter dem Arm, und wird von jubelnden Freunden im Abendrot empfangen.",camera:"Wide pull-back, golden sunset",mood:"Triumphant",duration:"6s"}],
-  [{title:"Ein ruhiger Start",desc:"Am Fenster mit einer dampfenden Tasse Tee, vertieft in ein dickes Buch. Herbstblätter fallen vorbei.",camera:"Static medium shot, cozy interior",mood:"Peaceful",duration:"5s"},
-   {title:"Die große Idee",desc:"Plötzlich ein Sprung — brillante Idee! Notizen fliegen, Zeichnungen entstehen, Augen funkeln.",camera:"Dynamic pan, papers flying",mood:"Excited",duration:"5s"},
-   {title:"Harte Arbeit",desc:"Spät in der Nacht, umgeben von Entwürfen, konzentriert weiterarbeiten. Ernst und entschlossen.",camera:"Close-up on focused expression, lamp light",mood:"Focused",duration:"5s"},
-   {title:"Der Moment der Wahrheit",desc:"Das fertige Ergebnis wird präsentiert. Die Stille vor dem Applaus dehnt sich spürbar aus.",camera:"Medium shot, anticipation",mood:"Nervous",duration:"5s"},
-   {title:"Anerkennung & Freude",desc:"Applaus füllt den Raum. Eine leichte Verbeugung, ein breites echtes Lächeln.",camera:"Wide shot, warm group lighting",mood:"Joyful",duration:"6s"}],
+const DEMO_STORIES=[
+  [{title:"The First Morning",desc:"The character wakes up early, full of excitement. The kitchen smells of fresh dough as they tie their apron and prepare the first ingredients.",camera:"Wide shot, warm morning sunlight through window",mood:"Hopeful",duration:"5s"},
+   {title:"The First Challenge",desc:"The first attempt goes wrong — the dough sticks and the recipe is hard to read. They frown but refuse to give up.",camera:"Medium close-up, soft frustrated expression",mood:"Determined",duration:"5s"},
+   {title:"An Unexpected Helper",desc:"An elderly neighbor knocks with a family recipe. The character listens carefully, eyes glowing with gratitude.",camera:"Over-shoulder shot, warm candlelight",mood:"Grateful",duration:"5s"},
+   {title:"The Breakthrough",desc:"The oven opens — golden-brown, perfectly baked results. The character beams and raises both arms in joy.",camera:"Low angle, steam rising, warm amber light",mood:"Triumphant",duration:"5s"},
+   {title:"Celebrating Together",desc:"The whole neighborhood gathers. The character shares fresh bread and smiles happily at the crowd.",camera:"Wide pull-back, golden hour, all characters together",mood:"Joyful",duration:"6s"}],
+  [{title:"Setting Out",desc:"At the harbor with a small backpack — wide open sea, the wind sweeps back their hair.",camera:"Wide establishing shot, dramatic sky",mood:"Adventurous",duration:"5s"},
+   {title:"Storm at Sea",desc:"Dark clouds roll in. The character grips the helm and navigates crashing waves with calm steady eyes.",camera:"Dynamic tracking shot, handheld style",mood:"Tense",duration:"5s"},
+   {title:"The Mysterious Island",desc:"The fog lifts to reveal a lush unknown island. They leap into the shallows and wade ashore.",camera:"Slow push-in, mysterious morning mist",mood:"Awed",duration:"6s"},
+   {title:"The Hidden Treasure",desc:"With bare hands they dig under an ancient tree, striking a rusted chest glowing with golden light.",camera:"Close-up on hands, treasure reveal",mood:"Excited",duration:"5s"},
+   {title:"Return as a Hero",desc:"They return, chest in hand, greeted by cheering friends in the evening glow.",camera:"Wide pull-back, golden sunset",mood:"Triumphant",duration:"6s"}],
+  [{title:"A Quiet Start",desc:"By the window with a steaming cup of tea, deep in a thick book. Autumn leaves drift past outside.",camera:"Static medium shot, cozy interior",mood:"Peaceful",duration:"5s"},
+   {title:"The Big Idea",desc:"Suddenly a leap — a brilliant idea! Notes fly, sketches form, eyes light up with excitement.",camera:"Dynamic pan, papers flying",mood:"Excited",duration:"5s"},
+   {title:"Hard Work",desc:"Late at night, surrounded by drafts, working with intense focus. Serious and determined.",camera:"Close-up on focused expression, lamp light",mood:"Focused",duration:"5s"},
+   {title:"The Moment of Truth",desc:"The finished result is presented to a small audience. The silence before the applause stretches out.",camera:"Medium shot, anticipation",mood:"Nervous",duration:"5s"},
+   {title:"Recognition & Joy",desc:"Applause fills the room. A slight bow, a wide genuine smile.",camera:"Wide shot, warm group lighting",mood:"Joyful",duration:"6s"}],
 ];
 
-function demoAnalysis(){return {...DEMO_AN[Math.floor(Math.random()*DEMO_AN.length)]};}
+function demoAnalysis(){return{...DEMO_AN[Math.floor(Math.random()*DEMO_AN.length)]};}
 function demoStory(idea){
   const kw=idea.toLowerCase();
-  const idx=(kw.includes("back")||kw.includes("küche")||kw.includes("brot"))?0:
-            (kw.includes("reis")||kw.includes("meer")||kw.includes("abenteuer"))?1:
-            Math.floor(Math.random()*DEMO_STORIES.length);
-  return DEMO_STORIES[idx].map((s,i)=>({scene:i+1,...s}));
+  const i=(kw.includes("bak")||kw.includes("bread")||kw.includes("kitchen"))?0:
+           (kw.includes("sea")||kw.includes("travel")||kw.includes("adventure")||kw.includes("island"))?1:
+           Math.floor(Math.random()*DEMO_STORIES.length);
+  return DEMO_STORIES[i].map((s,j)=>({scene:j+1,...s}));
 }
 
 async function aiAnalyzeChar(name,desc){
@@ -380,7 +412,7 @@ Character: ${name}
 Description: ${desc}
 Respond ONLY with valid JSON (no markdown):
 {"coloring":"...","eyes":"...","clothing":"...","accessories":"...","build":"...","style":"...","traits":["t1","t2","t3"],"consistencyNote":"..."}`;
-  const t = G.mode==="local" ? await callOllama(p) : await callCloud(p);
+  const t=G.mode==="local"?await callOllama(p):await callCloud(p);
   return parseJSON(t);
 }
 
@@ -392,11 +424,75 @@ Story idea: "${idea}"
 ${char.name} must appear identically in ALL 5 scenes.
 Respond ONLY with a raw JSON array (no markdown, no preamble):
 [{"scene":1,"title":"...","description":"2-3 vivid sentences","camera":"...","mood":"...","duration":"5s"}]`;
-  const t = G.mode==="local" ? await callOllama(p) : await callCloud(p,1400);
+  const t=G.mode==="local"?await callOllama(p):await callCloud(p,1400);
   return parseJSON(t);
 }
 
-// ─── UI Primitives ───────────────────────────────────────────────────────────
+// ── Processing Timer Component ───────────────────────────────────────────────
+function getStage(pct){
+  if(pct<5) return "Queued — waiting for GPU...";
+  if(pct<15) return "Initializing model...";
+  if(pct<35) return "Generating keyframes...";
+  if(pct<58) return "Compositing scene...";
+  if(pct<78) return "Rendering output...";
+  if(pct<94) return "Encoding video...";
+  if(pct<100) return "Almost ready!";
+  return "✓ Done";
+}
+
+function fmt(secs){
+  const m=Math.floor(secs/60), s=secs%60;
+  return m>0?`${m}m ${s.toString().padStart(2,"0")}s`:`${s}s`;
+}
+
+function ProcessingTimer({video,onComplete}){
+  const total=video.estimatedSecs||180;
+  const [elapsed,setElapsed]=useState(()=>Math.floor((Date.now()-video.createdAt)/1000));
+
+  useEffect(()=>{
+    if(video.status!=="processing") return;
+    const iv=setInterval(()=>{
+      const e=Math.floor((Date.now()-video.createdAt)/1000);
+      setElapsed(e);
+      if(e>=total){clearInterval(iv);onComplete&&onComplete(video.id);}
+    },1000);
+    return()=>clearInterval(iv);
+  },[video.id,total,video.status]);
+
+  const pct=Math.min(99,Math.floor((elapsed/total)*100));
+  const remaining=Math.max(0,total-elapsed);
+
+  return(
+    <div className="pt">
+      <div className="pt-stage"><div className="pt-stage-dot"/>{getStage(pct)}</div>
+      <div className="pt-track"><div className="pt-fill" style={{width:`${pct}%`}}/></div>
+      <div className="pt-meta">
+        <span className="pt-pct">{pct}%</span>
+        <span className="pt-remain">{remaining>0?`${fmt(remaining)} remaining`:"Finalizing..."}</span>
+      </div>
+      <div className="pt-elapsed">Started {fmt(elapsed)} ago · Est. total: {fmt(total)}</div>
+    </div>
+  );
+}
+
+// ── Processing Card (full view in History) ──────────────────────────────────
+function ProcessingCard({video,onComplete}){
+  return(
+    <div className="proc-card">
+      <div className="proc-card-header">
+        <div className="proc-card-avatar" style={{background:`${video.charColor}18`,border:`1px solid ${video.charColor}33`}}>◈</div>
+        <div className="proc-card-info">
+          <div className="proc-card-scene">{video.scene}</div>
+          <div className="proc-card-meta" style={{color:video.charColor}}>{video.char} · {video.ratio} · {video.dur}</div>
+        </div>
+        <div className="proc-card-model">{video.model}</div>
+      </div>
+      <ProcessingTimer video={video} onComplete={onComplete}/>
+    </div>
+  );
+}
+
+// ── Primitives ───────────────────────────────────────────────────────────────
 const Pill=({status})=>{const m={done:"Done",processing:"Processing",queued:"Queued",error:"Error"};return<span className={`pill ${status||"queued"}`}><span className="pill-dot"/>{m[status]||"Queued"}</span>;};
 const Btn=({children,v="def",sz="md",onClick,disabled,style:s,cls=""})=><button className={`btn ${v} ${sz} ${cls}`} onClick={onClick} disabled={disabled} style={s}>{children}</button>;
 const Field=({label,children,cls=""})=><div className={`field ${cls}`}>{label&&<label>{label}</label>}{children}</div>;
@@ -407,11 +503,11 @@ const Card=({children,cls="",onClick,style:s})=><div className={`card ${onClick?
 const SHdr=({title,action})=><div className="sec-hdr"><h2>{title}</h2>{action}</div>;
 
 const ModeBanner=({mode})=>{
-  const m={cloud:{icon:"☁️",text:"Cloud-KI aktiv (Anthropic + Kling/Runway/Luma)"},local:{icon:"🖥️",text:"Lokale KI aktiv (Ollama Text + ComfyUI Video) — nur lokal erreichbar"},demo:{icon:"🎭",text:"Demo-Modus — realistische Beispieldaten, kein API-Key oder lokales Setup nötig"}}[mode]||{};
+  const m={cloud:{icon:"☁️",text:"Cloud AI active (Anthropic + Kling / Runway / Luma)"},local:{icon:"🖥️",text:"Local AI active (Ollama + ComfyUI) — works only when opened locally"},demo:{icon:"🎭",text:"Demo Mode — realistic sample data, no API key or local setup required"}}[mode]||{};
   return<div className={`mode-banner ${mode}`}><span style={{fontSize:16}}>{m.icon}</span><span>{m.text}</span></div>;
 };
 
-const VThumb=({v,showExport})=>(
+const VThumb=({v,showExport,onComplete})=>(
   <Card cls="vt">
     <div className="vt-pre" style={{background:`linear-gradient(140deg,${v.charColor}22 0%,var(--bg-3) 100%)`}}>
       <div className="vt-play">▶</div>
@@ -419,10 +515,11 @@ const VThumb=({v,showExport})=>(
       <div className="vt-meta">{v.ratio} · {v.dur}</div>
       {v.localModel&&<div className="vt-lmodel">🖥️ {v.localModel}</div>}
     </div>
+    {v.status==="processing"&&<ProcessingTimer video={v} onComplete={onComplete}/>}
     <div className="vt-body">
       <div className="vt-scene">{v.scene}</div>
       <div className="vt-foot"><span style={{color:v.charColor,fontWeight:600}}>{v.char}</span><span className="vt-ts">{v.ts}</span></div>
-      {showExport&&<div style={{display:"flex",gap:6,marginTop:9}}>
+      {showExport&&v.status==="done"&&<div style={{display:"flex",gap:6,marginTop:9}}>
         <Btn v="def" sz="sm" style={{flex:1,fontSize:11}}>⬇ MP4</Btn>
         <Btn v="def" sz="sm" style={{flex:1,fontSize:11}}>⬇ Reels</Btn>
         <Btn v="def" sz="sm" style={{flex:1,fontSize:11}}>⬇ Shorts</Btn>
@@ -431,35 +528,43 @@ const VThumb=({v,showExport})=>(
   </Card>
 );
 
-// ─── DASHBOARD ───────────────────────────────────────────────────────────────
-function Dashboard({videos,chars,onNavigate,mode}){
+// ── DASHBOARD ────────────────────────────────────────────────────────────────
+function Dashboard({videos,chars,onNavigate,mode,onVideoComplete}){
+  const processing=videos.filter(v=>v.status==="processing");
   const stats=[
-    {l:"Characters",v:chars.length,sub:`${chars.filter(c=>c.locked).length} gesperrt`,c:"#f59e0b"},
-    {l:"Videos",v:videos.length,sub:"+3 diese Woche",c:"#4f9cf9"},
-    {l:"Story-Serien",v:chars.reduce((a,c)=>a+(c.series||0),0),sub:"Szenen gesamt",c:"#a78bfa"},
-    {l:"In Arbeit",v:videos.filter(v=>v.status==="processing").length,sub:"Ca. 2 Min.",c:"#22d3a5"},
+    {l:"Characters",v:chars.length,sub:`${chars.filter(c=>c.locked).length} locked`,c:"#f59e0b"},
+    {l:"Videos",v:videos.length,sub:"+3 this week",c:"#4f9cf9"},
+    {l:"Story Series",v:chars.reduce((a,c)=>a+(c.series||0),0),sub:"scenes total",c:"#a78bfa"},
+    {l:"Processing",v:processing.length,sub:"Click to view",c:"#22d3a5"},
   ];
   const acts=[
-    {t:"Story-Serie",d:"5 Szenen aus einer Idee",i:"◇",p:"story",c:"#a78bfa",bg:"var(--purple-bg)"},
-    {t:"Charakter hinzufügen",d:"Referenzbild hochladen & analysieren",i:"◈",p:"characters",c:"#f59e0b",bg:"var(--gold-bg)"},
-    {t:"Video generieren",d:"Einzelne Szene mit voller Kontrolle",i:"▶",p:"video",c:"#4f9cf9",bg:"var(--blue-bg)"},
+    {t:"Story Series",d:"Generate 5 linked scenes from one idea",i:"◇",p:"story",c:"#a78bfa",bg:"var(--purple-bg)"},
+    {t:"Add Character",d:"Upload reference image & analyze",i:"◈",p:"characters",c:"#f59e0b",bg:"var(--gold-bg)"},
+    {t:"Generate Video",d:"Create a single scene with full control",i:"▶",p:"video",c:"#4f9cf9",bg:"var(--blue-bg)"},
   ];
   return(
     <div className="page">
-      <div className="page-hdr"><div><h1>Dashboard</h1><p className="page-sub">Dein kreatives Studio auf einen Blick</p></div><Btn v="pri" onClick={()=>onNavigate("video")}>+ Neues Video</Btn></div>
+      <div className="page-hdr"><div><h1>Dashboard</h1><p className="page-sub">Your creative studio at a glance</p></div><Btn v="pri" onClick={()=>onNavigate("video")}>+ New Video</Btn></div>
       <ModeBanner mode={mode}/>
-      <div className="stats-grid">{stats.map(s=><Card key={s.l} style={{padding:"16px 18px"}}><div className="stat-lbl">{s.l}</div><div className="stat-val" style={{color:s.c}}>{s.v}</div><div className="stat-sub">{s.sub}</div></Card>)}</div>
+      <div className="stats-grid">{stats.map(s=><Card key={s.l} style={{padding:"16px 18px"}} onClick={s.l==="Processing"?()=>onNavigate("history"):undefined} cls={s.l==="Processing"?"click":""}><div className="stat-lbl">{s.l}</div><div className="stat-val" style={{color:s.c}}>{s.v}</div><div className="stat-sub">{s.sub}</div></Card>)}</div>
+
+      {/* Active processing videos */}
+      {processing.length>0&&<>
+        <SHdr title={`🔄 Currently Processing (${processing.length})`} action={<Btn v="gho" sz="sm" onClick={()=>onNavigate("history")}>View all →</Btn>}/>
+        {processing.slice(0,2).map(v=><ProcessingCard key={v.id} video={v} onComplete={onVideoComplete}/>)}
+      </>}
+
       <SHdr title="Quick Actions"/>
       <div className="act-grid mb18">{acts.map(a=><Card key={a.t} onClick={()=>onNavigate(a.p)} cls="click"><div className="act-icon" style={{color:a.c,background:a.bg}}>{a.i}</div><div className="act-title">{a.t}</div><div className="act-desc">{a.d}</div></Card>)}</div>
-      <SHdr title="Neueste Videos" action={<Btn v="gho" sz="sm" onClick={()=>onNavigate("history")}>Alle →</Btn>}/>
-      <div className="vid-grid mb18">{videos.slice(0,3).map(v=><VThumb key={v.id} v={v}/>)}</div>
-      <SHdr title="Charaktere" action={<Btn v="gho" sz="sm" onClick={()=>onNavigate("characters")}>Verwalten →</Btn>}/>
-      <div className="char-mini-grid">{chars.map(c=><Card key={c.id} cls="char-mini"><div className="char-mini-av" style={{background:`${c.color}18`,border:`1px solid ${c.color}33`}}>◈</div><div style={{flex:1,minWidth:0}}><div className="char-mini-name">{c.name}{c.locked&&<span className="badge b-gold">GESPERRT</span>}</div><div className="char-mini-desc">{c.description}</div><div className="char-mini-stats">{c.videos} Videos · {c.series} Serien</div></div></Card>)}</div>
+      <SHdr title="Recent Videos" action={<Btn v="gho" sz="sm" onClick={()=>onNavigate("history")}>All →</Btn>}/>
+      <div className="vid-grid mb18">{videos.filter(v=>v.status==="done").slice(0,3).map(v=><VThumb key={v.id} v={v}/>)}</div>
+      <SHdr title="Characters" action={<Btn v="gho" sz="sm" onClick={()=>onNavigate("characters")}>Manage →</Btn>}/>
+      <div className="char-mini-grid">{chars.map(c=><Card key={c.id} cls="char-mini"><div className="char-mini-av" style={{background:`${c.color}18`,border:`1px solid ${c.color}33`}}>◈</div><div style={{flex:1,minWidth:0}}><div className="char-mini-name">{c.name}{c.locked&&<span className="badge b-gold">LOCKED</span>}</div><div className="char-mini-desc">{c.description}</div><div className="char-mini-stats">{c.videos} videos · {c.series} series</div></div></Card>)}</div>
     </div>
   );
 }
 
-// ─── CHARACTER MANAGER ───────────────────────────────────────────────────────
+// ── CHARACTER MANAGER ────────────────────────────────────────────────────────
 function CharacterManager({chars,setChars,mode}){
   const [showAdd,setShowAdd]=useState(false);
   const [name,setName]=useState("");const [desc,setDesc]=useState("");
@@ -477,48 +582,48 @@ function CharacterManager({chars,setChars,mode}){
   };
   return(
     <div className="page">
-      <div className="page-hdr"><div><h1>Character Manager</h1><p className="page-sub">KI-Charakterprofile verwalten</p></div><Btn v="pri" onClick={()=>setShowAdd(p=>!p)}>+ Charakter hinzufügen</Btn></div>
+      <div className="page-hdr"><div><h1>Character Manager</h1><p className="page-sub">Build and manage AI-consistent character profiles</p></div><Btn v="pri" onClick={()=>setShowAdd(p=>!p)}>+ Add Character</Btn></div>
       <ModeBanner mode={mode}/>
       {showAdd&&<Card cls="gold mb20" style={{animation:"scaleIn .2s ease"}}>
-        <h3 className="mb16">Neues Charakterprofil</h3>
-        <div className="upload-zone"><div style={{fontSize:26,opacity:.25,marginBottom:7}}>⬆</div><p style={{color:"var(--t2)",fontSize:13,marginBottom:3}}>Referenzbilder hier ablegen</p><span style={{color:"var(--t3)",fontSize:11,display:"block",marginBottom:11}}>PNG, JPG — mehrere Ansichten empfohlen</span><Btn sz="sm">Dateien auswählen</Btn></div>
+        <h3 className="mb16">New Character Profile</h3>
+        <div className="upload-zone"><div style={{fontSize:26,opacity:.25,marginBottom:7}}>⬆</div><p style={{color:"var(--t2)",fontSize:13,marginBottom:3}}>Drop reference images here</p><span style={{color:"var(--t3)",fontSize:11,display:"block",marginBottom:11}}>PNG, JPG — multiple views recommended</span><Btn sz="sm">Browse Files</Btn></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:13,marginBottom:14}}>
-          <Inp label="Name" value={name} onChange={setName} ph="z.B. Mochi"/>
-          <Inp label="Visuelle Beschreibung" value={desc} onChange={setDesc} ph="Aussehen, Kleidung, Farben, Stil genau beschreiben…"/>
+          <Inp label="Character Name" value={name} onChange={setName} ph="e.g. Mochi"/>
+          <Inp label="Visual Description" value={desc} onChange={setDesc} ph="Describe appearance, clothing, colors, style in detail…"/>
         </div>
-        {analyzing&&<div className="analyzing-bar"><div className="spinner" style={{width:17,height:17}}/>{mode==="local"?"Ollama analysiert…":mode==="demo"?"Demo-Analyse läuft…":"Claude analysiert…"}</div>}
+        {analyzing&&<div className="analyzing-bar"><div className="spinner" style={{width:17,height:17}}/>{mode==="local"?"Ollama analyzing…":mode==="demo"?"Running demo analysis…":"Claude analyzing…"}</div>}
         {analysis&&<div className="analysis-box" style={{animation:"fadeIn .3s ease"}}>
-          <div style={{fontSize:11,color:"var(--gold)",fontWeight:700,textTransform:"uppercase",letterSpacing:".07em",marginBottom:12}}>✓ Analyse abgeschlossen</div>
-          <div className="analysis-grid">{[["Farbe",analysis.coloring],["Augen",analysis.eyes],["Kleidung",analysis.clothing],["Accessoires",analysis.accessories],["Statur",analysis.build],["Stil",analysis.style]].map(([k,v])=><div key={k} className="analysis-item"><div className="analysis-key">{k}</div><div className="analysis-val">{v}</div></div>)}</div>
+          <div style={{fontSize:11,color:"var(--gold)",fontWeight:700,textTransform:"uppercase",letterSpacing:".07em",marginBottom:12}}>✓ Analysis Complete</div>
+          <div className="analysis-grid">{[["Coloring",analysis.coloring],["Eyes",analysis.eyes],["Clothing",analysis.clothing],["Accessories",analysis.accessories],["Build",analysis.build],["Style",analysis.style]].map(([k,v])=><div key={k} className="analysis-item"><div className="analysis-key">{k}</div><div className="analysis-val">{v}</div></div>)}</div>
           {analysis.consistencyNote&&<div style={{fontSize:12,color:"var(--t2)",fontStyle:"italic",background:"var(--bg-3)",padding:"9px 12px",borderRadius:"var(--r-sm)",lineHeight:1.7,marginBottom:10}}>"{analysis.consistencyNote}"</div>}
           <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>{(analysis.traits||[]).map(t=><span key={t} className="badge b-gold">{t}</span>)}</div>
         </div>}
         {err&&<div className="error-box">{err}</div>}
         <div style={{display:"flex",gap:9,justifyContent:"flex-end",marginTop:14}}>
-          <Btn v="gho" onClick={()=>{setShowAdd(false);setAnalysis(null);setErr(null);}}>Abbrechen</Btn>
-          <Btn onClick={analyze} disabled={analyzing||!desc||!name}>{analyzing?"⟳ Läuft…":"◈ Analysieren"}</Btn>
-          {analysis&&<Btn v="pri" onClick={save}>Speichern</Btn>}
+          <Btn v="gho" onClick={()=>{setShowAdd(false);setAnalysis(null);setErr(null);}}>Cancel</Btn>
+          <Btn onClick={analyze} disabled={analyzing||!desc||!name}>{analyzing?"⟳ Analyzing…":"◈ Analyze Character"}</Btn>
+          {analysis&&<Btn v="pri" onClick={save}>Save Character</Btn>}
         </div>
       </Card>}
-      {chars.length===0&&<div style={{padding:"48px 24px",textAlign:"center"}}><div style={{fontSize:38,opacity:.15,marginBottom:11}}>◈</div><p style={{fontSize:13,color:"var(--t3)"}}>Noch keine Charaktere</p></div>}
+      {chars.length===0&&<div style={{padding:"48px 24px",textAlign:"center"}}><div style={{fontSize:38,opacity:.15,marginBottom:11}}>◈</div><p style={{fontSize:13,color:"var(--t3)"}}>No characters yet — add your first to get started</p></div>}
       <div className="char-grid">{chars.map(c=>{
         const tl=()=>setChars(p=>p.map(x=>x.id===c.id?{...x,locked:!x.locked}:x));
         const dl=()=>setChars(p=>p.filter(x=>x.id!==c.id));
         return<Card key={c.id} style={{border:`1px solid ${c.locked?c.color+"44":"var(--border)"}`,background:c.locked?`${c.color}06`:"var(--bg-2)"}}>
           <div className="char-card-hdr">
             <div className="char-card-id"><div className="char-card-av" style={{background:`${c.color}1a`,border:`1px solid ${c.color}33`}}>◈</div><div><div className="char-card-name">{c.name}</div><div className="char-card-style">{c.style}</div></div></div>
-            <div className="char-card-ctrl"><button className={`lock-btn ${c.locked?"on":""}`} onClick={tl}>{c.locked?"🔒 GESPERRT":"🔓 SPERREN"}</button><button className="del-btn" onClick={dl}>✕</button></div>
+            <div className="char-card-ctrl"><button className={`lock-btn ${c.locked?"on":""}`} onClick={tl}>{c.locked?"🔒 LOCKED":"🔓 LOCK"}</button><button className="del-btn" onClick={dl}>✕</button></div>
           </div>
           <p className="char-desc">{c.description}</p>
-          <div className="trait-grid">{[["Farbe",c.coloring],["Augen",c.eyes],["Kleidung",c.clothing]].map(([k,v])=><div key={k} className="trait-item"><div className="trait-key">{k}</div><div className="trait-val">{v}</div></div>)}</div>
-          <div className="char-foot"><div className="char-tags">{(c.traits||[]).slice(0,3).map(t=><span key={t} className="char-tag" style={{color:c.color,background:`${c.color}18`}}>{t}</span>)}</div><span style={{fontSize:11,color:"var(--t3)"}}>{c.videos} Videos</span></div>
+          <div className="trait-grid">{[["Coloring",c.coloring],["Eyes",c.eyes],["Clothing",c.clothing]].map(([k,v])=><div key={k} className="trait-item"><div className="trait-key">{k}</div><div className="trait-val">{v}</div></div>)}</div>
+          <div className="char-foot"><div className="char-tags">{(c.traits||[]).slice(0,3).map(t=><span key={t} className="char-tag" style={{color:c.color,background:`${c.color}18`}}>{t}</span>)}</div><span style={{fontSize:11,color:"var(--t3)"}}>{c.videos} videos</span></div>
         </Card>;
       })}</div>
     </div>
   );
 }
 
-// ─── VIDEO CREATOR ───────────────────────────────────────────────────────────
+// ── VIDEO CREATOR ────────────────────────────────────────────────────────────
 function VideoCreator({chars,setVideos,mode}){
   const [charId,setCharId]=useState(chars[0]?.id||1);
   const [scene,setScene]=useState("");const [camera,setCamera]=useState("");
@@ -527,6 +632,8 @@ function VideoCreator({chars,setVideos,mode}){
   const [localVidModel,setLocalVidModel]=useState("animatediff");
   const [gen,setGen]=useState(false);const [result,setResult]=useState(null);const [copied,setCopied]=useState(false);
   const sc=chars.find(c=>c.id===Number(charId))||chars[0];
+  const modelName=mode==="local"?LOCAL_VIDEO_MODELS.find(m=>m.id===localVidModel)?.name:CLOUD_VID.find(m=>m.v===cloudModel)?.l||cloudModel;
+  const estimatedSecs=MODEL_TIMES[modelName]||180;
   const prompt=sc&&scene?`[Character Consistency: ${sc.name} — ${sc.description}. Coloring: ${sc.coloring}. Eyes: ${sc.eyes}. Clothing: ${sc.clothing}, ${sc.accessories}.] Scene: ${scene}${camera?` Camera: ${camera}.`:""} Style: ${style}. Duration: ${dur}s. Ratio: ${ratio}.`:"";
   const ratioAR={"16:9":"16/9","9:16":"9/16","1:1":"1/1","4:5":"4/5"}[ratio]||"9/16";
   const copy=()=>{navigator.clipboard?.writeText(prompt);setCopied(true);setTimeout(()=>setCopied(false),2000);};
@@ -534,74 +641,71 @@ function VideoCreator({chars,setVideos,mode}){
   const generate=async()=>{
     if(!scene||!sc)return;
     setGen(true);setResult(null);
-    await new Promise(r=>setTimeout(r,mode==="demo"?1200:2600));
-    const lm=mode==="local"?LOCAL_VIDEO_MODELS.find(m=>m.id===localVidModel)?.name:null;
-    const nv={id:Date.now(),charId:sc.id,char:sc.name,charColor:sc.color,scene,dur:`${dur}s`,ratio,status:mode==="demo"?"done":"processing",model:mode==="local"?lm:CLOUD_VID.find(m=>m.v===cloudModel)?.l||cloudModel,localModel:lm,ts:"gerade eben",prompt};
+    await new Promise(r=>setTimeout(r,mode==="demo"?800:1200));
+    const nv={id:Date.now(),charId:sc.id,char:sc.name,charColor:sc.color,scene,dur:`${dur}s`,ratio,
+      status:mode==="demo"?"done":"processing",
+      model:modelName,localModel:mode==="local"?modelName:null,
+      ts:"just now",prompt,createdAt:Date.now(),estimatedSecs};
     setVideos(p=>[nv,...p]);setResult(nv);setGen(false);
   };
   return(
     <div className="page">
-      <div className="page-hdr"><div><h1>Video Creator</h1><p className="page-sub">Videos mit gesperrtem Charakter generieren</p></div></div>
+      <div className="page-hdr"><div><h1>Video Creator</h1><p className="page-sub">Generate videos with locked character consistency</p></div></div>
       <ModeBanner mode={mode}/>
       <div className="vc-layout">
         <div className="vc-form">
           <Card>
-            <Field label="Charakter"><div className="char-picker">{chars.map(c=><button key={c.id} className="char-btn" onClick={()=>setCharId(c.id)} style={Number(charId)===c.id?{borderColor:c.color,background:`${c.color}0e`}:{}}><div className="char-btn-av" style={{background:`${c.color}20`}}>◈</div><div><div className="char-btn-name">{c.name}</div><div className="char-btn-lock" style={{color:c.locked?"var(--gold)":"var(--t3)"}}>{c.locked?"🔒 Gesperrt":"Offen"}</div></div></button>)}</div></Field>
+            <Field label="Character"><div className="char-picker">{chars.map(c=><button key={c.id} className="char-btn" onClick={()=>setCharId(c.id)} style={Number(charId)===c.id?{borderColor:c.color,background:`${c.color}0e`}:{}}><div className="char-btn-av" style={{background:`${c.color}20`}}>◈</div><div><div className="char-btn-name">{c.name}</div><div className="char-btn-lock" style={{color:c.locked?"var(--gold)":"var(--t3)"}}>{c.locked?"🔒 Locked":"Unlocked"}</div></div></button>)}</div></Field>
           </Card>
           <Card>
-            <TA label="Szene beschreiben" value={scene} onChange={setScene} rows={4} cls="mb14" ph="Was macht der Charakter? Wo? Welche Stimmung, Licht, Details…"/>
-            <Inp label="Kamera-Anweisung (optional)" value={camera} onChange={setCamera} cls="mb14" ph="z.B. Langsames Heranzoomen, warmes Abendlicht, geringe Tiefenschärfe"/>
+            <TA label="Scene Description" value={scene} onChange={setScene} rows={4} cls="mb14" ph="What is the character doing? Where? What mood, lighting, details…"/>
+            <Inp label="Camera Instruction (optional)" value={camera} onChange={setCamera} cls="mb14" ph="e.g. Slow push-in, warm golden-hour light, shallow depth of field"/>
             <div className="vc-opts">
-              <Sel label="Stil" value={style} onChange={setStyle} opts={STYLES}/>
-              <Sel label="Dauer" value={dur} onChange={setDur} opts={DURS}/>
-              <Sel label="Format" value={ratio} onChange={setRatio} opts={RATIOS}/>
-              {mode!=="local"&&<Sel label="KI-Modell" value={cloudModel} onChange={setCloudModel} opts={CLOUD_VID}/>}
+              <Sel label="Style" value={style} onChange={setStyle} opts={STYLES}/>
+              <Sel label="Duration" value={dur} onChange={setDur} opts={DURS}/>
+              <Sel label="Ratio" value={ratio} onChange={setRatio} opts={RATIOS}/>
+              {mode!=="local"&&<Sel label="AI Model" value={cloudModel} onChange={setCloudModel} opts={CLOUD_VID}/>}
               {mode==="local"&&<div/>}
             </div>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginTop:12,padding:"8px 12px",background:"var(--bg-3)",borderRadius:"var(--r-md)"}}>
+              <span style={{fontSize:12,color:"var(--t2)"}}>⏱ Estimated generation time:</span>
+              <span style={{fontSize:12,fontWeight:700,color:"var(--gold)"}}>{fmt(estimatedSecs)}</span>
+            </div>
             {mode==="local"&&<div className="local-panel">
-              <div style={{fontSize:11,color:"var(--green)",fontWeight:700,textTransform:"uppercase",letterSpacing:".07em",marginBottom:10}}>🖥️ Lokales Video-Modell</div>
-              <div className="local-models">
-                {LOCAL_VIDEO_MODELS.map(m=><button key={m.id} className={`lm-btn ${localVidModel===m.id?"active":""}`} onClick={()=>setLocalVidModel(m.id)}>
-                  <span className="lm-icon">{m.icon}</span>
-                  <div><div className="lm-name">{m.name}</div><div className="lm-desc">{m.desc}</div></div>
-                  {localVidModel===m.id&&<span style={{marginLeft:"auto",color:"var(--green)",fontSize:14}}>✓</span>}
-                </button>)}
-              </div>
-              <div style={{display:"flex",gap:8}}>
-                <Btn v="grn" sz="sm" onClick={openComfy} style={{flex:1}}>🔗 ComfyUI öffnen</Btn>
-                <Btn v="def" sz="sm" onClick={copy} style={{flex:1}}>{copied?"✓ Kopiert!":"📋 Prompt kopieren"}</Btn>
-              </div>
-              <div style={{fontSize:11,color:"var(--t3)",lineHeight:1.6,marginTop:7}}>Prompt kopieren → in ComfyUI einfügen → mit {LOCAL_VIDEO_MODELS.find(m=>m.id===localVidModel)?.name} generieren → fertige Datei importieren.</div>
+              <div style={{fontSize:11,color:"var(--green)",fontWeight:700,textTransform:"uppercase",letterSpacing:".07em",marginBottom:10}}>🖥️ Local Video Model</div>
+              <div className="local-models">{LOCAL_VIDEO_MODELS.map(m=><button key={m.id} className={`lm-btn ${localVidModel===m.id?"active":""}`} onClick={()=>setLocalVidModel(m.id)}><span className="lm-icon">{m.icon}</span><div><div className="lm-name">{m.name}</div><div className="lm-desc">{m.desc}</div></div><span className="lm-time">{m.time}</span>{localVidModel===m.id&&<span style={{color:"var(--green)",fontSize:14,marginLeft:4}}>✓</span>}</button>)}</div>
+              <div style={{display:"flex",gap:8}}><Btn v="grn" sz="sm" onClick={openComfy} style={{flex:1}}>🔗 Open ComfyUI</Btn><Btn v="def" sz="sm" onClick={copy} style={{flex:1}}>{copied?"✓ Copied!":"📋 Copy Prompt"}</Btn></div>
             </div>}
           </Card>
           {prompt&&<Card style={{background:"var(--bg-3)"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:7}}>
-              <div className="vc-lbl" style={{margin:0}}>Auto-Prompt</div>
-              <Btn v="gho" sz="sm" onClick={copy}>{copied?"✓ Kopiert!":"📋 Kopieren"}</Btn>
+              <div className="vc-lbl" style={{margin:0}}>Auto-built Prompt</div>
+              <Btn v="gho" sz="sm" onClick={copy}>{copied?"✓ Copied!":"📋 Copy"}</Btn>
             </div>
             <div className="prompt-prev">{prompt}</div>
           </Card>}
           <Btn v="pri" sz="lg" onClick={generate} disabled={gen||!scene} style={{width:"100%"}}>
-            {gen?"⟳ Generierung läuft…":mode==="local"?"🖥️ Lokal generieren":mode==="demo"?"🎭 Demo-Video erstellen":"▶ Video generieren"}
+            {gen?"⟳ Submitting…":mode==="local"?"🖥️ Generate Locally":mode==="demo"?"🎭 Create Demo Video":"▶ Generate Video"}
           </Btn>
         </div>
         <div className="vc-sidebar">
           <div className="vc-preview" style={{aspectRatio:ratioAR}}>
-            {gen?<><div className="spinner"/><span>{mode==="local"?"ComfyUI verarbeitet…":mode==="demo"?"Demo läuft…":"KI verarbeitet…"}</span></>
-              :result?<><div style={{width:54,height:54,borderRadius:"50%",background:"var(--gold-bg)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,color:"var(--gold)"}}>▶</div><div style={{fontWeight:600,color:"var(--t1)",fontSize:13}}>Video {mode==="demo"?"bereit!":"in Warteschlange!"}</div><Pill status={result.status}/></>
-              :<><div style={{fontSize:34,opacity:.1}}>▶</div><span>Vorschau erscheint hier</span></>}
+            {gen?<><div className="spinner"/><span>Submitting to {modelName}…</span></>
+              :result&&result.status==="processing"?<><div style={{fontSize:13,color:"var(--t1)",fontWeight:600,marginBottom:4}}>Video submitted!</div><div style={{width:"80%"}}><ProcessingTimer video={result}/></div></>
+              :result&&result.status==="done"?<><div style={{width:54,height:54,borderRadius:"50%",background:"var(--gold-bg)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,color:"var(--gold)"}}>▶</div><div style={{fontWeight:600,color:"var(--t1)",fontSize:13}}>Ready to download!</div><Pill status="done"/></>
+              :<><div style={{fontSize:34,opacity:.1}}>▶</div><span>Preview will appear here</span></>}
           </div>
           {sc&&<Card>
-            <div className="vc-lbl">Charakterprofil</div>
+            <div className="vc-lbl">Character Profile</div>
             <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:10}}>
               <div style={{width:36,height:36,borderRadius:9,background:`${sc.color}1a`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>◈</div>
-              <div><div style={{fontWeight:700,color:"var(--t1)",fontSize:13,fontFamily:"var(--fd)"}}>{sc.name}</div>{sc.locked&&<div style={{fontSize:10,color:"var(--gold)"}}>🔒 Konsistenz aktiv</div>}</div>
+              <div><div style={{fontWeight:700,color:"var(--t1)",fontSize:13,fontFamily:"var(--fd)"}}>{sc.name}</div>{sc.locked&&<div style={{fontSize:10,color:"var(--gold)"}}>🔒 Consistency active</div>}</div>
             </div>
-            {[["Farbe",sc.coloring],["Augen",sc.eyes],["Kleidung",sc.clothing]].map(([k,v])=><div key={k} className="vc-row"><span>{k}</span><span>{v}</span></div>)}
+            {[["Coloring",sc.coloring],["Eyes",sc.eyes],["Clothing",sc.clothing]].map(([k,v])=><div key={k} className="vc-row"><span>{k}</span><span>{v}</span></div>)}
           </Card>}
           <Card>
-            <div className="vc-lbl">Export-Formate</div>
-            {[["MP4 (1080p)","Universal"],["TikTok","9:16 optimiert"],["Instagram Reels","4:5"],["YouTube Shorts","Mit Untertiteln"]].map(([f,h])=><div key={f} className="exp-row"><span>{f}</span><span>{h}</span></div>)}
+            <div className="vc-lbl">Export Formats</div>
+            {[["MP4 (1080p)","Universal"],["TikTok","9:16 optimized"],["Instagram Reels","4:5 crop"],["YouTube Shorts","With subtitles"]].map(([f,h])=><div key={f} className="exp-row"><span>{f}</span><span>{h}</span></div>)}
           </Card>
         </div>
       </div>
@@ -609,7 +713,7 @@ function VideoCreator({chars,setVideos,mode}){
   );
 }
 
-// ─── STORY CREATOR ───────────────────────────────────────────────────────────
+// ── STORY CREATOR ────────────────────────────────────────────────────────────
 function StoryCreator({chars,mode}){
   const [charId,setCharId]=useState(String(chars[0]?.id||1));
   const [idea,setIdea]=useState("");const [scenes,setScenes]=useState([]);
@@ -624,13 +728,13 @@ function StoryCreator({chars,mode}){
   const upd=(i,f,v)=>setScenes(p=>p.map((s,j)=>j===i?{...s,[f]:v}:s));
   return(
     <div className="page">
-      <div className="page-hdr"><div><h1>Story Creator</h1><p className="page-sub">Eine Idee → 5 Szenen mit demselben Charakter</p></div></div>
+      <div className="page-hdr"><div><h1>Story Creator</h1><p className="page-sub">One idea → 5 connected scenes with the same character</p></div></div>
       <ModeBanner mode={mode}/>
       <Card cls="mb20">
         <div className="story-bar">
-          <Sel label="Charakter" value={charId} onChange={setCharId} opts={chars.map(c=>({v:String(c.id),l:`${c.name}${c.locked?" 🔒":""}` }))}/>
-          <Inp label="Story-Idee" value={idea} onChange={setIdea} ph='"Mochi eröffnet eine Bäckerei und freundet sich mit der ganzen Nachbarschaft an"'/>
-          <Btn v="pri" sz="lg" onClick={generate} disabled={loading||!idea} style={{alignSelf:"flex-end",whiteSpace:"nowrap"}}>{loading?"⟳ Generiert…":mode==="demo"?"🎭 Demo-Story":"◇ Story erstellen"}</Btn>
+          <Sel label="Character" value={charId} onChange={setCharId} opts={chars.map(c=>({v:String(c.id),l:`${c.name}${c.locked?" 🔒":""}` }))}/>
+          <Inp label="Story Idea" value={idea} onChange={setIdea} ph='"Mochi opens a bakery and befriends the whole neighbourhood" — one line is enough'/>
+          <Btn v="pri" sz="lg" onClick={generate} disabled={loading||!idea} style={{alignSelf:"flex-end",whiteSpace:"nowrap"}}>{loading?"⟳ Generating…":mode==="demo"?"🎭 Demo Story":"◇ Create Story"}</Btn>
         </div>
       </Card>
       {err&&<div className="error-box">{err}</div>}
@@ -638,7 +742,7 @@ function StoryCreator({chars,mode}){
       {scenes.length>0&&<>
         <div className="story-hdr">
           <div className="story-title">Story: <span>"{idea}"</span></div>
-          <div style={{display:"flex",gap:9}}><Btn sz="sm">⬇ Prompts</Btn><Btn v="pri" sz="sm">▶ Alle 5 Videos</Btn></div>
+          <div style={{display:"flex",gap:9}}><Btn sz="sm">⬇ Export Prompts</Btn><Btn v="pri" sz="sm">▶ Generate All 5 Videos</Btn></div>
         </div>
         <div className="scenes-list">{scenes.map((s,i)=><Card key={i} cls="scene-card">
           <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
@@ -646,7 +750,7 @@ function StoryCreator({chars,mode}){
             {i<scenes.length-1&&<div className="scene-conn"/>}
           </div>
           <div>{editIdx===i
-            ?<div style={{display:"flex",flexDirection:"column",gap:9}}><Inp value={s.title} onChange={v=>upd(i,"title",v)}/><TA value={s.description} onChange={v=>upd(i,"description",v)} rows={3}/><Btn sz="sm" onClick={()=>setEditIdx(null)}>✓ Fertig</Btn></div>
+            ?<div style={{display:"flex",flexDirection:"column",gap:9}}><Inp value={s.title} onChange={v=>upd(i,"title",v)}/><TA value={s.description} onChange={v=>upd(i,"description",v)} rows={3}/><Btn sz="sm" onClick={()=>setEditIdx(null)}>✓ Done</Btn></div>
             :<><div className="scene-title">{s.title}</div><div className="scene-desc">{s.description}</div>
               <div className="scene-tags">
                 <span className="scene-tag scene-tag-gray">📷 {s.camera}</span>
@@ -654,42 +758,47 @@ function StoryCreator({chars,mode}){
                 <span className="scene-tag scene-tag-gray">⏱ {s.duration}</span>
               </div></>}
           </div>
-          <div className="scene-actions"><Btn v="pri" sz="sm">▶ Generieren</Btn><Btn sz="sm" onClick={()=>setEditIdx(editIdx===i?null:i)}>✎ Edit</Btn></div>
+          <div className="scene-actions"><Btn v="pri" sz="sm">▶ Generate</Btn><Btn sz="sm" onClick={()=>setEditIdx(editIdx===i?null:i)}>✎ Edit</Btn></div>
         </Card>)}</div>
-        <div className="consist-box">
-          <span style={{fontSize:20}}>🔒</span>
-          <div><div style={{fontSize:13,fontWeight:700,color:"var(--gold)",marginBottom:3}}>Charakter-Konsistenz aktiv</div>
-          <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.6}}>{sc?.name}'s vollständiges visuelles Profil ist in jedem Szenen-Prompt eingebettet — gleiche Optik in allen 5 Videos.</div></div>
-        </div>
+        <div className="consist-box"><span style={{fontSize:20}}>🔒</span><div><div style={{fontSize:13,fontWeight:700,color:"var(--gold)",marginBottom:3}}>Character Consistency Active</div><div style={{fontSize:12,color:"var(--t2)",lineHeight:1.6}}>{sc?.name}'s full visual profile is embedded in every scene prompt — same face, clothing, and style across all 5 videos.</div></div></div>
       </>}
     </div>
   );
 }
 
-// ─── HISTORY ─────────────────────────────────────────────────────────────────
-function History({videos,chars}){
+// ── HISTORY ──────────────────────────────────────────────────────────────────
+function History({videos,chars,onVideoComplete}){
   const [filter,setFilter]=useState("all");const [sort,setSort]=useState("newest");
   const filtered=videos.filter(v=>filter==="all"||v.char===filter).sort((a,b)=>sort==="newest"?b.id-a.id:a.id-b.id);
+  const processing=filtered.filter(v=>v.status==="processing");
+  const done=filtered.filter(v=>v.status!=="processing");
   return(
     <div className="page">
-      <div className="page-hdr"><div><h1>Video History</h1><p className="page-sub">{videos.length} Videos generiert</p></div></div>
+      <div className="page-hdr"><div><h1>Video History</h1><p className="page-sub">{videos.length} videos generated</p></div></div>
       <div className="hist-filters">
-        <div className="filter-pills">{["all",...chars.map(c=>c.name)].map(f=><button key={f} className={`fpill ${filter===f?"on":""}`} onClick={()=>setFilter(f)}>{f==="all"?"Alle":f}</button>)}</div>
-        <Sel value={sort} onChange={setSort} opts={[{v:"newest",l:"Neueste zuerst"},{v:"oldest",l:"Älteste zuerst"}]} cls="" style={{width:160}}/>
+        <div className="filter-pills">{["all",...chars.map(c=>c.name)].map(f=><button key={f} className={`fpill ${filter===f?"on":""}`} onClick={()=>setFilter(f)}>{f==="all"?"All Videos":f}</button>)}</div>
+        <Sel value={sort} onChange={setSort} opts={[{v:"newest",l:"Newest first"},{v:"oldest",l:"Oldest first"}]} cls=""/>
       </div>
-      {filtered.length===0&&<div style={{padding:"48px 24px",textAlign:"center"}}><div style={{fontSize:38,opacity:.15,marginBottom:11}}>▶</div><p style={{fontSize:13,color:"var(--t3)"}}>Noch keine Videos</p></div>}
-      <div className="hist-grid">{filtered.map(v=><VThumb key={v.id} v={v} showExport/>)}</div>
+
+      {/* Processing section */}
+      {processing.length>0&&<>
+        <div style={{fontSize:12,color:"var(--gold)",fontWeight:700,textTransform:"uppercase",letterSpacing:".07em",marginBottom:12,display:"flex",alignItems:"center",gap:7}}>
+          <div style={{width:7,height:7,borderRadius:"50%",background:"var(--gold)",animation:"pulse 1.2s infinite"}}/> Processing ({processing.length})
+        </div>
+        {processing.map(v=><ProcessingCard key={v.id} video={v} onComplete={onVideoComplete}/>)}
+        <div style={{height:1,background:"var(--border)",margin:"20px 0"}}/>
+      </>}
+
+      {done.length===0&&processing.length===0&&<div style={{padding:"48px 24px",textAlign:"center"}}><div style={{fontSize:38,opacity:.15,marginBottom:11}}>▶</div><p style={{fontSize:13,color:"var(--t3)"}}>No videos yet — generate your first video to see it here</p></div>}
+      <div className="hist-grid">{done.map(v=><VThumb key={v.id} v={v} showExport onComplete={onVideoComplete}/>)}</div>
     </div>
   );
 }
 
-// ─── TOGGLE ───────────────────────────────────────────────────────────────────
-function Toggle({label,def}){
-  const [on,setOn]=useState(def);
-  return<div className="toggle-row"><span>{label}</span><button className={`tog ${on?"on":""}`} onClick={()=>setOn(p=>!p)}><div className="tog-knob"/></button></div>;
-}
+// ── TOGGLE ────────────────────────────────────────────────────────────────────
+function Toggle({label,def}){const [on,setOn]=useState(def);return<div className="toggle-row"><span>{label}</span><button className={`tog ${on?"on":""}`} onClick={()=>setOn(p=>!p)}><div className="tog-knob"/></button></div>;}
 
-// ─── SETTINGS ─────────────────────────────────────────────────────────────────
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
 function Settings({mode,setMode}){
   const [anthropic,setAnthropic]=useState(G.anthropic);
   const [ollamaUrl,setOllamaUrl]=useState(G.ollamaUrl);
@@ -697,173 +806,159 @@ function Settings({mode,setMode}){
   const [comfyPort,setComfyPort]=useState(G.comfyPort);
   const [ollamaSt,setOllamaSt]=useState("idle");const [comfySt,setComfySt]=useState("idle");
   const [saved,setSaved]=useState(false);
-
   const testOllamaConn=async()=>{setOllamaSt("testing");G.ollamaUrl=ollamaUrl;setOllamaSt(await testOllama()?"ok":"fail");};
   const testComfyConn=async()=>{setComfySt("testing");setComfySt(await testComfy(comfyPort)?"ok":"fail");};
-
   const save=()=>{
     Object.assign(G,{mode,anthropic,ollamaUrl,ollamaModel,comfyPort});
-    localStorage.setItem("ai_mode",mode);localStorage.setItem("anthropic_key",anthropic);
-    localStorage.setItem("ollama_url",ollamaUrl);localStorage.setItem("ollama_model",ollamaModel);localStorage.setItem("comfy_port",comfyPort);
+    ["ai_mode","anthropic_key","ollama_url","ollama_model","comfy_port"].forEach((k,i)=>localStorage.setItem(k,[mode,anthropic,ollamaUrl,ollamaModel,comfyPort][i]));
     setSaved(true);setTimeout(()=>setSaved(false),2200);
   };
-
-  const modes={
-    cloud:{icon:"☁️",title:"Cloud-APIs",desc:"Beste Qualität — API-Keys nötig",cls:"sel-cloud"},
-    local:{icon:"🖥️",title:"Lokal (Ollama + ComfyUI)",desc:"100% privat — nur lokal, GPU empf.",cls:"sel-local"},
-    demo:{icon:"🎭",title:"Demo-Modus",desc:"Kein Setup — überall nutzbar",cls:"sel-demo"},
-  };
   const dot=s=><div className={`conn-dot ${s}`}/>;
-  const stepColor={"local":"var(--green)","demo":"var(--purple)","cloud":"var(--blue)"}[mode]||"var(--green)";
-
+  const gc="var(--green)";
   return(
     <div className="page">
-      <div className="page-hdr"><div><h1>Einstellungen</h1><p className="page-sub">KI-Modus, API-Keys, Konsistenz-Engine</p></div></div>
+      <div className="page-hdr"><div><h1>Settings</h1><p className="page-sub">AI mode, API keys, and consistency engine</p></div></div>
       <div className="settings-wrap">
-
-        {/* Mode Selector */}
         <Card>
-          <h3 className="mb18">🤖 KI-Modus wählen</h3>
+          <h3 className="mb18">🤖 Choose AI Mode</h3>
           <div className="mode-grid">
-            {Object.entries(modes).map(([k,m])=><button key={k} className={`mode-card ${mode===k?m.cls:""}`} onClick={()=>{setMode(k);G.mode=k;}}>
+            {[
+              {k:"cloud",icon:"☁️",title:"Cloud APIs",desc:"Best quality — API keys required",cls:"sel-cloud"},
+              {k:"local",icon:"🖥️",title:"Local (Ollama + ComfyUI)",desc:"100% private — local only, GPU recommended",cls:"sel-local"},
+              {k:"demo",icon:"🎭",title:"Demo Mode",desc:"No setup — works everywhere",cls:"sel-demo"},
+            ].map(m=><button key={m.k} className={`mode-card ${mode===m.k?m.cls:""}`} onClick={()=>{setMode(m.k);G.mode=m.k;}}>
               <div className="mode-card-icon">{m.icon}</div>
               <div className="mode-card-title">{m.title}</div>
               <div className="mode-card-desc">{m.desc}</div>
             </button>)}
           </div>
 
-          {/* ── Cloud ── */}
           {mode==="cloud"&&<div style={{animation:"fadeIn .3s ease"}}>
-            <div style={{fontSize:12,color:"var(--blue)",fontWeight:600,marginBottom:13}}>☁️ Cloud-Konfiguration</div>
+            <div style={{fontSize:12,color:"var(--blue)",fontWeight:600,marginBottom:13}}>☁️ Cloud Configuration</div>
             <div className="mb14">
               <Inp label="Anthropic API Key (Character Analysis + Story Generator)" type="password" value={anthropic} onChange={setAnthropic} ph="sk-ant-•••••••••••••••••••••••••"/>
-              <p className="hint">console.anthropic.com → API Keys erstellen</p>
+              <p className="hint">console.anthropic.com → API Keys</p>
             </div>
             <div style={{background:"var(--bg-3)",borderRadius:"var(--r-md)",padding:"12px 15px",fontSize:12,color:"var(--t2)",lineHeight:1.8}}>
-              Für Video-Generierung zusätzlich:<br/>
+              For video generation you also need:<br/>
               <strong style={{color:"var(--t1)"}}>Kling AI</strong> kling.kuaishou.com &nbsp;·&nbsp; <strong style={{color:"var(--t1)"}}>Runway Gen-3</strong> app.runwayml.com &nbsp;·&nbsp; <strong style={{color:"var(--t1)"}}>Luma Dream</strong> lumalabs.ai
             </div>
           </div>}
 
-          {/* ── Local ── */}
           {mode==="local"&&<div style={{animation:"fadeIn .3s ease"}}>
-            <div style={{fontSize:12,color:"var(--green)",fontWeight:600,marginBottom:12}}>🖥️ Lokale Konfiguration</div>
-            <div className="warn-box">⚠️ <strong>Wichtig:</strong> Lokal-Modus funktioniert nur wenn die Datei <strong>lokal</strong> geöffnet wird — nicht über GitHub Pages (HTTPS). Lokal starten: <code style={{background:"var(--bg-0)",padding:"1px 6px",borderRadius:4,fontFamily:"var(--fm)"}}>python -m http.server 8080</code>, dann <a href="http://localhost:8080" style={{color:"var(--gold)"}}>localhost:8080</a> öffnen.</div>
-
-            <div style={{fontWeight:700,color:"var(--t1)",fontSize:14,marginBottom:11}}>📝 Schritt 1 — Text-KI: Ollama</div>
+            <div style={{fontSize:12,color:gc,fontWeight:600,marginBottom:12}}>🖥️ Local Configuration</div>
+            <div className="warn-box">⚠️ <strong>Important:</strong> Local mode only works when the file is opened <strong>locally</strong> — not via GitHub Pages (HTTPS). Start locally: <code style={{background:"var(--bg-0)",padding:"1px 6px",borderRadius:4,fontFamily:"var(--fm)"}}>python -m http.server 8080</code></div>
+            <div style={{fontWeight:700,color:"var(--t1)",fontSize:14,marginBottom:11}}>📝 Step 1 — Text AI: Ollama</div>
             {[
-              {n:1,t:"Ollama installieren",d:<>Besuche <a href="https://ollama.com" target="_blank" style={{color:"var(--green)"}}>ollama.com</a> und lade die App herunter</>,},
-              {n:2,t:"Modell herunterladen",d:<><code className="code-line">ollama pull llama3.2</code></>,},
-              {n:3,t:"Ollama mit CORS starten",d:<><code className="code-line">OLLAMA_ORIGINS=* ollama serve</code></>,},
-            ].map(s=><div key={s.n} className="setup-step"><div className="step-num" style={{background:`${stepColor}18`,color:stepColor}}>{s.n}</div><div className="step-body"><div className="step-title">{s.t}</div><div className="step-desc">{s.d}</div></div></div>)}
-
+              {n:1,t:"Install Ollama",d:<>Visit <a href="https://ollama.com" target="_blank" style={{color:gc}}>ollama.com</a> and download the app</>},
+              {n:2,t:"Download a model",d:<><code className="code-line">ollama pull llama3.2</code></>},
+              {n:3,t:"Start Ollama with CORS",d:<><code className="code-line">OLLAMA_ORIGINS=* ollama serve</code></>},
+            ].map(s=><div key={s.n} className="setup-step"><div className="step-num" style={{background:`${gc}18`,color:gc}}>{s.n}</div><div className="step-body"><div className="step-title">{s.t}</div><div className="step-desc">{s.d}</div></div></div>)}
             <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:12,margin:"12px 0 4px"}}>
               <Inp label="Ollama URL" value={ollamaUrl} onChange={setOllamaUrl} ph="http://localhost:11434"/>
-              <Sel label="Modell" value={ollamaModel} onChange={setOllamaModel} opts={OLLAMA_MODELS}/>
+              <Sel label="Model" value={ollamaModel} onChange={setOllamaModel} opts={OLLAMA_MODELS}/>
             </div>
-            <div className="conn-test">
-              {dot(ollamaSt==="testing"?"testing":ollamaSt)}
-              <span style={{fontSize:12,color:"var(--t2)",flex:1}}>{ollamaSt==="idle"?"Noch nicht getestet":ollamaSt==="testing"?"Verbinde…":ollamaSt==="ok"?`✓ Ollama läuft — Modell: ${ollamaModel}`:"✗ Nicht erreichbar — läuft 'ollama serve'?"}</span>
-              <Btn v="grn" sz="sm" onClick={testOllamaConn} disabled={ollamaSt==="testing"}>Test</Btn>
-            </div>
-
-            <div style={{fontWeight:700,color:"var(--t1)",fontSize:14,margin:"20px 0 11px"}}>🎬 Schritt 2 — Video-KI: ComfyUI</div>
+            <div className="conn-test">{dot(ollamaSt==="testing"?"testing":ollamaSt)}<span style={{fontSize:12,color:"var(--t2)",flex:1}}>{ollamaSt==="idle"?"Not tested yet":ollamaSt==="testing"?"Connecting…":ollamaSt==="ok"?`✓ Ollama running — model: ${ollamaModel}`:"✗ Not reachable — is 'ollama serve' running?"}</span><Btn v="grn" sz="sm" onClick={testOllamaConn} disabled={ollamaSt==="testing"}>Test</Btn></div>
+            <div style={{fontWeight:700,color:"var(--t1)",fontSize:14,margin:"20px 0 11px"}}>🎬 Step 2 — Video AI: ComfyUI</div>
             {[
-              {n:1,t:"ComfyUI installieren",d:<><a href="https://github.com/comfyanonymous/ComfyUI" target="_blank" style={{color:"var(--green)"}}>github.com/comfyanonymous/ComfyUI</a> — Python 3.10+, NVIDIA-GPU empfohlen</>,},
-              {n:2,t:"Video-Modell herunterladen",d:"AnimateDiff, SVD, CogVideoX, LTX-Video oder Wan2.1 als .safetensors in models/",},
-              {n:3,t:"ComfyUI mit CORS starten",d:<><code className="code-line">python main.py --enable-cors-header</code></>,},
-              {n:4,t:"Prompt kopieren & einfügen",d:'Video Creator → Prompt bauen → "📋 Kopieren" → in ComfyUI einfügen → generieren',},
-            ].map(s=><div key={s.n} className="setup-step"><div className="step-num" style={{background:`${stepColor}18`,color:stepColor}}>{s.n}</div><div className="step-body"><div className="step-title">{s.t}</div><div className="step-desc">{s.d}</div></div></div>)}
-
+              {n:1,t:"Install ComfyUI",d:<><a href="https://github.com/comfyanonymous/ComfyUI" target="_blank" style={{color:gc}}>github.com/comfyanonymous/ComfyUI</a> — Python 3.10+, NVIDIA GPU recommended</>},
+              {n:2,t:"Download a video model",d:"AnimateDiff, SVD, CogVideoX, LTX-Video or Wan2.1 as .safetensors into models/"},
+              {n:3,t:"Start ComfyUI with CORS",d:<><code className="code-line">python main.py --enable-cors-header</code></>},
+              {n:4,t:"Copy & paste prompt",d:'Video Creator → build prompt → "📋 Copy Prompt" → paste into ComfyUI → generate'},
+            ].map(s=><div key={s.n} className="setup-step"><div className="step-num" style={{background:`${gc}18`,color:gc}}>{s.n}</div><div className="step-body"><div className="step-title">{s.t}</div><div className="step-desc">{s.d}</div></div></div>)}
             <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:12,margin:"12px 0 4px"}}>
               <Inp label="ComfyUI Port" value={comfyPort} onChange={setComfyPort} ph="8188"/>
-              <Btn v="grn" onClick={testComfyConn} disabled={comfySt==="testing"} style={{alignSelf:"flex-end",width:"100%"}}>Verbindung testen</Btn>
+              <Btn v="grn" onClick={testComfyConn} disabled={comfySt==="testing"} style={{alignSelf:"flex-end",width:"100%"}}>Test Connection</Btn>
             </div>
-            <div className="conn-test">
-              {dot(comfySt==="testing"?"testing":comfySt)}
-              <span style={{fontSize:12,color:"var(--t2)",flex:1}}>{comfySt==="idle"?"Noch nicht getestet":comfySt==="testing"?"Verbinde…":comfySt==="ok"?"✓ ComfyUI läuft":"✗ Nicht erreichbar — läuft ComfyUI?"}</span>
-              <Btn v="blu" sz="sm" onClick={()=>window.open(`http://localhost:${comfyPort}`,"_blank")}>Öffnen ↗</Btn>
-            </div>
+            <div className="conn-test">{dot(comfySt==="testing"?"testing":comfySt)}<span style={{fontSize:12,color:"var(--t2)",flex:1}}>{comfySt==="idle"?"Not tested yet":comfySt==="testing"?"Connecting…":comfySt==="ok"?"✓ ComfyUI running":"✗ Not reachable — is ComfyUI running?"}</span><Btn v="blu" sz="sm" onClick={()=>window.open(`http://localhost:${comfyPort}`,"_blank")}>Open ↗</Btn></div>
           </div>}
 
-          {/* ── Demo ── */}
           {mode==="demo"&&<div style={{animation:"fadeIn .3s ease"}}>
             <Card cls="purple" style={{padding:"15px 18px"}}>
-              <div style={{fontSize:13,fontWeight:700,color:"var(--purple)",marginBottom:8}}>🎭 Demo-Modus — kein Setup erforderlich</div>
+              <div style={{fontSize:13,fontWeight:700,color:"var(--purple)",marginBottom:8}}>🎭 Demo Mode — no setup required</div>
               <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.9}}>
-                ✓ Funktioniert überall — auch auf GitHub Pages<br/>
-                ✓ Kein API-Key nötig<br/>
-                ✓ Keine lokale Installation<br/>
-                ✓ Realistische Charakter-Analysen & Story-Szenen<br/>
-                ✓ Videos werden als Demo-Einträge gespeichert<br/>
-                ✗ Inhalte sind Beispieldaten, keine echten KI-Outputs
+                ✓ Works everywhere — including GitHub Pages<br/>
+                ✓ No API key needed<br/>
+                ✓ No local installation<br/>
+                ✓ Realistic character analyses & story scenes<br/>
+                ✓ Processing timer with live countdown<br/>
+                ✗ Content is sample data, not real AI output
               </div>
             </Card>
-            <div style={{marginTop:13,fontSize:12,color:"var(--t2)",lineHeight:1.7}}>
-              Perfekt für: Präsentationen, UI-Tests, Prototyping — ohne jeden API-Aufwand. Zum Wechsel auf echte KI: oben "Cloud" oder "Lokal" wählen.
-            </div>
           </div>}
         </Card>
 
-        {/* Consistency Engine */}
         <Card>
-          <h3 className="mb12">🔒 Charakter-Konsistenz-Engine</h3>
-          <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.8,marginBottom:16}}>Wenn Character Lock aktiv ist, wird das vollständige visuelle Profil automatisch in jeden Prompt eingebettet — gleiche Optik in jedem generierten Video, egal welches Modell.</p>
-          <Toggle label="Charakterprofil automatisch in alle Prompts einbetten" def={true}/>
-          <Toggle label="Warnen wenn kein Charakter gesperrt ist" def={true}/>
-          <Toggle label="Stil-Konsistenz-Klausel einschließen" def={true}/>
-          <Toggle label="Charaktere nach erstem Video automatisch sperren" def={false}/>
-          <Toggle label="Prompt-Vorschau vor jeder Generierung anzeigen" def={true}/>
+          <h3 className="mb12">🔒 Character Consistency Engine</h3>
+          <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.8,marginBottom:16}}>When Character Lock is active, the engine embeds the full visual profile into every prompt — same face, colours, and clothing across every generated video.</p>
+          <Toggle label="Auto-embed character profile in all prompts" def={true}/>
+          <Toggle label="Warn when generating without a locked character" def={true}/>
+          <Toggle label="Include style consistency clause in prompt" def={true}/>
+          <Toggle label="Auto-lock characters after first generated video" def={false}/>
+          <Toggle label="Show prompt preview before each generation" def={true}/>
         </Card>
 
         <Card>
-          <h3 className="mb12">⬇ Export-Einstellungen</h3>
-          <Toggle label="Untertitel automatisch generieren" def={false}/>
-          <Toggle label="Studio-Logo als Wasserzeichen" def={false}/>
-          <Toggle label="Quell-Prompts mit Export speichern" def={true}/>
+          <h3 className="mb12">⬇ Export Preferences</h3>
+          <Toggle label="Auto-generate subtitles on export" def={false}/>
+          <Toggle label="Watermark with studio logo" def={false}/>
+          <Toggle label="Save source prompts with each export" def={true}/>
         </Card>
 
-        <Btn v="pri" sz="lg" onClick={save} style={{width:250}}>{saved?"✓ Gespeichert!":"Einstellungen speichern"}</Btn>
+        <Btn v="pri" sz="lg" onClick={save} style={{width:240}}>{saved?"✓ Saved!":"Save Settings"}</Btn>
       </div>
     </div>
   );
 }
 
-// ─── SIDEBAR ──────────────────────────────────────────────────────────────────
-function Sidebar({page,onNavigate,lockedChar,mode,setMode}){
-  const modeMap={cloud:{cls:"cloud",icon:"☁️",label:"Cloud-KI"},local:{cls:"local",icon:"🖥️",label:"Lokal (Ollama)"},demo:{cls:"demo",icon:"🎭",label:"Demo-Modus"}};
-  const m=modeMap[mode]||modeMap.demo;
+// ── SIDEBAR ───────────────────────────────────────────────────────────────────
+function Sidebar({page,onNavigate,lockedChar,mode,setMode,processingCount}){
+  const mm={cloud:{cls:"cloud",icon:"☁️",label:"Cloud AI"},local:{cls:"local",icon:"🖥️",label:"Local (Ollama)"},demo:{cls:"demo",icon:"🎭",label:"Demo Mode"}};
+  const m=mm[mode]||mm.demo;
   const next={cloud:"local",local:"demo",demo:"cloud"}[mode];
   return(
     <aside className="sb">
       <div className="sb-logo"><div className="sb-logo-icon">▶</div><div><div className="sb-logo-t1">AI Character</div><div className="sb-logo-t2">VIDEO STUDIO</div></div></div>
       <nav className="sb-nav">{NAV.map(item=><button key={item.id} className={`sb-item ${page===item.id?"active":""}`} onClick={()=>onNavigate(item.id)}><span style={{fontSize:14,opacity:page===item.id?1:.6}}>{item.icon}</span><span>{item.label}</span>{item.badge&&<span className="sb-badge">{item.badge}</span>}</button>)}</nav>
       <div className="sb-foot">
-        <button className={`sb-mode-btn ${m.cls}`} onClick={()=>{const nm=next;G.mode=nm;setMode(nm);}} title="KI-Modus wechseln">
-          <span>{m.icon}</span><span style={{flex:1}}>{m.label}</span><span style={{opacity:.6,fontSize:9}}>▼</span>
-        </button>
+        {processingCount>0&&<button className="sb-processing" onClick={()=>onNavigate("history")}><div className="sb-processing-dot"/><span>{processingCount} video{processingCount>1?"s":""} processing…</span></button>}
+        <button className={`sb-mode-btn ${m.cls}`} onClick={()=>{const nm=next;G.mode=nm;setMode(nm);}} title="Switch AI mode"><span>{m.icon}</span><span style={{flex:1}}>{m.label}</span><span style={{opacity:.5,fontSize:9}}>▼</span></button>
         <div className={`sb-lock ${lockedChar?"on":""}`}>
-          <div className="sb-lock-lbl">{lockedChar?"🔒 Charakter gesperrt":"Kein Charakter gesperrt"}</div>
+          <div className="sb-lock-lbl">{lockedChar?"🔒 Character locked":"No character locked"}</div>
           {lockedChar&&<div className="sb-lock-name">{lockedChar.name}</div>}
-          <div className="sb-lock-hint">{lockedChar?"In alle Prompts eingebettet":"Charakter sperren für Konsistenz"}</div>
+          <div className="sb-lock-hint">{lockedChar?"Embedded in all prompts":"Lock a character for consistency"}</div>
         </div>
       </div>
     </aside>
   );
 }
 
-// ─── APP ROOT ─────────────────────────────────────────────────────────────────
+// ── APP ROOT ──────────────────────────────────────────────────────────────────
 function App(){
   const [page,setPage]=useState("dashboard");
   const [chars,setChars]=useState(INIT_CHARS);
   const [videos,setVideos]=useState(INIT_VIDEOS);
   const [mode,setMode]=useState(G.mode);
+
   const lockedChar=chars.find(c=>c.locked)||null;
-  const props={chars,setChars,videos,setVideos,onNavigate:setPage,mode};
-  const pages={dashboard:<Dashboard {...props}/>,characters:<CharacterManager {...props}/>,video:<VideoCreator {...props}/>,story:<StoryCreator {...props}/>,history:<History {...props}/>,settings:<Settings mode={mode} setMode={setMode}/>};
+  const processingCount=videos.filter(v=>v.status==="processing").length;
+
+  const onVideoComplete=id=>{
+    setVideos(p=>p.map(v=>v.id===id?{...v,status:"done",ts:"just now"}:v));
+  };
+
+  const props={chars,setChars,videos,setVideos,onNavigate:setPage,mode,onVideoComplete};
+  const pages={
+    dashboard:<Dashboard {...props}/>,
+    characters:<CharacterManager {...props}/>,
+    video:<VideoCreator {...props}/>,
+    story:<StoryCreator {...props}/>,
+    history:<History {...props}/>,
+    settings:<Settings mode={mode} setMode={setMode}/>,
+  };
   return(
     <div className="shell">
-      <Sidebar page={page} onNavigate={setPage} lockedChar={lockedChar} mode={mode} setMode={setMode}/>
+      <Sidebar page={page} onNavigate={setPage} lockedChar={lockedChar} mode={mode} setMode={setMode} processingCount={processingCount}/>
       <main className="main">{pages[page]||pages.dashboard}</main>
     </div>
   );
