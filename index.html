@@ -321,6 +321,19 @@ const LOCAL_VIDEO_MODELS=[
   {id:"wanvideo",name:"Wan2.1",desc:"14B — best local quality",icon:"🌊",time:"~20 min"},
 ];
 
+
+// Free public sample MP4s used in Demo mode
+const SAMPLE_VIDEOS=[
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4",
+];
+function randomSampleVideo(){return SAMPLE_VIDEOS[Math.floor(Math.random()*SAMPLE_VIDEOS.length)];}
+
 const INIT_CHARS=[
   {id:1,name:"Mochi",locked:true,color:"#f59e0b",description:"Orange & white cat in traditional Japanese clothing with floral headscarf",traits:["Curious","Warm","Creative"],style:"Studio Ghibli–inspired",coloring:"Orange & white fur",eyes:"Large amber, round",clothing:"Yukata + floral headscarf",accessories:"Wicker basket, apron",build:"Small, soft proportions",videos:14,series:3},
   {id:2,name:"Captain Rex",locked:false,color:"#4f9cf9",description:"Navy blue penguin in captain's coat with gold buttons and tiny brass telescope",traits:["Adventurous","Bold","Loyal"],style:"2D cartoon, flat design",coloring:"Navy & white plumage",eyes:"Sharp, dark, determined",clothing:"Captain's coat + peaked cap",accessories:"Brass telescope, map scroll",build:"Stocky, upright posture",videos:6,series:1},
@@ -328,11 +341,11 @@ const INIT_CHARS=[
 
 const now = Date.now();
 const INIT_VIDEOS=[
-  {id:1,charId:1,char:"Mochi",charColor:"#f59e0b",scene:"Baking sourdough in a cozy cottage kitchen",dur:"5s",ratio:"9:16",status:"done",model:"Kling AI",ts:"2h ago",createdAt:now-7200000,estimatedSecs:180},
-  {id:2,charId:1,char:"Mochi",charColor:"#f59e0b",scene:"Opening a flower market at golden-hour sunrise",dur:"8s",ratio:"16:9",status:"done",model:"Runway Gen-3",ts:"3h ago",createdAt:now-10800000,estimatedSecs:150},
+  {id:1,charId:1,char:"Mochi",charColor:"#f59e0b",scene:"Baking sourdough in a cozy cottage kitchen",dur:"5s",ratio:"9:16",status:"done",model:"Kling AI",ts:"2h ago",createdAt:now-7200000,estimatedSecs:180,videoUrl:"https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"},
+  {id:2,charId:1,char:"Mochi",charColor:"#f59e0b",scene:"Opening a flower market at golden-hour sunrise",dur:"8s",ratio:"16:9",status:"done",model:"Runway Gen-3",ts:"3h ago",createdAt:now-10800000,estimatedSecs:150,videoUrl:"https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"},
   {id:3,charId:2,char:"Captain Rex",charColor:"#4f9cf9",scene:"Navigating a storm with compass in hand",dur:"6s",ratio:"1:1",status:"processing",model:"Luma Dream",ts:"1h ago",createdAt:now-210000,estimatedSecs:240},
-  {id:4,charId:1,char:"Mochi",charColor:"#f59e0b",scene:"Teaching pottery class to small forest creatures",dur:"10s",ratio:"9:16",status:"done",model:"Kling AI",ts:"1d ago",createdAt:now-86400000,estimatedSecs:180},
-  {id:5,charId:2,char:"Captain Rex",charColor:"#4f9cf9",scene:"Discovering a treasure map on a remote island",dur:"7s",ratio:"16:9",status:"done",model:"Runway Gen-3",ts:"2d ago",createdAt:now-172800000,estimatedSecs:150},
+  {id:4,charId:1,char:"Mochi",charColor:"#f59e0b",scene:"Teaching pottery class to small forest creatures",dur:"10s",ratio:"9:16",status:"done",model:"Kling AI",ts:"1d ago",createdAt:now-86400000,estimatedSecs:180,videoUrl:"https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"},
+  {id:5,charId:2,char:"Captain Rex",charColor:"#4f9cf9",scene:"Discovering a treasure map on a remote island",dur:"7s",ratio:"16:9",status:"done",model:"Runway Gen-3",ts:"2d ago",createdAt:now-172800000,estimatedSecs:150,videoUrl:"https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"},
 ];
 
 let G={
@@ -492,6 +505,63 @@ function ProcessingCard({video,onComplete}){
   );
 }
 
+
+// ── Video Download Helper ────────────────────────────────────────────────────
+function triggerDownload(url,filename){
+  const a=document.createElement("a");
+  a.href=url;a.download=filename||"video.mp4";a.target="_blank";
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+
+// ── Video Modal ───────────────────────────────────────────────────────────────
+function VideoModal({video,onClose}){
+  const formats=[
+    {label:"⬇ Download MP4",suffix:"mp4",primary:true},
+    {label:"⬇ TikTok (9:16)",suffix:"tiktok.mp4",primary:false},
+    {label:"⬇ Instagram Reels",suffix:"reels.mp4",primary:false},
+    {label:"⬇ YouTube Shorts",suffix:"shorts.mp4",primary:false},
+  ];
+  useEffect(()=>{
+    const close=e=>{if(e.key==="Escape")onClose();};
+    document.addEventListener("keydown",close);
+    return()=>document.removeEventListener("keydown",close);
+  },[]);
+  const filename=`${video.char.replace(/\s/g,"-").toLowerCase()}-${video.id}`;
+  return(
+    <div className="vmodal-overlay" onClick={onClose}>
+      <div className="vmodal" onClick={e=>e.stopPropagation()} style={{position:"relative"}}>
+        <button className="vmodal-close" onClick={onClose}>✕</button>
+        {video.videoUrl
+          ?<video className="vmodal-video" src={video.videoUrl} controls autoPlay playsInline/>
+          :<div style={{height:220,background:"var(--bg-3)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10}}>
+            <div style={{fontSize:36,opacity:.2}}>▶</div>
+            <div style={{fontSize:13,color:"var(--t2)"}}>
+              {video.status==="processing"?"Video is still generating…":"No video URL — use a real API key to generate"}
+            </div>
+          </div>}
+        <div className="vmodal-body">
+          <div className="vmodal-title">{video.scene}</div>
+          <div className="vmodal-meta">
+            <span style={{color:video.charColor,fontWeight:600}}>{video.char}</span>
+            <span>{video.ratio}</span><span>{video.dur}</span><span>{video.model}</span>
+            <span style={{color:"var(--t3)"}}>{video.ts}</span>
+          </div>
+          {video.videoUrl&&<div className="vmodal-actions">
+            <a className="dl-link pri" href={video.videoUrl} download={`${filename}.mp4`} target="_blank">⬇ Download MP4</a>
+            <a className="dl-link" href={video.videoUrl} download={`${filename}-tiktok.mp4`} target="_blank">TikTok</a>
+            <a className="dl-link" href={video.videoUrl} download={`${filename}-reels.mp4`} target="_blank">Reels</a>
+            <a className="dl-link" href={video.videoUrl} download={`${filename}-shorts.mp4`} target="_blank">Shorts</a>
+            <button className="dl-link" onClick={()=>{navigator.clipboard?.writeText(video.videoUrl||"");}} style={{cursor:"pointer"}}>📋 Copy URL</button>
+          </div>}
+          {!video.videoUrl&&video.status!=="processing"&&<div style={{fontSize:12,color:"var(--t3)",padding:"10px 14px",background:"var(--bg-3)",borderRadius:"var(--r-md)"}}>
+            To get real downloadable videos: switch to Cloud mode in Settings and add your API keys (Kling AI / Runway / Luma Dream).
+          </div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Primitives ───────────────────────────────────────────────────────────────
 const Pill=({status})=>{const m={done:"Done",processing:"Processing",queued:"Queued",error:"Error"};return<span className={`pill ${status||"queued"}`}><span className="pill-dot"/>{m[status]||"Queued"}</span>;};
 const Btn=({children,v="def",sz="md",onClick,disabled,style:s,cls=""})=><button className={`btn ${v} ${sz} ${cls}`} onClick={onClick} disabled={disabled} style={s}>{children}</button>;
@@ -507,26 +577,41 @@ const ModeBanner=({mode})=>{
   return<div className={`mode-banner ${mode}`}><span style={{fontSize:16}}>{m.icon}</span><span>{m.text}</span></div>;
 };
 
-const VThumb=({v,showExport,onComplete})=>(
-  <Card cls="vt">
-    <div className="vt-pre" style={{background:`linear-gradient(140deg,${v.charColor}22 0%,var(--bg-3) 100%)`}}>
-      <div className="vt-play">▶</div>
-      <div className="vt-stat"><Pill status={v.status}/></div>
-      <div className="vt-meta">{v.ratio} · {v.dur}</div>
-      {v.localModel&&<div className="vt-lmodel">🖥️ {v.localModel}</div>}
-    </div>
-    {v.status==="processing"&&<ProcessingTimer video={v} onComplete={onComplete}/>}
-    <div className="vt-body">
-      <div className="vt-scene">{v.scene}</div>
-      <div className="vt-foot"><span style={{color:v.charColor,fontWeight:600}}>{v.char}</span><span className="vt-ts">{v.ts}</span></div>
-      {showExport&&v.status==="done"&&<div style={{display:"flex",gap:6,marginTop:9}}>
-        <Btn v="def" sz="sm" style={{flex:1,fontSize:11}}>⬇ MP4</Btn>
-        <Btn v="def" sz="sm" style={{flex:1,fontSize:11}}>⬇ Reels</Btn>
-        <Btn v="def" sz="sm" style={{flex:1,fontSize:11}}>⬇ Shorts</Btn>
-      </div>}
-    </div>
-  </Card>
-);
+function VThumb({v,showExport,onComplete}){
+  const [modal,setModal]=useState(false);
+  return(
+    <>
+    {modal&&<VideoModal video={v} onClose={()=>setModal(false)}/>}
+    <Card cls="vt">
+      <div className="vt-pre" style={{background:`linear-gradient(140deg,${v.charColor}22 0%,var(--bg-3) 100%)`}}>
+        {v.status==="done"&&v.videoUrl
+          ?<video src={v.videoUrl} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",opacity:.35,pointerEvents:"none"}}/>
+          :null}
+        <div className="vt-play-wrap" style={{zIndex:1,cursor:v.status==="done"?"pointer":"default"}} onClick={v.status==="done"?()=>setModal(true):undefined}>
+          <div className="vt-play" style={{background:v.status==="done"?"rgba(245,158,11,.75)":"rgba(0,0,0,.45)"}}>▶</div>
+        </div>
+        <div className="vt-stat"><Pill status={v.status}/></div>
+        <div className="vt-meta">{v.ratio} · {v.dur}</div>
+        {v.localModel&&<div className="vt-lmodel">🖥️ {v.localModel}</div>}
+      </div>
+      {v.status==="processing"&&<ProcessingTimer video={v} onComplete={onComplete}/>}
+      <div className="vt-body">
+        <div className="vt-scene" style={{cursor:v.status==="done"?"pointer":"default"}} onClick={v.status==="done"?()=>setModal(true):undefined}>{v.scene}</div>
+        <div className="vt-foot"><span style={{color:v.charColor,fontWeight:600}}>{v.char}</span><span className="vt-ts">{v.ts}</span></div>
+        {showExport&&v.status==="done"&&<div style={{display:"flex",gap:6,marginTop:9}}>
+          <button className="dl-link" style={{flex:1}} onClick={()=>setModal(true)}>▶ Play</button>
+          {v.videoUrl
+            ?<a className="dl-link" style={{flex:1}} href={v.videoUrl} download={`${v.char}-${v.id}.mp4`} target="_blank">⬇ Download</a>
+            :<button className="dl-link" style={{flex:1}} onClick={()=>setModal(true)}>⬇ Download</button>}
+        </div>}
+        {v.status==="done"&&!showExport&&v.videoUrl&&<div style={{marginTop:8}}>
+          <button className="dl-link" style={{width:"100%",justifyContent:"center"}} onClick={()=>setModal(true)}>▶ Play video</button>
+        </div>}
+      </div>
+    </Card>
+    </>
+  );
+}
 
 // ── DASHBOARD ────────────────────────────────────────────────────────────────
 function Dashboard({videos,chars,onNavigate,mode,onVideoComplete}){
@@ -630,7 +715,7 @@ function VideoCreator({chars,setVideos,mode}){
   const [style,setStyle]=useState("studio-ghibli");const [dur,setDur]=useState("5");
   const [ratio,setRatio]=useState("9:16");const [cloudModel,setCloudModel]=useState("kling");
   const [localVidModel,setLocalVidModel]=useState("animatediff");
-  const [gen,setGen]=useState(false);const [result,setResult]=useState(null);const [copied,setCopied]=useState(false);
+  const [gen,setGen]=useState(false);const [result,setResult]=useState(null);const [copied,setCopied]=useState(false);const [showResultModal,setShowResultModal]=useState(false);
   const sc=chars.find(c=>c.id===Number(charId))||chars[0];
   const modelName=mode==="local"?LOCAL_VIDEO_MODELS.find(m=>m.id===localVidModel)?.name:CLOUD_VID.find(m=>m.v===cloudModel)?.l||cloudModel;
   const estimatedSecs=MODEL_TIMES[modelName]||180;
@@ -645,11 +730,13 @@ function VideoCreator({chars,setVideos,mode}){
     const nv={id:Date.now(),charId:sc.id,char:sc.name,charColor:sc.color,scene,dur:`${dur}s`,ratio,
       status:mode==="demo"?"done":"processing",
       model:modelName,localModel:mode==="local"?modelName:null,
-      ts:"just now",prompt,createdAt:Date.now(),estimatedSecs};
+      ts:"just now",prompt,createdAt:Date.now(),estimatedSecs,
+      videoUrl:mode==="demo"?randomSampleVideo():null};
     setVideos(p=>[nv,...p]);setResult(nv);setGen(false);
   };
   return(
     <div className="page">
+      {showResultModal&&result&&<VideoModal video={result} onClose={()=>setShowResultModal(false)}/>}
       <div className="page-hdr"><div><h1>Video Creator</h1><p className="page-sub">Generate videos with locked character consistency</p></div></div>
       <ModeBanner mode={mode}/>
       <div className="vc-layout">
@@ -692,7 +779,7 @@ function VideoCreator({chars,setVideos,mode}){
           <div className="vc-preview" style={{aspectRatio:ratioAR}}>
             {gen?<><div className="spinner"/><span>Submitting to {modelName}…</span></>
               :result&&result.status==="processing"?<><div style={{fontSize:13,color:"var(--t1)",fontWeight:600,marginBottom:4}}>Video submitted!</div><div style={{width:"80%"}}><ProcessingTimer video={result}/></div></>
-              :result&&result.status==="done"?<><div style={{width:54,height:54,borderRadius:"50%",background:"var(--gold-bg)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,color:"var(--gold)"}}>▶</div><div style={{fontWeight:600,color:"var(--t1)",fontSize:13}}>Ready to download!</div><Pill status="done"/></>
+              :result&&result.status==="done"?<><div style={{width:54,height:54,borderRadius:"50%",background:"var(--gold-bg)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,color:"var(--gold)",cursor:"pointer"}} onClick={()=>setShowResultModal(true)}>▶</div><div style={{fontWeight:600,color:"var(--t1)",fontSize:13}}>Ready!</div><Pill status="done"/><button className="dl-link pri" onClick={()=>setShowResultModal(true)}>▶ Play &amp; Download</button></>
               :<><div style={{fontSize:34,opacity:.1}}>▶</div><span>Preview will appear here</span></>}
           </div>
           {sc&&<Card>
@@ -944,7 +1031,7 @@ function App(){
   const processingCount=videos.filter(v=>v.status==="processing").length;
 
   const onVideoComplete=id=>{
-    setVideos(p=>p.map(v=>v.id===id?{...v,status:"done",ts:"just now"}:v));
+    setVideos(p=>p.map(v=>v.id===id?{...v,status:"done",ts:"just now",videoUrl:randomSampleVideo()}:v));
   };
 
   const props={chars,setChars,videos,setVideos,onNavigate:setPage,mode,onVideoComplete};
