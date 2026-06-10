@@ -284,6 +284,29 @@
     .tog{width:40px;height:22px;border-radius:11px;border:none;cursor:pointer;background:var(--bg-4);position:relative;transition:background .2s;flex-shrink:0}
     .tog.on{background:var(--gold)}.tog.on .tog-knob{left:21px}
     .tog-knob{width:16px;height:16px;border-radius:50%;background:white;position:absolute;top:3px;left:3px;transition:left .2s}
+
+    /* ── Video Modal ─────────────────────────────────── */
+    .vmodal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s ease}
+    .vmodal{background:var(--bg-2);border:1px solid var(--border-md);border-radius:20px;overflow:hidden;width:100%;max-width:740px;max-height:92vh;display:flex;flex-direction:column;position:relative;animation:scaleIn .2s ease}
+    .vmodal video{width:100%;max-height:56vh;background:#000;display:block;object-fit:contain}
+    .vmodal-body{padding:18px 22px;flex-shrink:0}
+    .vmodal-title{font-family:var(--fd);font-size:15px;font-weight:700;color:var(--t1);margin-bottom:6px;line-height:1.4}
+    .vmodal-meta{font-size:12px;color:var(--t2);margin-bottom:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .vmodal-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .vmodal-close{position:absolute;top:14px;right:14px;background:rgba(0,0,0,.7);border:1px solid var(--border-md);color:var(--t1);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:var(--tr);z-index:10}
+    .vmodal-close:hover{background:var(--red-bg);color:var(--red);border-color:rgba(252,136,136,.3)}
+    .vmodal-no-video{min-height:200px;background:var(--bg-3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--t2);font-size:13px;padding:30px}
+    /* ── Download / action link ───────────────────────── */
+    .dl-link{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border-radius:var(--r-md);font-size:12px;font-weight:500;font-family:var(--fb);text-decoration:none;transition:var(--tr);cursor:pointer;background:var(--bg-4);color:var(--t1);border:1px solid var(--border-md);white-space:nowrap}
+    .dl-link:hover{border-color:var(--border-hi);background:var(--bg-3);text-decoration:none}
+    .dl-link.pri{background:var(--gold);color:#1a0d00;border-color:var(--gold);font-weight:700}
+    .dl-link.pri:hover{background:var(--gold-light)}
+    /* ── Thumb play overlay ───────────────────────────── */
+    .vt-pre{position:relative}
+    .vt-play{transition:all .18s ease;z-index:2}
+    .vt:hover .vt-play{transform:scale(1.1)}
+    .vt-video-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.3;pointer-events:none}
+
   </style>
 </head>
 <body>
@@ -398,6 +421,24 @@ let G={
 
 // ── AI Engine ────────────────────────────────────────────────────────────────
 function parseJSON(t){return extractJSON(t);}
+
+
+// Smart JSON extractor — handles models that wrap JSON in text/markdown
+function extractJSON(text){
+  if(!text) throw new Error("Empty response from AI model");
+  // 1. Direct parse
+  try{return JSON.parse(text.trim());}catch{}
+  // 2. Strip markdown code fences
+  const clean=text.replace(/```json\n?|```\n?/g,"").trim();
+  try{return JSON.parse(clean);}catch{}
+  // 3. Find first JSON object in text
+  const objM=text.match(/\{[\s\S]*\}/);
+  if(objM){try{return JSON.parse(objM[0]);}catch{}}
+  // 4. Find first JSON array in text
+  const arrM=text.match(/\[[\s\S]*\]/);
+  if(arrM){try{return JSON.parse(arrM[0]);}catch{}}
+  throw new Error("Could not parse JSON from AI response. Try model: llama3.2 or mistral");
+}
 
 async function callCloud(prompt,max=1200){
   if(!G.anthropic) throw new Error("No Anthropic API key — please add it in Settings.");
@@ -711,11 +752,10 @@ function VideoModal({video,onClose}){
         <button className="vmodal-close" onClick={onClose}>✕</button>
         {video.videoUrl
           ?<video className="vmodal-video" src={video.videoUrl} controls autoPlay playsInline/>
-          :<div style={{height:220,background:"var(--bg-3)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10}}>
-            <div style={{fontSize:36,opacity:.2}}>▶</div>
-            <div style={{fontSize:13,color:"var(--t2)"}}>
-              {video.status==="processing"?"Video is still generating…":"No video URL — use a real API key to generate"}
-            </div>
+          :<div className="vmodal-no-video">
+            <div style={{fontSize:36,opacity:.15}}>▶</div>
+            <div>{video.status==="processing"?"⏳ Video is still generating…":"No video file yet"}</div>
+            {video.status!=="processing"&&<div style={{fontSize:11,color:"var(--t3)",textAlign:"center",maxWidth:300}}>Add Kling / Runway / Luma API keys in Settings to generate real videos. Demo mode uses sample files.</div>}
           </div>}
         <div className="vmodal-body">
           <div className="vmodal-title">{video.scene}</div>
@@ -763,7 +803,7 @@ function VThumb({v,showExport,onComplete}){
     <Card cls="vt">
       <div className="vt-pre" style={{background:`linear-gradient(140deg,${v.charColor}22 0%,var(--bg-3) 100%)`}}>
         {v.status==="done"&&v.videoUrl
-          ?<video src={v.videoUrl} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",opacity:.35,pointerEvents:"none"}}/>
+          ?<video src={v.videoUrl} className="vt-video-bg" muted playsInline/>
           :null}
         <div className="vt-play-wrap" style={{zIndex:1,cursor:v.status==="done"?"pointer":"default"}} onClick={v.status==="done"?()=>setModal(true):undefined}>
           <div className="vt-play" style={{background:v.status==="done"?"rgba(245,158,11,.75)":"rgba(0,0,0,.45)"}}>▶</div>
@@ -1313,11 +1353,11 @@ function App(){
 
   const props={chars,setChars,videos,setVideos,onNavigate:setPage,mode,onVideoComplete};
   const pages={
-    dashboard:<Dashboard {...props}/>,
+    dashboard:<Dashboard {...props} onVideoComplete={onVideoComplete}/>,
     characters:<CharacterManager {...props}/>,
     video:<VideoCreator {...props}/>,
     story:<StoryCreator {...props}/>,
-    history:<History {...props}/>,
+    history:<History {...props} onVideoComplete={onVideoComplete}/>,
     settings:<Settings mode={mode} setMode={setMode}/>,
   };
   return(
