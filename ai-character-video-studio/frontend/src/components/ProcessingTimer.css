@@ -1,0 +1,63 @@
+/* ─── components/ProcessingTimer.css ─────────────────────────────────────── */
+
+@keyframes progressGlow { 0%,100% { opacity:.85 } 50% { opacity:1 } }
+@keyframes pulseDot     { 0%,100% { opacity:1  } 50% { opacity:.3 } }
+
+.pt {
+  padding: 12px 16px;
+  background: var(--bg-0);
+  border-top: 1px solid var(--border);
+}
+
+.pt-stage {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+
+.pt-stage-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  flex-shrink: 0;
+  animation: pulseDot 1.2s infinite;
+}
+
+.pt-track {
+  height: 4px;
+  background: var(--bg-4);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.pt-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  transition: width .8s ease;
+  animation: progressGlow 2s infinite;
+}
+
+.pt-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+}
+
+.pt-pct    { color: var(--gold); font-weight: 700; }
+.pt-remain { color: var(--text-2); }
+
+.pt-elapsed {
+  font-size: 10px;
+  color: var(--text-3);
+  margin-top: 3px;
+}
+
+/* Compact version (inside video thumb) */
+.pt-compact { padding: 8px 12px; background: var(--bg-0); border-top: 1px solid var(--border); }
+.pt-compact-meta { display: flex; justify-content: space-between; font-size: 10px; margin-top: 4px; }
