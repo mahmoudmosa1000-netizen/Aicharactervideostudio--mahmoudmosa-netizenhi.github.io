@@ -1,0 +1,97 @@
+/* ─── components/VideoCreator.css ────────────────────────────────────────── */
+
+.vc-layout {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 24px;
+}
+
+.vc-form { display: flex; flex-direction: column; gap: 18px; }
+
+/* Character Picker */
+.vc-char-picker { display: flex; gap: 10px; margin-top: 2px; }
+
+.vc-char-btn {
+  flex: 1; padding: 12px 14px; border-radius: var(--radius-lg);
+  cursor: pointer; border: 1px solid var(--border);
+  background: var(--bg-3);
+  display: flex; align-items: center; gap: 10px;
+  text-align: left; transition: var(--transition);
+}
+.vc-char-btn:hover { border-color: var(--border-md); }
+.vc-char-btn--active { /* border/background set inline */ }
+
+.vc-char-btn__avatar {
+  width: 34px; height: 34px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; font-size: 16px;
+}
+
+.vc-char-btn__name { font-weight: 700; color: var(--text-1); font-size: 13px; font-family: var(--font-display); }
+.vc-char-btn__lock { font-size: 10px; margin-top: 1px; }
+
+/* Options grid */
+.vc-scene  { margin-bottom: 14px; }
+.vc-camera { margin-bottom: 14px; }
+.vc-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+/* Prompt */
+.vc-prompt-card { background: var(--bg-3); }
+.vc-prompt-label {
+  font-size: 10px; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px;
+}
+
+/* Generate button */
+.vc-generate-btn { width: 100%; }
+
+/* ── Right Sidebar ───────────────────────────────────────────────────────── */
+.vc-sidebar { display: flex; flex-direction: column; gap: 16px; }
+
+/* Preview box */
+.vc-preview {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  min-height: 180px;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 12px;
+  color: var(--text-2); font-size: 13px;
+}
+
+.vc-preview__empty-icon { font-size: 36px; opacity: 0.1; }
+
+.vc-preview__done-icon {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--gold-bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; color: var(--gold);
+}
+.vc-preview__done-text { font-weight: 600; color: var(--text-1); font-size: 13px; }
+.vc-preview__eta { font-size: 11px; color: var(--text-3); }
+
+/* Character Profile */
+.vc-profile-label { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 12px; }
+
+.vc-profile-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.vc-profile-avatar {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+}
+.vc-profile-name { font-weight: 700; color: var(--text-1); font-size: 14px; font-family: var(--font-display); }
+.vc-profile-lock { font-size: 10px; color: var(--gold); margin-top: 1px; }
+
+.vc-profile-row {
+  display: flex; justify-content: space-between;
+  padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 12px;
+}
+.vc-profile-row span:first-child { color: var(--text-3); }
+.vc-profile-row span:last-child  { color: var(--text-1); font-weight: 500; text-align: right; max-width: 60%; }
+
+/* Export rows */
+.vc-export-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 10px; background: var(--bg-3);
+  border-radius: var(--radius-sm); margin-bottom: 6px; font-size: 12px;
+}
+.vc-export-row span:first-child { color: var(--text-1); font-weight: 500; }
+.vc-export-row span:last-child  { font-size: 10px; color: var(--text-3); }

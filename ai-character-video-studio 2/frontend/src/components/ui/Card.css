@@ -1,0 +1,22 @@
+/* ─── components/ui/Card.css ─────────────────────────────────────────────── */
+
+.card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 20px 24px;
+  transition: var(--transition);
+}
+
+.card--clickable {
+  cursor: pointer;
+}
+.card--clickable:hover {
+  border-color: var(--border-md);
+  background: var(--bg-3);
+}
+
+.card--highlight {
+  border-color: var(--gold-border);
+  background: var(--gold-bg);
+}
