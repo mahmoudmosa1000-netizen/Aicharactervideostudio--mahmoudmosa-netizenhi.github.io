@@ -311,6 +311,18 @@
 </head>
 <body>
 <div id="root"></div>
+<div id="error-display" style="display:none;position:fixed;inset:0;background:#07070c;color:#fc8888;font-family:monospace;font-size:13px;padding:24px;z-index:99999;overflow:auto;white-space:pre-wrap"></div>
+<script>
+window.onerror = function(msg, src, line, col, err) {
+  const d = document.getElementById("error-display");
+  if(d){ d.style.display="block"; d.textContent = "❌ JS Error (line " + line + "):\n" + msg + "\n\n" + (err&&err.stack||""); }
+  return true;
+};
+window.addEventListener("unhandledrejection", function(e){
+  const d = document.getElementById("error-display");
+  if(d){ d.style.display="block"; d.textContent = "❌ Promise Error:\n" + (e.reason&&e.reason.message||e.reason||"Unknown"); }
+});
+</script>
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
 
@@ -1054,7 +1066,7 @@ function VideoCreator({chars,setVideos,mode}){
           <div className="vc-preview" style={{aspectRatio:ratioAR}}>
             {gen?<><div className="spinner"/><span>Submitting to {modelName}…</span></>
               :result&&result.status==="processing"?<><div style={{fontSize:13,color:"var(--t1)",fontWeight:600,marginBottom:4}}>Video submitted!</div><div style={{width:"80%"}}><ProcessingTimer video={result}/></div></>
-              :result&&result.status==="done"?<><div style={{width:54,height:54,borderRadius:"50%",background:"var(--gold-bg)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,color:"var(--gold)",cursor:"pointer"}} onClick={()=>setShowResultModal(true)}>▶</div><div style={{fontWeight:600,color:"var(--t1)",fontSize:13}}>Ready!</div><Pill status="done"/><button className="dl-link pri" onClick={()=>setShowResultModal(true)}>▶ Play &amp; Download</button></>
+              :result&&result.status==="done"?<><div style={{width:54,height:54,borderRadius:"50%",background:"var(--gold-bg)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,color:"var(--gold)",cursor:"pointer"}} onClick={()=>setShowResultModal(true)}>▶</div><div style={{fontWeight:600,color:"var(--t1)",fontSize:13}}>Ready!</div><Pill status="done"/><button className="dl-link pri" onClick={()=>setShowResultModal(true)}>▶ Play + Download</button></>
               :<><div style={{fontSize:34,opacity:.1}}>▶</div><span>Preview will appear here</span></>}
           </div>
           {sc&&<Card>
@@ -1214,7 +1226,7 @@ function Settings({mode,setMode}){
             </div>
             <div style={{background:"var(--bg-3)",borderRadius:"var(--r-md)",padding:"12px 15px",fontSize:12,color:"var(--t2)",lineHeight:1.8}}>
               For video generation you also need:<br/>
-              <strong style={{color:"var(--t1)"}}>Kling AI</strong> kling.kuaishou.com &nbsp;·&nbsp; <strong style={{color:"var(--t1)"}}>Runway Gen-3</strong> app.runwayml.com &nbsp;·&nbsp; <strong style={{color:"var(--t1)"}}>Luma Dream</strong> lumalabs.ai
+              <strong style={{color:"var(--t1)"}}>Kling AI</strong> kling.kuaishou.com  ·  <strong style={{color:"var(--t1)"}}>Runway Gen-3</strong> app.runwayml.com  ·  <strong style={{color:"var(--t1)"}}>Luma Dream</strong> lumalabs.ai
             </div>
           </div>}
 
@@ -1367,7 +1379,12 @@ function App(){
     </div>
   );
 }
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+try {
+  ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+} catch(err) {
+  const d = document.getElementById("error-display");
+  if(d){ d.style.display="block"; d.textContent = "❌ Render Error:\n\n" + err.message + "\n\n" + (err.stack||""); }
+}
 </script>
 </body>
 </html>
