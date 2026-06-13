@@ -1,0 +1,70 @@
+/* ─── components/History.css ─────────────────────────────────────────────── */
+
+.history-filters {
+  display: flex; align-items: center;
+  justify-content: space-between; margin-bottom: 24px;
+}
+
+.history-filter-pills { display: flex; gap: 8px; }
+
+.history-filter-pill {
+  padding: 7px 16px; border-radius: 20px; font-size: 12px;
+  font-weight: 600; cursor: pointer; border: none;
+  font-family: var(--font-body); transition: var(--transition);
+  background: var(--bg-3); color: var(--text-2);
+}
+.history-filter-pill--active { background: var(--gold); color: #1a0d00; }
+
+.history-sort { width: 160px; }
+
+.history-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+/* History Card */
+.history-card { padding: 0; overflow: hidden; }
+
+.history-card__thumb {
+  height: 158px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; border-bottom: 1px solid var(--border);
+}
+
+.history-card__play {
+  width: 46px; height: 46px; border-radius: 50%;
+  background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: rgba(255,255,255,0.8);
+  cursor: pointer; transition: var(--transition);
+}
+.history-card__play:hover { background: rgba(0,0,0,0.7); }
+
+.history-card__status { position: absolute; top: 10px; right: 10px; }
+
+.history-card__badge-ratio,
+.history-card__badge-model {
+  position: absolute; bottom: 8px;
+  background: rgba(0,0,0,0.6);
+  padding: 2px 8px; border-radius: 6px;
+  font-size: 10px; color: rgba(255,255,255,0.6);
+}
+.history-card__badge-ratio { left: 10px; }
+.history-card__badge-model { right: 10px; color: rgba(255,255,255,0.4); }
+
+.history-card__body { padding: 12px 14px; }
+
+.history-card__scene {
+  font-size: 12px; font-weight: 500; color: var(--text-1);
+  line-height: 1.5; margin-bottom: 8px;
+}
+
+.history-card__meta {
+  display: flex; justify-content: space-between;
+  font-size: 11px; margin-bottom: 12px;
+}
+.history-card__ts { color: var(--text-3); }
+
+.history-card__actions { display: flex; gap: 6px; }
+.history-card__btn { flex: 1; font-size: 11px !important; }
