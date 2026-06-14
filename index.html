@@ -1,790 +1,466 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AI Character Video Studio</title>
-  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet"/>
-  <style>
-    :root{
-      --bg-0:#07070c;--bg-1:#0c0c15;--bg-2:#11111c;--bg-3:#181826;--bg-4:#1e1e2e;
-      --border:rgba(255,255,255,.06);--border-md:rgba(255,255,255,.11);--border-hi:rgba(255,255,255,.2);
-      --gold:#f59e0b;--gold-light:#fcd34d;--gold-bg:rgba(245,158,11,.1);--gold-border:rgba(245,158,11,.28);
-      --blue:#4f9cf9;--blue-bg:rgba(79,156,249,.1);--blue-border:rgba(79,156,249,.28);
-      --green:#22d3a5;--green-bg:rgba(34,211,165,.1);--green-border:rgba(34,211,165,.28);
-      --purple:#a78bfa;--purple-bg:rgba(167,139,250,.1);--purple-border:rgba(167,139,250,.28);
-      --red:#fc8888;--red-bg:rgba(252,136,136,.1);
-      --t1:#f0f0f5;--t2:#8888a0;--t3:#44445a;
-      --fd:"Syne",system-ui,sans-serif;--fb:"DM Sans",system-ui,sans-serif;--fm:"JetBrains Mono",monospace;
-      --r-sm:8px;--r-md:10px;--r-lg:14px;--r-xl:16px;--tr:all .15s ease;--sw:244px;
-    }
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%;background:var(--bg-0);color:var(--t1);font-family:var(--fb);font-size:14px;-webkit-font-smoothing:antialiased}
-    #root{height:100%}
-    ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:var(--border-md);border-radius:4px}
-    input,textarea,select,button{font-family:var(--fb)}
-    input::placeholder,textarea::placeholder{color:rgba(255,255,255,.18)}
-    input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold-border)!important;box-shadow:0 0 0 3px rgba(245,158,11,.08)}
-    h1{font-family:var(--fd);font-size:26px;font-weight:800;color:var(--t1);line-height:1.2}
-    h2{font-family:var(--fd);font-size:17px;font-weight:700;color:var(--t1)}
-    h3{font-family:var(--fd);font-size:15px;font-weight:700;color:var(--t1)}
-    @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-    @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
-    @keyframes scaleIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
-    @keyframes progressGlow{0%,100%{opacity:.8}50%{opacity:1}}
-
-    /* Layout */
-    .shell{display:flex;min-height:100vh}
-    .main{flex:1;overflow-y:auto;padding:32px 36px;max-height:100vh}
-    .page{animation:fadeIn .3s ease}
-    .page-hdr{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px}
-    .page-sub{font-size:13px;color:var(--t2);margin-top:4px}
-    .sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;margin-top:24px}
-
-    /* Sidebar */
-    .sb{width:var(--sw);flex-shrink:0;background:var(--bg-1);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;overflow-y:auto}
-    .sb-logo{display:flex;align-items:center;gap:10px;padding:20px 18px 18px;border-bottom:1px solid var(--border)}
-    .sb-logo-icon{width:36px;height:36px;border-radius:10px;background:var(--gold-bg);border:1px solid var(--gold-border);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--gold);flex-shrink:0}
-    .sb-logo-t1{font-family:var(--fd);font-size:12px;font-weight:800;color:var(--t1)}
-    .sb-logo-t2{font-family:var(--fd);font-size:9px;color:var(--gold);font-weight:700;letter-spacing:.1em}
-    .sb-nav{padding:12px 8px;flex:1}
-    .sb-item{width:100%;padding:9px 12px;border-radius:var(--r-md);border:none;border-left:2px solid transparent;cursor:pointer;display:flex;align-items:center;gap:10px;text-align:left;font-family:var(--fb);font-size:13px;font-weight:500;margin-bottom:2px;background:transparent;color:var(--t2);transition:var(--tr)}
-    .sb-item:hover{background:var(--bg-3);color:var(--t1)}
-    .sb-item.active{background:var(--gold-bg);color:var(--gold);border-left-color:var(--gold)}
-    .sb-badge{margin-left:auto;font-size:9px;color:var(--purple);background:var(--purple-bg);padding:1px 7px;border-radius:10px;font-weight:700}
-    .sb-foot{padding:10px 12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
-    .sb-lock{background:var(--bg-3);border:1px solid var(--border);border-radius:var(--r-md);padding:9px 11px}
-    .sb-lock.on{background:var(--gold-bg);border-color:var(--gold-border)}
-    .sb-lock-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;color:var(--t3)}
-    .sb-lock.on .sb-lock-lbl{color:var(--gold)}
-    .sb-lock-name{font-size:12px;font-weight:600;color:var(--t1);margin-bottom:1px}
-    .sb-lock-hint{font-size:10px;color:var(--t2)}
-    .sb-mode-btn{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:var(--r-md);font-size:11px;font-weight:600;cursor:pointer;border:none;width:100%;transition:var(--tr);text-align:left}
-    .sb-mode-btn.cloud{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
-    .sb-mode-btn.local{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
-    .sb-mode-btn.demo{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)}
-
-    /* Processing counter badge on sidebar */
-    .sb-processing{display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:var(--r-md);background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);font-size:11px;font-weight:600;color:var(--gold)}
-    .sb-processing-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);animation:pulse 1.2s infinite;flex-shrink:0}
-
-    /* Card */
-    .card{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-xl);padding:20px 24px;transition:var(--tr)}
-    .card.click{cursor:pointer}.card.click:hover{border-color:var(--border-md);background:var(--bg-3)}
-    .card.gold{border-color:var(--gold-border)!important;background:var(--gold-bg)!important}
-    .card.green{border-color:var(--green-border)!important;background:var(--green-bg)!important}
-    .card.purple{border-color:var(--purple-border)!important;background:var(--purple-bg)!important}
-
-    /* Button */
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:var(--r-md);font-family:var(--fb);font-weight:500;cursor:pointer;transition:var(--tr);white-space:nowrap;border:none}
-    .btn:disabled{opacity:.45;cursor:not-allowed}
-    .btn.sm{padding:6px 14px;font-size:12px}.btn.md{padding:10px 20px;font-size:14px}.btn.lg{padding:13px 28px;font-size:15px;font-weight:600}
-    .btn.def{background:var(--bg-4);color:var(--t1);border:1px solid var(--border-md)}.btn.def:hover:not(:disabled){border-color:var(--border-hi)}
-    .btn.pri{background:var(--gold);color:#1a0d00;border:1px solid var(--gold);font-weight:700}.btn.pri:hover:not(:disabled){background:var(--gold-light)}
-    .btn.gho{background:transparent;color:var(--t2);border:1px solid transparent}.btn.gho:hover:not(:disabled){background:var(--bg-3);color:var(--t1)}
-    .btn.grn{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
-    .btn.blu{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
-    .btn.pur{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)}
-
-    /* Field */
-    .field{display:flex;flex-direction:column;gap:6px}
-    .field label{font-size:11px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.07em}
-    .finp{width:100%;background:var(--bg-3);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 14px;color:var(--t1);font-size:14px;font-family:var(--fb);outline:none;transition:var(--tr);resize:vertical}
-    .finp:hover{border-color:var(--border-md)}
-    select.finp{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2344445a' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
-
-    /* Badges & Pills */
-    .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
-    .pill-dot{width:5px;height:5px;border-radius:50%;display:inline-block}
-    .pill.done{color:var(--green);background:var(--green-bg)}.pill.done .pill-dot{background:var(--green)}
-    .pill.processing{color:var(--gold);background:var(--gold-bg)}.pill.processing .pill-dot{background:var(--gold);animation:pulse 1.5s infinite}
-    .pill.queued{color:var(--t2);background:var(--bg-4)}.pill.queued .pill-dot{background:var(--t2)}
-    .pill.error{color:var(--red);background:var(--red-bg)}.pill.error .pill-dot{background:var(--red)}
-    .badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700}
-    .b-gold{color:var(--gold);background:var(--gold-bg)}.b-green{color:var(--green);background:var(--green-bg)}.b-purple{color:var(--purple);background:var(--purple-bg)}
-
-    /* ── Processing Timer ─────────────────────────────────────── */
-    .pt{padding:12px 14px;background:var(--bg-0);border-top:1px solid var(--border)}
-    .pt-stage{font-size:11px;font-weight:600;color:var(--gold);margin-bottom:7px;display:flex;align-items:center;gap:6px}
-    .pt-stage-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pulse 1.2s infinite;flex-shrink:0}
-    .pt-track{height:4px;background:var(--bg-4);border-radius:4px;overflow:hidden;margin-bottom:6px}
-    .pt-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--gold),var(--gold-light));transition:width .8s ease;animation:progressGlow 2s infinite}
-    .pt-meta{display:flex;justify-content:space-between;font-size:10px}
-    .pt-pct{color:var(--gold);font-weight:700}
-    .pt-remain{color:var(--t2)}
-    .pt-elapsed{color:var(--t3);font-size:10px;margin-top:2px}
-
-    /* Processing card (full view in History) */
-    .proc-card{background:var(--bg-2);border:1px solid var(--gold-border);border-radius:var(--r-xl);overflow:hidden;margin-bottom:12px}
-    .proc-card-header{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border)}
-    .proc-card-avatar{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-    .proc-card-info{flex:1;min-width:0}
-    .proc-card-scene{font-size:13px;font-weight:500;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .proc-card-meta{font-size:11px;color:var(--t2);margin-top:2px}
-    .proc-card-model{font-size:11px;color:var(--t3);padding:2px 8px;background:var(--bg-3);border-radius:6px;flex-shrink:0}
-
-    /* Misc */
-    .spinner{border-radius:50%;border:3px solid var(--bg-4);border-top-color:var(--gold);animation:spin 1s linear infinite}
-    .skeleton{background:var(--bg-2);border-radius:var(--r-lg);border:1px solid var(--border);overflow:hidden;position:relative}
-    .skeleton::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,var(--bg-3),transparent);animation:shimmer 1.4s ease infinite}
-    .error-box{background:var(--red-bg);border:1px solid rgba(252,136,136,.2);border-radius:var(--r-lg);padding:14px 18px;color:var(--red);font-size:13px;margin-bottom:18px}
-    .warn-box{background:var(--gold-bg);border:1px solid var(--gold-border);border-radius:var(--r-lg);padding:12px 16px;color:var(--gold);font-size:12px;line-height:1.7;margin-bottom:14px}
-    .prompt-prev{font-family:var(--fm);font-size:12px;color:var(--t2);line-height:1.8;background:var(--bg-2);padding:12px 14px;border-radius:var(--r-md);border:1px solid var(--border)}
-    .hint{font-size:11px;color:var(--t3);margin-top:4px}
-    .analyzing-bar{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg-3);border-radius:var(--r-md);margin-bottom:14px;color:var(--t2);font-size:13px}
-    .mb6{margin-bottom:6px}.mb12{margin-bottom:12px}.mb14{margin-bottom:14px}.mb16{margin-bottom:16px}.mb18{margin-bottom:18px}.mb20{margin-bottom:20px}
-
-    /* Mode Banner */
-    .mode-banner{display:flex;align-items:center;gap:10px;padding:11px 16px;border-radius:var(--r-lg);font-size:12px;margin-bottom:20px;border:1px solid}
-    .mode-banner.cloud{background:var(--blue-bg);border-color:var(--blue-border);color:var(--blue)}
-    .mode-banner.local{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
-    .mode-banner.demo{background:var(--purple-bg);border-color:var(--purple-border);color:var(--purple)}
-
-    /* Mode Selector */
-    .mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
-    .mode-card{padding:16px 14px;border-radius:var(--r-lg);border:2px solid var(--border);background:var(--bg-3);cursor:pointer;text-align:center;transition:var(--tr)}
-    .mode-card:hover{border-color:var(--border-md)}
-    .mode-card.sel-cloud{border-color:var(--blue);background:var(--blue-bg)}
-    .mode-card.sel-local{border-color:var(--green);background:var(--green-bg)}
-    .mode-card.sel-demo{border-color:var(--purple);background:var(--purple-bg)}
-    .mode-card-icon{font-size:26px;margin-bottom:7px}
-    .mode-card-title{font-family:var(--fd);font-size:13px;font-weight:700;color:var(--t1);margin-bottom:4px}
-    .mode-card-desc{font-size:11px;color:var(--t2);line-height:1.5}
-
-    /* Setup Steps */
-    .setup-step{display:flex;gap:12px;align-items:flex-start;padding:12px;background:var(--bg-3);border-radius:var(--r-md);margin-bottom:8px}
-    .step-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;font-family:var(--fd)}
-    .step-body{flex:1}.step-title{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:3px}
-    .step-desc{font-size:12px;color:var(--t2);line-height:1.6}
-    .code-line{font-family:var(--fm);font-size:11px;color:var(--green);background:var(--bg-0);padding:6px 10px;border-radius:var(--r-sm);margin-top:5px;display:block}
-    .conn-test{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg-3);border-radius:var(--r-md);margin-top:10px}
-    .conn-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-    .conn-dot.ok{background:var(--green)}.conn-dot.fail{background:var(--red)}.conn-dot.idle{background:var(--t3)}.conn-dot.testing{background:var(--gold);animation:pulse 1s infinite}
-
-    /* Local models */
-    .local-models{display:flex;flex-direction:column;gap:8px;margin:12px 0}
-    .lm-btn{width:100%;padding:10px 14px;border-radius:var(--r-md);border:1px solid var(--border);background:var(--bg-2);cursor:pointer;display:flex;align-items:center;gap:12px;text-align:left;transition:var(--tr)}
-    .lm-btn:hover{border-color:var(--border-md)}.lm-btn.active{border-color:var(--green);background:var(--green-bg)}
-    .lm-icon{font-size:20px;flex-shrink:0}
-    .lm-name{font-size:13px;font-weight:600;color:var(--t1);font-family:var(--fd)}
-    .lm-desc{font-size:11px;color:var(--t2)}
-    .lm-time{font-size:10px;color:var(--t3);margin-left:auto;flex-shrink:0}
-
-    /* Dashboard */
-    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
-    .stat-val{font-family:var(--fd);font-size:32px;font-weight:800;line-height:1;margin:8px 0 6px}
-    .stat-lbl{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em}
-    .stat-sub{font-size:11px;color:var(--t3)}
-    .act-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-    .act-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:12px}
-    .act-title{font-family:var(--fd);font-size:14px;font-weight:700;color:var(--t1);margin-bottom:5px}
-    .act-desc{font-size:12px;color:var(--t2);line-height:1.6}
-
-    /* Video Thumb */
-    .vid-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-    .vt{padding:0!important;overflow:hidden}
-    .vt-pre{height:142px;display:flex;align-items:center;justify-content:center;position:relative;border-bottom:1px solid var(--border)}
-    .vt-play{width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;font-size:17px;color:rgba(255,255,255,.85);cursor:pointer}
-    .vt-stat{position:absolute;top:9px;right:9px}
-    .vt-meta{position:absolute;bottom:7px;left:9px;background:rgba(0,0,0,.6);padding:2px 8px;border-radius:6px;font-size:10px;color:rgba(255,255,255,.6)}
-    .vt-lmodel{position:absolute;bottom:7px;right:9px;background:rgba(34,211,165,.15);padding:2px 8px;border-radius:6px;font-size:10px;color:var(--green)}
-    .vt-body{padding:11px 13px}
-    .vt-scene{font-size:12px;font-weight:500;color:var(--t1);line-height:1.5;margin-bottom:7px}
-    .vt-foot{display:flex;justify-content:space-between;font-size:11px;font-weight:600}
-    .vt-ts{color:var(--t3);font-weight:400}
-
-    /* Characters */
-    .char-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-    .char-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
-    .char-mini{display:flex;align-items:center;gap:13px;padding:13px 16px!important}
-    .char-mini-av{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
-    .char-mini-name{display:flex;align-items:center;gap:7px;font-family:var(--fd);font-size:13px;font-weight:700;color:var(--t1);margin-bottom:3px}
-    .char-mini-desc{font-size:11px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .char-mini-stats{font-size:10px;color:var(--t3);margin-top:3px}
-    .upload-zone{border:2px dashed var(--border-md);border-radius:var(--r-lg);padding:24px;text-align:center;background:var(--bg-3);cursor:pointer;transition:var(--tr);margin-bottom:16px}
-    .upload-zone:hover{border-color:var(--gold-border);background:var(--gold-bg)}
-    .analysis-box{background:var(--gold-bg);border:1px solid var(--gold-border);border-radius:var(--r-lg);padding:14px 18px;margin-bottom:14px}
-    .analysis-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
-    .analysis-item{background:var(--bg-2);border-radius:var(--r-sm);padding:8px 10px}
-    .analysis-key{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px}
-    .analysis-val{font-size:11px;color:var(--t1);font-weight:600}
-    .char-card-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
-    .char-card-id{display:flex;align-items:center;gap:12px}
-    .char-card-av{width:48px;height:48px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
-    .char-card-name{font-family:var(--fd);font-size:16px;font-weight:800;color:var(--t1)}
-    .char-card-style{font-size:11px;color:var(--t2);margin-top:1px}
-    .char-card-ctrl{display:flex;gap:7px;align-items:center}
-    .lock-btn{padding:5px 11px;border-radius:20px;font-size:10px;font-weight:700;cursor:pointer;border:none;background:var(--bg-4);color:var(--t3);transition:var(--tr)}
-    .lock-btn.on{background:var(--gold-bg);color:var(--gold)}
-    .del-btn{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;padding:3px;line-height:1;transition:var(--tr)}
-    .del-btn:hover{color:var(--red)}
-    .char-desc{font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:12px}
-    .trait-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}
-    .trait-item{background:var(--bg-3);border-radius:var(--r-sm);padding:7px 9px}
-    .trait-key{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px}
-    .trait-val{font-size:11px;color:var(--t1);font-weight:600}
-    .char-foot{display:flex;align-items:center;justify-content:space-between}
-    .char-tags{display:flex;gap:5px;flex-wrap:wrap}
-    .char-tag{font-size:10px;padding:2px 9px;border-radius:20px;font-weight:600}
-
-    /* Video Creator */
-    .vc-layout{display:grid;grid-template-columns:1fr 350px;gap:22px}
-    .vc-form{display:flex;flex-direction:column;gap:16px}
-    .char-picker{display:flex;gap:9px;margin-top:2px}
-    .char-btn{flex:1;padding:11px 12px;border-radius:var(--r-lg);cursor:pointer;border:1px solid var(--border);background:var(--bg-3);display:flex;align-items:center;gap:9px;text-align:left;transition:var(--tr)}
-    .char-btn:hover{border-color:var(--border-md)}
-    .char-btn-av{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px}
-    .char-btn-name{font-weight:700;color:var(--t1);font-size:12px;font-family:var(--fd)}
-    .char-btn-lock{font-size:10px;margin-top:1px}
-    .vc-opts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-    .local-panel{padding:14px;background:var(--green-bg);border:1px solid var(--green-border);border-radius:var(--r-lg);margin-top:10px}
-    .vc-preview{background:var(--bg-3);border:1px solid var(--border);border-radius:var(--r-xl);min-height:170px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:11px;color:var(--t2);font-size:13px}
-    .vc-sidebar{display:flex;flex-direction:column;gap:14px}
-    .vc-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px}
-    .vc-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
-    .vc-row span:first-child{color:var(--t3)}.vc-row span:last-child{color:var(--t1);font-weight:500;text-align:right;max-width:60%}
-    .exp-row{display:flex;justify-content:space-between;align-items:center;padding:7px 9px;background:var(--bg-3);border-radius:var(--r-sm);margin-bottom:5px;font-size:12px}
-    .exp-row span:first-child{color:var(--t1);font-weight:500}.exp-row span:last-child{font-size:10px;color:var(--t3)}
-
-    /* Story Creator */
-    .story-bar{display:grid;grid-template-columns:190px 1fr auto;gap:13px;align-items:flex-end}
-    .story-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-    .story-title{font-family:var(--fd);font-size:14px;font-weight:700;color:var(--t1)}
-    .story-title span{color:var(--t2);font-weight:400}
-    .scenes-list{display:flex;flex-direction:column;gap:11px}
-    .scene-card{display:grid!important;grid-template-columns:52px 1fr auto!important;gap:16px;align-items:flex-start;padding:16px 18px!important}
-    .scene-num{width:44px;height:44px;border-radius:var(--r-lg);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;font-family:var(--fd)}
-    .scene-conn{width:1px;height:18px;background:var(--border);margin:5px auto 0}
-    .scene-title{font-family:var(--fd);font-size:13px;font-weight:700;color:var(--t1);margin-bottom:5px}
-    .scene-desc{font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:9px}
-    .scene-tags{display:flex;gap:7px;flex-wrap:wrap}
-    .scene-tag{font-size:11px;padding:3px 9px;border-radius:var(--r-sm)}
-    .scene-tag-gray{color:var(--t3);background:var(--bg-3)}
-    .scene-actions{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
-    .consist-box{display:flex;align-items:center;gap:13px;background:var(--gold-bg);border:1px solid var(--gold-border);border-radius:var(--r-lg);padding:13px 16px;margin-top:18px}
-
-    /* History */
-    .hist-filters{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
-    .filter-pills{display:flex;gap:7px}
-    .fpill{padding:6px 15px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:var(--fb);transition:var(--tr);background:var(--bg-3);color:var(--t2)}
-    .fpill.on{background:var(--gold);color:#1a0d00}
-    .hist-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-
-    /* Settings */
-    .settings-wrap{display:flex;flex-direction:column;gap:22px;max-width:680px}
-    .toggle-row{display:flex;justify-content:space-between;align-items:center;padding:10px 13px;background:var(--bg-3);border-radius:var(--r-md);margin-bottom:7px}
-    .toggle-row span{font-size:13px;color:var(--t1)}
-    .tog{width:40px;height:22px;border-radius:11px;border:none;cursor:pointer;background:var(--bg-4);position:relative;transition:background .2s;flex-shrink:0}
-    .tog.on{background:var(--gold)}.tog.on .tog-knob{left:21px}
-    .tog-knob{width:16px;height:16px;border-radius:50%;background:white;position:absolute;top:3px;left:3px;transition:left .2s}
-
-    /* ── Video Modal ─────────────────────────────────── */
-    .vmodal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s ease}
-    .vmodal{background:var(--bg-2);border:1px solid var(--border-md);border-radius:20px;overflow:hidden;width:100%;max-width:740px;max-height:92vh;display:flex;flex-direction:column;position:relative;animation:scaleIn .2s ease}
-    .vmodal video{width:100%;max-height:56vh;background:#000;display:block;object-fit:contain}
-    .vmodal-body{padding:18px 22px;flex-shrink:0}
-    .vmodal-title{font-family:var(--fd);font-size:15px;font-weight:700;color:var(--t1);margin-bottom:6px;line-height:1.4}
-    .vmodal-meta{font-size:12px;color:var(--t2);margin-bottom:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-    .vmodal-actions{display:flex;gap:8px;flex-wrap:wrap}
-    .vmodal-close{position:absolute;top:14px;right:14px;background:rgba(0,0,0,.7);border:1px solid var(--border-md);color:var(--t1);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:var(--tr);z-index:10}
-    .vmodal-close:hover{background:var(--red-bg);color:var(--red);border-color:rgba(252,136,136,.3)}
-    .vmodal-no-video{min-height:200px;background:var(--bg-3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--t2);font-size:13px;padding:30px}
-    /* ── Download / action link ───────────────────────── */
-    .dl-link{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border-radius:var(--r-md);font-size:12px;font-weight:500;font-family:var(--fb);text-decoration:none;transition:var(--tr);cursor:pointer;background:var(--bg-4);color:var(--t1);border:1px solid var(--border-md);white-space:nowrap}
-    .dl-link:hover{border-color:var(--border-hi);background:var(--bg-3);text-decoration:none}
-    .dl-link.pri{background:var(--gold);color:#1a0d00;border-color:var(--gold);font-weight:700}
-    .dl-link.pri:hover{background:var(--gold-light)}
-    /* ── Thumb play overlay ───────────────────────────── */
-    .vt-pre{position:relative}
-    .vt-play{transition:all .18s ease;z-index:2}
-    .vt:hover .vt-play{transform:scale(1.1)}
-    .vt-video-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.3;pointer-events:none}
-
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Character Video Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.23.2/babel.min.js"></script>
+<style>
+:root{
+  --bg0:#07070c;--bg1:#0c0c15;--bg2:#11111c;--bg3:#181826;--bg4:#1e1e2e;
+  --brd:rgba(255,255,255,.06);--brdm:rgba(255,255,255,.12);--brdh:rgba(255,255,255,.2);
+  --gold:#f59e0b;--goldb:rgba(245,158,11,.12);--goldbo:rgba(245,158,11,.3);
+  --blue:#4f9cf9;--blueb:rgba(79,156,249,.12);--bluebo:rgba(79,156,249,.3);
+  --green:#22d3a5;--greenb:rgba(34,211,165,.12);--greenbo:rgba(34,211,165,.3);
+  --purple:#a78bfa;--purpleb:rgba(167,139,250,.12);--purplebo:rgba(167,139,250,.3);
+  --red:#fc8888;--redb:rgba(252,136,136,.12);
+  --t1:#f0f0f5;--t2:#8888a0;--t3:#44445a;
+  --fd:"Syne",system-ui,sans-serif;
+  --fb:"DM Sans",system-ui,sans-serif;
+  --r:10px;--rxl:16px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body,#root{height:100%}
+body{background:var(--bg0);color:var(--t1);font-family:var(--fb);font-size:14px;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--brdm);border-radius:4px}
+input,textarea,select,button{font-family:var(--fb)}
+input::placeholder,textarea::placeholder{color:rgba(255,255,255,.2)}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--goldbo)!important;box-shadow:0 0 0 3px rgba(245,158,11,.08)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes pglow{0%,100%{opacity:.8}50%{opacity:1}}
+/* Layout */
+.shell{display:flex;min-height:100vh}
+.main{flex:1;overflow-y:auto;padding:28px 32px;max-height:100vh}
+.page{animation:fadeIn .3s ease}
+.phdr{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px}
+.psub{font-size:12px;color:var(--t2);margin-top:3px}
+.shdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;margin-top:22px}
+/* Sidebar */
+.sb{width:232px;flex-shrink:0;background:var(--bg1);border-right:1px solid var(--brd);display:flex;flex-direction:column;height:100vh;position:sticky;top:0}
+.sb-logo{display:flex;align-items:center;gap:10px;padding:18px 16px;border-bottom:1px solid var(--brd)}
+.sb-icon{width:34px;height:34px;border-radius:9px;background:var(--goldb);border:1px solid var(--goldbo);display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--gold)}
+.sb-t1{font-family:var(--fd);font-size:12px;font-weight:800;color:var(--t1)}
+.sb-t2{font-size:9px;color:var(--gold);font-weight:700;letter-spacing:.1em}
+.sb-nav{padding:10px 8px;flex:1}
+.sb-item{width:100%;padding:8px 11px;border-radius:var(--r);border:none;border-left:2px solid transparent;cursor:pointer;display:flex;align-items:center;gap:9px;font-family:var(--fb);font-size:13px;font-weight:500;margin-bottom:2px;background:transparent;color:var(--t2);transition:all .15s;text-align:left}
+.sb-item:hover{background:var(--bg3);color:var(--t1)}
+.sb-item.on{background:var(--goldb);color:var(--gold);border-left-color:var(--gold)}
+.sb-bge{margin-left:auto;font-size:9px;color:var(--purple);background:var(--purpleb);padding:1px 6px;border-radius:8px;font-weight:700}
+.sb-foot{padding:10px 12px;border-top:1px solid var(--brd);display:flex;flex-direction:column;gap:7px}
+.sb-mode{display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:var(--r);font-size:11px;font-weight:600;cursor:pointer;border:none;width:100%;text-align:left;transition:all .15s}
+.sb-mode.cloud{background:var(--blueb);color:var(--blue);border:1px solid var(--bluebo)}
+.sb-mode.local{background:var(--greenb);color:var(--green);border:1px solid var(--greenbo)}
+.sb-mode.demo{background:var(--purpleb);color:var(--purple);border:1px solid var(--purplebo)}
+.sb-lock{background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r);padding:9px 11px}
+.sb-lock.on{background:var(--goldb);border-color:var(--goldbo)}
+.sb-lk-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;color:var(--t3)}
+.sb-lock.on .sb-lk-lbl{color:var(--gold)}
+.sb-lk-name{font-size:12px;font-weight:600;color:var(--t1);margin-bottom:1px}
+.sb-lk-hint{font-size:10px;color:var(--t2)}
+.sb-proc{display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:var(--r);background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);font-size:11px;font-weight:600;color:var(--gold);cursor:pointer}
+.sb-proc-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pulse 1.2s infinite}
+/* Card */
+.card{background:var(--bg2);border:1px solid var(--brd);border-radius:var(--rxl);padding:18px 22px;transition:all .15s}
+.card.click{cursor:pointer}.card.click:hover{border-color:var(--brdm);background:var(--bg3)}
+.card.gold{border-color:var(--goldbo)!important;background:var(--goldb)!important}
+.card.green{border-color:var(--greenbo)!important;background:var(--greenb)!important}
+.card.purple{border-color:var(--purplebo)!important;background:var(--purpleb)!important}
+/* Button */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border-radius:var(--r);font-family:var(--fb);font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap;border:none;text-decoration:none}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.sm{padding:6px 13px;font-size:12px}.btn.md{padding:9px 18px;font-size:14px}.btn.lg{padding:12px 26px;font-size:15px;font-weight:600}
+.btn.def{background:var(--bg4);color:var(--t1);border:1px solid var(--brdm)}.btn.def:hover:not(:disabled){border-color:var(--brdh)}
+.btn.pri{background:var(--gold);color:#1a0d00;font-weight:700}.btn.pri:hover:not(:disabled){filter:brightness(1.1)}
+.btn.gho{background:transparent;color:var(--t2);border:1px solid transparent}.btn.gho:hover:not(:disabled){background:var(--bg3);color:var(--t1)}
+.btn.grn{background:var(--greenb);color:var(--green);border:1px solid var(--greenbo)}
+.btn.blu{background:var(--blueb);color:var(--blue);border:1px solid var(--bluebo)}
+/* Field */
+.fld{display:flex;flex-direction:column;gap:5px}
+.fld label{font-size:10px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.07em}
+.inp{width:100%;background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r);padding:9px 13px;color:var(--t1);font-size:14px;font-family:var(--fb);outline:none;transition:all .15s;resize:vertical}
+.inp:hover{border-color:var(--brdm)}
+select.inp{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2344445a' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:30px}
+/* Pills */
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.pill-dot{width:5px;height:5px;border-radius:50%;display:inline-block}
+.pill.done{color:var(--green);background:var(--greenb)}.pill.done .pill-dot{background:var(--green)}
+.pill.processing{color:var(--gold);background:var(--goldb)}.pill.processing .pill-dot{background:var(--gold);animation:pulse 1.4s infinite}
+.pill.queued{color:var(--t2);background:var(--bg4)}.pill.queued .pill-dot{background:var(--t2)}
+.pill.error{color:var(--red);background:var(--redb)}.pill.error .pill-dot{background:var(--red)}
+/* Badge */
+.bdg{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.bdg.gold{color:var(--gold);background:var(--goldb)}
+.bdg.green{color:var(--green);background:var(--greenb)}
+.bdg.purple{color:var(--purple);background:var(--purpleb)}
+/* Mode banner */
+.mbanner{display:flex;align-items:center;gap:9px;padding:10px 14px;border-radius:var(--rxl);font-size:12px;margin-bottom:18px;border:1px solid}
+.mbanner.cloud{background:var(--blueb);border-color:var(--bluebo);color:var(--blue)}
+.mbanner.local{background:var(--greenb);border-color:var(--greenbo);color:var(--green)}
+.mbanner.demo{background:var(--purpleb);border-color:var(--purplebo);color:var(--purple)}
+/* Processing timer */
+.pt{padding:10px 13px;background:var(--bg0);border-top:1px solid var(--brd)}
+.pt-stage{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--gold);margin-bottom:6px}
+.pt-dot{width:5px;height:5px;border-radius:50%;background:var(--gold);animation:pulse 1.2s infinite;flex-shrink:0}
+.pt-track{height:4px;background:var(--bg4);border-radius:4px;overflow:hidden;margin-bottom:5px}
+.pt-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--gold),#fcd34d);transition:width .8s ease;animation:pglow 2s infinite}
+.pt-meta{display:flex;justify-content:space-between;font-size:10px}
+.pt-pct{color:var(--gold);font-weight:700}.pt-rem{color:var(--t2)}
+.pt-elapsed{font-size:10px;color:var(--t3);margin-top:2px}
+/* Video Modal */
+.vmod-ov{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s ease}
+.vmod{background:var(--bg2);border:1px solid var(--brdm);border-radius:20px;overflow:hidden;width:100%;max-width:740px;max-height:92vh;display:flex;flex-direction:column;position:relative}
+.vmod video{width:100%;max-height:55vh;background:#000;display:block;object-fit:contain}
+.vmod-nobody{min-height:200px;background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--t2);font-size:13px;padding:28px;text-align:center}
+.vmod-nobody span{font-size:11px;color:var(--t3)}
+.vmod-close{position:absolute;top:13px;right:13px;background:rgba(0,0,0,.7);border:1px solid var(--brdm);color:var(--t1);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;z-index:10;transition:all .15s}
+.vmod-close:hover{background:var(--redb);color:var(--red)}
+.vmod-body{padding:16px 20px}
+.vmod-title{font-family:var(--fd);font-size:14px;font-weight:700;color:var(--t1);margin-bottom:5px;line-height:1.4}
+.vmod-meta{font-size:12px;color:var(--t2);margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap}
+.vmod-acts{display:flex;gap:7px;flex-wrap:wrap}
+.dlbtn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px 14px;border-radius:var(--r);font-size:12px;font-weight:500;font-family:var(--fb);text-decoration:none;cursor:pointer;background:var(--bg4);color:var(--t1);border:1px solid var(--brdm);transition:all .15s;white-space:nowrap}
+.dlbtn:hover{border-color:var(--brdh);background:var(--bg3)}
+.dlbtn.pri{background:var(--gold);color:#1a0d00;font-weight:700;border-color:var(--gold)}
+/* Video thumb */
+.vt{padding:0!important;overflow:hidden}
+.vt-pre{height:140px;display:flex;align-items:center;justify-content:center;position:relative;border-bottom:1px solid var(--brd)}
+.vt-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.3;pointer-events:none}
+.vt-play{width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:16px;color:rgba(255,255,255,.9);cursor:pointer;transition:all .2s;z-index:2}
+.vt-play:hover{transform:scale(1.1);background:rgba(245,158,11,.7)}
+.vt-stat{position:absolute;top:8px;right:8px;z-index:2}
+.vt-meta{position:absolute;bottom:7px;left:8px;background:rgba(0,0,0,.65);padding:2px 7px;border-radius:5px;font-size:10px;color:rgba(255,255,255,.65)}
+.vt-lm{position:absolute;bottom:7px;right:8px;background:rgba(34,211,165,.15);padding:2px 7px;border-radius:5px;font-size:10px;color:var(--green)}
+.vt-body{padding:10px 12px}
+.vt-scene{font-size:12px;font-weight:500;color:var(--t1);line-height:1.5;margin-bottom:6px;cursor:pointer}
+.vt-foot{display:flex;justify-content:space-between;font-size:11px}
+.vt-ts{color:var(--t3)}
+/* Dashboard */
+.stats-g{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:22px}
+.stat-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em}
+.stat-v{font-family:var(--fd);font-size:30px;font-weight:800;line-height:1;margin:7px 0 5px}
+.stat-sub{font-size:11px;color:var(--t3)}
+.act-g{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
+.act-ic{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:11px}
+.act-tt{font-family:var(--fd);font-size:13px;font-weight:700;color:var(--t1);margin-bottom:4px}
+.act-ds{font-size:12px;color:var(--t2);line-height:1.6}
+.vg3{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
+.cm2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cm-av{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+/* Characters */
+.chg2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.upz{border:2px dashed var(--brdm);border-radius:var(--rxl);padding:22px;text-align:center;background:var(--bg3);cursor:pointer;transition:all .15s;margin-bottom:14px}
+.upz:hover{border-color:var(--goldbo);background:var(--goldb)}
+.anb{background:var(--goldb);border:1px solid var(--goldbo);border-radius:var(--rxl);padding:13px 16px;margin-bottom:13px}
+.ang{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.ani{background:var(--bg2);border-radius:8px;padding:7px 10px}
+.ank{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px}
+.anv{font-size:11px;color:var(--t1);font-weight:600}
+.tg{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:11px}
+.ti{background:var(--bg3);border-radius:8px;padding:7px 9px}
+.tk{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px}
+.tv{font-size:11px;color:var(--t1);font-weight:600}
+/* Video Creator */
+.vcl{display:grid;grid-template-columns:1fr 340px;gap:20px}
+.vcf{display:flex;flex-direction:column;gap:15px}
+.cpick{display:flex;gap:8px;margin-top:2px}
+.cbtn{flex:1;padding:10px 11px;border-radius:13px;cursor:pointer;border:1px solid var(--brd);background:var(--bg3);display:flex;align-items:center;gap:8px;text-align:left;transition:all .15s}
+.cbtn:hover{border-color:var(--brdm)}
+.cbtn-av{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.cbtn-nm{font-weight:700;color:var(--t1);font-size:12px;font-family:var(--fd)}
+.cbtn-lk{font-size:10px;margin-top:1px}
+.vcopts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.lp{padding:13px;background:var(--greenb);border:1px solid var(--greenbo);border-radius:13px;margin-top:9px}
+.lms{display:flex;flex-direction:column;gap:7px;margin:9px 0}
+.lmb{width:100%;padding:9px 12px;border-radius:var(--r);border:1px solid var(--brd);background:var(--bg2);cursor:pointer;display:flex;align-items:center;gap:10px;text-align:left;transition:all .15s}
+.lmb:hover{border-color:var(--brdm)}.lmb.on{border-color:var(--green);background:var(--greenb)}
+.lmb-ic{font-size:18px;flex-shrink:0}.lmb-nm{font-size:13px;font-weight:600;color:var(--t1);font-family:var(--fd)}.lmb-ds{font-size:11px;color:var(--t2)}.lmb-t{font-size:10px;color:var(--t3);margin-left:auto}
+.vcprev{background:var(--bg3);border:1px solid var(--brd);border-radius:var(--rxl);min-height:165px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:var(--t2);font-size:13px}
+.vcsb{display:flex;flex-direction:column;gap:13px}
+.vclbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:9px}
+.vcrow{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--brd);font-size:12px}
+.vcrow span:first-child{color:var(--t3)}.vcrow span:last-child{color:var(--t1);font-weight:500;text-align:right;max-width:58%}
+.exrow{display:flex;justify-content:space-between;align-items:center;padding:7px 9px;background:var(--bg3);border-radius:8px;margin-bottom:5px;font-size:12px}
+.exrow span:first-child{color:var(--t1);font-weight:500}.exrow span:last-child{font-size:10px;color:var(--t3)}
+.prv-box{font-family:monospace;font-size:11px;color:var(--t2);line-height:1.8;background:var(--bg2);padding:11px 13px;border-radius:var(--r);border:1px solid var(--brd)}
+/* Story */
+.stbar{display:grid;grid-template-columns:185px 1fr auto;gap:12px;align-items:flex-end}
+.sthdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}
+.sttl{font-family:var(--fd);font-size:14px;font-weight:700;color:var(--t1)}
+.sttl span{color:var(--t2);font-weight:400}
+.sclist{display:flex;flex-direction:column;gap:10px}
+.sc-card{display:grid!important;grid-template-columns:50px 1fr auto!important;gap:14px;align-items:flex-start;padding:14px 16px!important}
+.sc-num{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;font-family:var(--fd)}
+.sc-conn{width:1px;height:16px;background:var(--brd);margin:5px auto 0}
+.sc-tt{font-family:var(--fd);font-size:13px;font-weight:700;color:var(--t1);margin-bottom:4px}
+.sc-ds{font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px}
+.sc-tags{display:flex;gap:6px;flex-wrap:wrap}
+.sc-tag{font-size:11px;padding:3px 9px;border-radius:8px}
+.sc-tg{color:var(--t3);background:var(--bg3)}
+.sc-acts{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+.cb-box{display:flex;align-items:center;gap:12px;background:var(--goldb);border:1px solid var(--goldbo);border-radius:13px;padding:12px 15px;margin-top:16px}
+/* History */
+.hf{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.fps{display:flex;gap:7px}
+.fp{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:var(--fb);transition:all .15s;background:var(--bg3);color:var(--t2)}
+.fp.on{background:var(--gold);color:#1a0d00}
+/* Settings */
+.sw{display:flex;flex-direction:column;gap:20px;max-width:660px}
+.mg{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:18px}
+.mc{padding:14px 12px;border-radius:13px;border:2px solid var(--brd);background:var(--bg3);cursor:pointer;text-align:center;transition:all .15s}
+.mc:hover{border-color:var(--brdm)}
+.mc.c-cloud{border-color:var(--blue);background:var(--blueb)}
+.mc.c-local{border-color:var(--green);background:var(--greenb)}
+.mc.c-demo{border-color:var(--purple);background:var(--purpleb)}
+.mc-ic{font-size:24px;margin-bottom:6px}
+.mc-tt{font-family:var(--fd);font-size:12px;font-weight:700;color:var(--t1);margin-bottom:3px}
+.mc-ds{font-size:11px;color:var(--t2);line-height:1.5}
+.ss{display:flex;flex-direction:column;gap:7px}
+.srow{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:var(--bg3);border-radius:var(--r)}
+.srow span{font-size:13px;color:var(--t1)}
+.tog{width:38px;height:21px;border-radius:10px;border:none;cursor:pointer;background:var(--bg4);position:relative;transition:background .2s}
+.tog.on{background:var(--gold)}.tog.on .tok{left:19px}
+.tok{width:15px;height:15px;border-radius:50%;background:white;position:absolute;top:3px;left:3px;transition:left .2s}
+/* Setup steps */
+.step{display:flex;gap:11px;align-items:flex-start;padding:11px;background:var(--bg3);border-radius:var(--r);margin-bottom:7px}
+.step-n{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;font-family:var(--fd)}
+.step-tt{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:2px}
+.step-ds{font-size:12px;color:var(--t2);line-height:1.6}
+.code{font-family:monospace;font-size:11px;color:var(--green);background:var(--bg0);padding:5px 9px;border-radius:6px;margin-top:4px;display:block}
+.conn{display:flex;align-items:center;gap:9px;padding:9px 13px;background:var(--bg3);border-radius:var(--r);margin-top:9px}
+.cdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.cdot.ok{background:var(--green)}.cdot.fail{background:var(--red)}.cdot.idle{background:var(--t3)}.cdot.testing{background:var(--gold);animation:pulse 1s infinite}
+/* Misc */
+.err-box{background:var(--redb);border:1px solid rgba(252,136,136,.2);border-radius:13px;padding:12px 16px;color:var(--red);font-size:13px;margin-bottom:16px}
+.warn-box{background:var(--goldb);border:1px solid var(--goldbo);border-radius:13px;padding:11px 15px;color:var(--gold);font-size:12px;line-height:1.7;margin-bottom:13px}
+.skel{background:var(--bg2);border-radius:13px;border:1px solid var(--brd);overflow:hidden;position:relative}
+.skel::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,var(--bg3) 50%,transparent 100%);background-size:200% 100%;animation:shimmer 1.4s ease infinite}
+.spin{border-radius:50%;border:3px solid var(--bg4);border-top-color:var(--gold);animation:spin 1s linear infinite}
+.hint{font-size:11px;color:var(--t3);margin-top:3px}
+.empty{padding:44px 20px;text-align:center}
+.empty-ic{font-size:36px;opacity:.12;margin-bottom:10px}
+.empty p{font-size:13px;color:var(--t3)}
+#error-screen{display:none;position:fixed;inset:0;background:#07070c;color:#fc8888;font-family:monospace;font-size:13px;padding:24px;z-index:99999;overflow:auto;white-space:pre-wrap;line-height:1.6}
+</style>
 </head>
 <body>
 <div id="root"></div>
-<div id="error-display" style="display:none;position:fixed;inset:0;background:#07070c;color:#fc8888;font-family:monospace;font-size:13px;padding:24px;z-index:99999;overflow:auto;white-space:pre-wrap"></div>
+<div id="error-screen"></div>
 <script>
-window.onerror = function(msg, src, line, col, err) {
-  const d = document.getElementById("error-display");
-  if(d){ d.style.display="block"; d.textContent = "❌ JS Error (line " + line + "):\n" + msg + "\n\n" + (err&&err.stack||""); }
+window.onerror=function(m,s,l,c,e){
+  var d=document.getElementById("error-screen");
+  if(d){d.style.display="block";d.textContent="JS Error (line "+l+"):\n"+m+"\n\n"+(e&&e.stack||"");}
   return true;
 };
-window.addEventListener("unhandledrejection", function(e){
-  const d = document.getElementById("error-display");
-  if(d){ d.style.display="block"; d.textContent = "❌ Promise Error:\n" + (e.reason&&e.reason.message||e.reason||"Unknown"); }
-});
 </script>
-<script type="text/babel">
-const { useState, useEffect, useRef } = React;
+<script type="text/babel" data-presets="react">
+const {useState,useEffect,useRef}=React;
 
 const SC=["#f59e0b","#4f9cf9","#a78bfa","#22d3a5","#fc8888"];
 const NAV=[
-  {id:"dashboard",label:"Dashboard",icon:"⬡"},
-  {id:"characters",label:"Characters",icon:"◈"},
+  {id:"dash",label:"Dashboard",icon:"⬡"},
+  {id:"chars",label:"Characters",icon:"◈"},
   {id:"video",label:"Video Creator",icon:"▶"},
   {id:"story",label:"Story Creator",icon:"◇",badge:"AI"},
-  {id:"history",label:"History",icon:"⊟"},
-  {id:"settings",label:"Settings",icon:"◎"},
+  {id:"hist",label:"History",icon:"⊟"},
+  {id:"set",label:"Settings",icon:"◎"},
 ];
 const STYLES=[{v:"studio-ghibli",l:"Studio Ghibli"},{v:"pixar",l:"Pixar 3D"},{v:"anime",l:"Anime"},{v:"2d-cartoon",l:"2D Cartoon"},{v:"watercolor",l:"Watercolor"},{v:"realistic",l:"Realistic"}];
-const DURS=[{v:"3",l:"3 sec"},{v:"5",l:"5 sec"},{v:"8",l:"8 sec"},{v:"10",l:"10 sec"},{v:"15",l:"15 sec"}];
-const RATIOS=[{v:"9:16",l:"9:16 TikTok"},{v:"16:9",l:"16:9 YouTube"},{v:"1:1",l:"1:1 Square"},{v:"4:5",l:"4:5 Instagram"}];
-const CLOUD_VID=[{v:"kling",l:"Kling AI"},{v:"runway",l:"Runway Gen-3"},{v:"luma",l:"Luma Dream"}];
-const OLLAMA_MODELS=[{v:"llama3.2",l:"Llama 3.2"},{v:"mistral",l:"Mistral 7B"},{v:"gemma2",l:"Gemma 2"},{v:"phi3",l:"Phi-3 Mini"},{v:"qwen2.5",l:"Qwen 2.5"}];
-
-// Estimated generation time in seconds per model
-const MODEL_TIMES={
-  "Kling AI":180,"Runway Gen-3":150,"Luma Dream":240,
-  "AnimateDiff":480,"Stable Video Diffusion":600,
-  "CogVideoX (5B)":900,"LTX-Video":300,"Wan2.1":1200,
-};
-
-const LOCAL_VIDEO_MODELS=[
+const DURS=[{v:"3",l:"3 sec"},{v:"5",l:"5 sec"},{v:"8",l:"8 sec"},{v:"10",l:"10 sec"}];
+const RATIOS=[{v:"9:16",l:"9:16 TikTok"},{v:"16:9",l:"16:9 YouTube"},{v:"1:1",l:"1:1 Square"},{v:"4:5",l:"4:5 Insta"}];
+const CVID=[{v:"kling",l:"Kling AI"},{v:"runway",l:"Runway Gen-3"},{v:"luma",l:"Luma Dream"}];
+const OMODELS=[{v:"llama3.2",l:"Llama 3.2"},{v:"mistral",l:"Mistral 7B"},{v:"gemma2",l:"Gemma 2"},{v:"phi3",l:"Phi-3 Mini"}];
+const LVIDS=[
   {id:"animatediff",name:"AnimateDiff",desc:"ComfyUI — GPU recommended",icon:"🎞️",time:"~8 min"},
-  {id:"svd",name:"Stable Video Diffusion",desc:"ComfyUI SVD Workflow",icon:"📽️",time:"~10 min"},
-  {id:"cogvideox",name:"CogVideoX (5B)",desc:"Open-source, high quality",icon:"🎬",time:"~15 min"},
   {id:"ltx",name:"LTX-Video",desc:"Fast, low VRAM",icon:"⚡",time:"~5 min"},
-  {id:"wanvideo",name:"Wan2.1",desc:"14B — best local quality",icon:"🌊",time:"~20 min"},
+  {id:"cogvideox",name:"CogVideoX (5B)",desc:"High quality",icon:"🎬",time:"~15 min"},
+  {id:"wan",name:"Wan2.1",desc:"Best local quality",icon:"🌊",time:"~20 min"},
 ];
-
-
-
-// Generate a real ComfyUI workflow JSON for AnimateDiff
-function buildComfyWorkflow(prompt, model="animatediff"){
-  const workflows={
-    animatediff:{
-      "1":{"inputs":{"ckpt_name":"v1-5-pruned-emaonly.ckpt"},"class_type":"CheckpointLoaderSimple"},
-      "2":{"inputs":{"model_name":"mm_sd_v15_v2.ckpt","beta_schedule":"linear","linear_start":0.00085,"linear_end":0.012},"class_type":"ADE_AnimateDiffLoaderWithContext"},
-      "3":{"inputs":{"text":prompt,"clip":["1",1]},"class_type":"CLIPTextEncode"},
-      "4":{"inputs":{"text":"blurry, ugly, bad anatomy, distorted, watermark","clip":["1",1]},"class_type":"CLIPTextEncode"},
-      "5":{"inputs":{"width":512,"height":512,"batch_size":16},"class_type":"EmptyLatentImage"},
-      "6":{"inputs":{"seed":Math.floor(Math.random()*999999),"steps":20,"cfg":7,"sampler_name":"euler_ancestral","scheduler":"normal","denoise":1,"model":["2",0],"positive":["3",0],"negative":["4",0],"latent_image":["5",0]},"class_type":"KSampler"},
-      "7":{"inputs":{"samples":["6",0],"vae":["1",2]},"class_type":"VAEDecode"},
-      "8":{"inputs":{"images":["7",0],"frame_rate":8,"loop_count":0,"filename_prefix":"AI_Character_Video","format":"image/webp","lossless":false,"quality":85,"method":"default"},"class_type":"SaveAnimatedWEBP"}
-    },
-    ltx:{
-      "1":{"inputs":{"model":"ltx-video-2b-v0.9.safetensors"},"class_type":"LTXVLoader"},
-      "2":{"inputs":{"text":prompt,"clip":["1",1]},"class_type":"CLIPTextEncode"},
-      "3":{"inputs":{"text":"blurry, ugly, distorted","clip":["1",1]},"class_type":"CLIPTextEncode"},
-      "4":{"inputs":{"width":768,"height":512,"length":97,"batch_size":1},"class_type":"LTXVEmptyLatentVideo"},
-      "5":{"inputs":{"seed":Math.floor(Math.random()*999999),"steps":25,"cfg":3,"model":["1",0],"positive":["2",0],"negative":["3",0],"latent":["4",0]},"class_type":"LTXVSampler"},
-      "6":{"inputs":{"samples":["5",0],"vae":["1",1]},"class_type":"LTXVDecode"},
-      "7":{"inputs":{"images":["6",0],"frame_rate":24,"filename_prefix":"LTX_Video"},"class_type":"SaveAnimatedWEBP"}
-    }
-  };
-  return JSON.stringify(workflows[model]||workflows.animatediff, null, 2);
-}
-
-// Submit workflow to ComfyUI API
-async function submitToComfyUI(prompt, port, model){
-  const workflow=buildComfyWorkflow(prompt, model);
-  const r=await fetch(`http://localhost:${port}/prompt`,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({prompt:JSON.parse(workflow)})
-  });
-  if(!r.ok) throw new Error(`ComfyUI error: HTTP ${r.status}`);
-  const d=await r.json();
-  return d.prompt_id;
-}
-
-// Free public sample MP4s used in Demo mode
-const SAMPLE_VIDEOS=[
+const MTIMES={"Kling AI":180,"Runway Gen-3":150,"Luma Dream":240,"AnimateDiff":480,"LTX-Video":300,"CogVideoX (5B)":900,"Wan2.1":1200};
+const SVIDS=[
   "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
   "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
   "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
   "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
   "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4",
 ];
-function randomSampleVideo(){return SAMPLE_VIDEOS[Math.floor(Math.random()*SAMPLE_VIDEOS.length)];}
+const randVid=()=>SVIDS[Math.floor(Math.random()*SVIDS.length)];
 
-const INIT_CHARS=[
-  {id:1,name:"Mochi",locked:true,color:"#f59e0b",description:"Orange & white cat in traditional Japanese clothing with floral headscarf",traits:["Curious","Warm","Creative"],style:"Studio Ghibli–inspired",coloring:"Orange & white fur",eyes:"Large amber, round",clothing:"Yukata + floral headscarf",accessories:"Wicker basket, apron",build:"Small, soft proportions",videos:14,series:3},
-  {id:2,name:"Captain Rex",locked:false,color:"#4f9cf9",description:"Navy blue penguin in captain's coat with gold buttons and tiny brass telescope",traits:["Adventurous","Bold","Loyal"],style:"2D cartoon, flat design",coloring:"Navy & white plumage",eyes:"Sharp, dark, determined",clothing:"Captain's coat + peaked cap",accessories:"Brass telescope, map scroll",build:"Stocky, upright posture",videos:6,series:1},
+const now=Date.now();
+const ICHARS=[
+  {id:1,name:"Mochi",locked:true,color:"#f59e0b",description:"Orange and white cat in traditional Japanese clothing with floral headscarf",traits:["Curious","Warm","Creative"],style:"Studio Ghibli",coloring:"Orange and white fur",eyes:"Large amber, round",clothing:"Yukata + floral headscarf",accessories:"Wicker basket, apron",build:"Small, soft proportions",videos:14,series:3},
+  {id:2,name:"Captain Rex",locked:false,color:"#4f9cf9",description:"Navy blue penguin in captain's coat with gold buttons and brass telescope",traits:["Adventurous","Bold","Loyal"],style:"2D cartoon flat",coloring:"Navy and white plumage",eyes:"Sharp dark, determined",clothing:"Captain's coat + peaked cap",accessories:"Brass telescope, map scroll",build:"Stocky, upright posture",videos:6,series:1},
 ];
-
-const now = Date.now();
-const INIT_VIDEOS=[
-  {id:1,charId:1,char:"Mochi",charColor:"#f59e0b",scene:"Baking sourdough in a cozy cottage kitchen",dur:"5s",ratio:"9:16",status:"done",model:"Kling AI",ts:"2h ago",createdAt:now-7200000,estimatedSecs:180,videoUrl:"https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"},
-  {id:2,charId:1,char:"Mochi",charColor:"#f59e0b",scene:"Opening a flower market at golden-hour sunrise",dur:"8s",ratio:"16:9",status:"done",model:"Runway Gen-3",ts:"3h ago",createdAt:now-10800000,estimatedSecs:150,videoUrl:"https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"},
-  {id:3,charId:2,char:"Captain Rex",charColor:"#4f9cf9",scene:"Navigating a storm with compass in hand",dur:"6s",ratio:"1:1",status:"processing",model:"Luma Dream",ts:"1h ago",createdAt:now-210000,estimatedSecs:240},
-  {id:4,charId:1,char:"Mochi",charColor:"#f59e0b",scene:"Teaching pottery class to small forest creatures",dur:"10s",ratio:"9:16",status:"done",model:"Kling AI",ts:"1d ago",createdAt:now-86400000,estimatedSecs:180,videoUrl:"https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"},
-  {id:5,charId:2,char:"Captain Rex",charColor:"#4f9cf9",scene:"Discovering a treasure map on a remote island",dur:"7s",ratio:"16:9",status:"done",model:"Runway Gen-3",ts:"2d ago",createdAt:now-172800000,estimatedSecs:150,videoUrl:"https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"},
+const IVIDS=[
+  {id:1,charId:1,char:"Mochi",charColor:"#f59e0b",scene:"Baking sourdough in a cozy cottage kitchen",dur:"5s",ratio:"9:16",status:"done",model:"Kling AI",ts:"2h ago",createdAt:now-7200000,estimatedSecs:180,videoUrl:SVIDS[0]},
+  {id:2,charId:1,char:"Mochi",charColor:"#f59e0b",scene:"Opening a flower market at golden-hour sunrise",dur:"8s",ratio:"16:9",status:"done",model:"Runway Gen-3",ts:"3h ago",createdAt:now-10800000,estimatedSecs:150,videoUrl:SVIDS[1]},
+  {id:3,charId:2,char:"Captain Rex",charColor:"#4f9cf9",scene:"Navigating a storm with compass in hand",dur:"6s",ratio:"1:1",status:"processing",model:"Luma Dream",ts:"1h ago",createdAt:now-3600000,estimatedSecs:240,videoUrl:null},
+  {id:4,charId:1,char:"Mochi",charColor:"#f59e0b",scene:"Teaching pottery class to small forest creatures",dur:"10s",ratio:"9:16",status:"done",model:"Kling AI",ts:"1d ago",createdAt:now-86400000,estimatedSecs:180,videoUrl:SVIDS[3]},
+  {id:5,charId:2,char:"Captain Rex",charColor:"#4f9cf9",scene:"Discovering a treasure map on a remote island",dur:"7s",ratio:"16:9",status:"done",model:"Runway Gen-3",ts:"2d ago",createdAt:now-172800000,estimatedSecs:150,videoUrl:SVIDS[4]},
 ];
 
 let G={
   mode:localStorage.getItem("ai_mode")||"demo",
-  anthropic:localStorage.getItem("anthropic_key")||"",
-  ollamaUrl:localStorage.getItem("ollama_url")||"http://localhost:11434",
-  ollamaModel:localStorage.getItem("ollama_model")||"llama3.2",
-  comfyPort:localStorage.getItem("comfy_port")||"8188",
+  key:localStorage.getItem("anthropic_key")||"",
+  oUrl:localStorage.getItem("ollama_url")||"http://localhost:11434",
+  oModel:localStorage.getItem("ollama_model")||"llama3.2",
+  cPort:localStorage.getItem("comfy_port")||"8188",
 };
 
-// ── AI Engine ────────────────────────────────────────────────────────────────
-function parseJSON(t){return extractJSON(t);}
-
-
-// Smart JSON extractor — handles models that wrap JSON in text/markdown
-function extractJSON(text){
-  if(!text) throw new Error("Empty response from AI model");
-  // 1. Direct parse
-  try{return JSON.parse(text.trim());}catch{}
-  // 2. Strip markdown code fences
-  const clean=text.replace(/```json\n?|```\n?/g,"").trim();
-  try{return JSON.parse(clean);}catch{}
-  // 3. Find first JSON object in text
-  const objM=text.match(/\{[\s\S]*\}/);
-  if(objM){try{return JSON.parse(objM[0]);}catch{}}
-  // 4. Find first JSON array in text
-  const arrM=text.match(/\[[\s\S]*\]/);
-  if(arrM){try{return JSON.parse(arrM[0]);}catch{}}
-  throw new Error("Could not parse JSON from AI response. Try model: llama3.2 or mistral");
+function extractJSON(txt){
+  if(!txt)throw new Error("Empty AI response");
+  try{return JSON.parse(txt.trim());}catch{}
+  const c=txt.replace(/```json\n?|```\n?/g,"").trim();
+  try{return JSON.parse(c);}catch{}
+  const o=txt.match(/\{[\s\S]*\}/);
+  if(o)try{return JSON.parse(o[0]);}catch{}
+  const a=txt.match(/\[[\s\S]*\]/);
+  if(a)try{return JSON.parse(a[0]);}catch{}
+  throw new Error("Cannot parse AI response. Try model: llama3.2 or mistral");
 }
 
-async function callCloud(prompt,max=1200){
-  if(!G.anthropic) throw new Error("No Anthropic API key — please add it in Settings.");
+async function callCloud(p,max=1200){
+  if(!G.key)throw new Error("No Anthropic API key — add it in Settings.");
   const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",
-    headers:{"Content-Type":"application/json","x-api-key":G.anthropic,"anthropic-version":"2023-06-01"},
-    body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:max,messages:[{role:"user",content:prompt}]})});
+    headers:{"Content-Type":"application/json","x-api-key":G.key,"anthropic-version":"2023-06-01"},
+    body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:max,messages:[{role:"user",content:p}]})});
   const d=await r.json();
-  if(!r.ok) throw new Error(d.error?.message||"Anthropic API error");
+  if(!r.ok)throw new Error(d.error?.message||"Anthropic error");
   return d.content?.[0]?.text||"";
 }
 
-async function callOllama(prompt){
-  // Block on HTTPS (GitHub Pages, etc.)
-  if(location.protocol==="https:"){
-    throw new Error("🔒 HTTPS blocks localhost. Download index.html, then run:\npython -m http.server 8080\nand open http://localhost:8080");
-  }
-  // Try chat API first (more reliable across models)
+async function callOllama(p){
+  if(location.protocol==="https:")throw new Error("HTTPS blocks localhost. Run: python -m http.server 8080 and open http://localhost:8080");
   try{
-    const r=await fetch(`${G.ollamaUrl}/api/chat`,{
-      method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:G.ollamaModel,messages:[{role:"user",content:prompt}],stream:false}),
-      signal:AbortSignal.timeout(60000)
-    });
-    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    const r=await fetch(`${G.oUrl}/api/chat`,{method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:G.oModel,messages:[{role:"user",content:p}],stream:false}),
+      signal:AbortSignal.timeout(60000)});
+    if(!r.ok)throw new Error("HTTP "+r.status);
     const d=await r.json();
     return d.message?.content||"";
-  }catch(chatErr){
-    // Fallback: generate API
-    try{
-      const r=await fetch(`${G.ollamaUrl}/api/generate`,{
-        method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({model:G.ollamaModel,prompt,stream:false}),
-        signal:AbortSignal.timeout(60000)
-      });
-      if(!r.ok) throw new Error(`HTTP ${r.status}`);
-      const d=await r.json();
-      return d.response||"";
-    }catch(genErr){
-      const isNetwork=genErr.message.includes("fetch")||genErr.message.includes("Failed")||genErr.name==="TypeError";
-      if(isNetwork){
-        throw new Error(`Ollama is not running or CORS is blocked.\n\nRun this command in your terminal:\nOLLAMA_ORIGINS=* ollama serve\n\nThen make sure you opened this page at http://localhost:8080 (not GitHub Pages).`);
-      }
-      throw new Error(`Ollama error: ${genErr.message}`);
-    }
+  }catch(e1){
+    const r=await fetch(`${G.oUrl}/api/generate`,{method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:G.oModel,prompt:p,stream:false}),
+      signal:AbortSignal.timeout(60000)});
+    if(!r.ok)throw new Error("Ollama not reachable. Run: OLLAMA_ORIGINS=* ollama serve");
+    const d=await r.json();
+    return d.response||"";
   }
 }
 
+async function callAI(p,max=1000){
+  if(G.mode==="local")return callOllama(p);
+  return callCloud(p,max);
+}
+
+const DEMO_AN=[
+  {coloring:"Rich orange and white fur",eyes:"Large amber eyes, gentle gaze",clothing:"Traditional floral yukata",accessories:"Wicker basket, headscarf",build:"Small, rounded, soft",style:"Studio Ghibli 2D animation",traits:["Curious","Warm","Gentle"],consistencyNote:"Always show with floral headscarf in warm golden lighting"},
+  {coloring:"Navy blue plumage, white belly",eyes:"Sharp round black eyes",clothing:"Navy captain coat, brass buttons",accessories:"Brass telescope, map scroll",build:"Stocky upright penguin",style:"2D cartoon bold flat design",traits:["Bold","Adventurous","Loyal"],consistencyNote:"Always show in crisp high-contrast light with clear silhouette"},
+];
+
+const DEMO_ST=[
+  [{title:"The First Morning",description:"The character wakes early, full of excitement. The kitchen smells of fresh dough as they prepare ingredients.",camera:"Wide shot, warm morning sunlight",mood:"Hopeful",duration:"5s"},
+   {title:"The Challenge",description:"The first attempt goes wrong. They frown in concentration but refuse to give up.",camera:"Medium close-up, soft light",mood:"Determined",duration:"5s"},
+   {title:"Unexpected Help",description:"A neighbor arrives with a family recipe. The character listens attentively.",camera:"Over-shoulder, warm candlelight",mood:"Grateful",duration:"5s"},
+   {title:"Breakthrough",description:"The oven opens to reveal perfect results. The character beams with joy.",camera:"Low angle, steam rising, amber light",mood:"Triumphant",duration:"5s"},
+   {title:"Celebration",description:"The whole neighborhood gathers. Everyone shares and smiles warmly.",camera:"Wide pull-back, golden hour",mood:"Joyful",duration:"6s"}],
+  [{title:"Setting Out",description:"At the harbor with a small pack, gazing at the open sea.",camera:"Wide shot, dramatic sky",mood:"Adventurous",duration:"5s"},
+   {title:"Storm at Sea",description:"Dark clouds roll in. They grip the helm and navigate crashing waves.",camera:"Dynamic tracking shot",mood:"Tense",duration:"5s"},
+   {title:"The Island",description:"Fog lifts to reveal a lush unknown island. They leap ashore.",camera:"Slow push-in, morning mist",mood:"Awed",duration:"6s"},
+   {title:"Hidden Treasure",description:"Digging under an ancient tree, they strike a glowing chest.",camera:"Close-up reveal shot",mood:"Excited",duration:"5s"},
+   {title:"Return as Hero",description:"They return with treasure to cheering friends in evening light.",camera:"Wide pull-back, golden sunset",mood:"Triumphant",duration:"6s"}],
+];
+
+async function aiAnalyze(name,desc){
+  if(G.mode==="demo")return{...DEMO_AN[Math.floor(Math.random()*DEMO_AN.length)]};
+  const p=`Analyze character for AI video generation.\nCharacter: ${name}\nDescription: ${desc}\nRespond ONLY with valid JSON:\n{"coloring":"...","eyes":"...","clothing":"...","accessories":"...","build":"...","style":"...","traits":["t1","t2","t3"],"consistencyNote":"..."}`;
+  const t=await callAI(p);
+  return extractJSON(t);
+}
+
+async function aiStory(char,idea){
+  if(G.mode==="demo"){const kw=idea.toLowerCase();const i=kw.includes("bak")||kw.includes("cook")?0:kw.includes("sea")||kw.includes("adventure")?1:Math.floor(Math.random()*DEMO_ST.length);return DEMO_ST[i].map((s,j)=>({scene:j+1,...s}));}
+  const p=`AI video story writer.\nCharacter: ${char.name} - ${char.description}\nStory: "${idea}"\n${char.name} appears identically in ALL 5 scenes.\nRespond ONLY with JSON array:\n[{"scene":1,"title":"...","description":"2-3 sentences","camera":"...","mood":"...","duration":"5s"}]`;
+  const t=await callAI(p,1400);
+  return extractJSON(t);
+}
 
 async function testOllama(){
-  if(location.protocol==="https:") return "https";
-  try{
-    const r=await fetch(`${G.ollamaUrl}/api/tags`,{signal:AbortSignal.timeout(4000)});
-    if(!r.ok) return `error_${r.status}`;
-    const d=await r.json();
-    const models=(d.models||[]).map(m=>m.name);
-    return {ok:true,models};
-  }catch(e){
-    if(e.name==="AbortError"||e.name==="TimeoutError") return "timeout";
-    return "unreachable";
-  }
+  if(location.protocol==="https:")return{ok:false,err:"https"};
+  try{const r=await fetch(`${G.oUrl}/api/tags`,{signal:AbortSignal.timeout(4000)});if(!r.ok)return{ok:false,err:"http_"+r.status};const d=await r.json();return{ok:true,models:(d.models||[]).map(m=>m.name)};}catch{return{ok:false,err:"unreachable"};}
 }
-
-
 async function testComfy(port){
-  if(location.protocol==="https:") return "https";
-  try{
-    const r=await fetch(`http://localhost:${port}/system_stats`,{signal:AbortSignal.timeout(4000)});
-    if(!r.ok) return "err_"+r.status;
-    const d=await r.json();
-    return {ok:true, gpu:d.system?.gpus?.[0]?.name||"GPU detected"};
-  }catch(e){
-    if(e.name==="AbortError") return "timeout";
-    return "unreachable";
-  }
+  if(location.protocol==="https:")return{ok:false,err:"https"};
+  try{const r=await fetch(`http://localhost:${port}/system_stats`,{signal:AbortSignal.timeout(4000)});if(!r.ok)return{ok:false,err:"http_"+r.status};const d=await r.json();return{ok:true,gpu:d.system?.gpus?.[0]?.name||"GPU detected"};}catch{return{ok:false,err:"unreachable"};}
 }
 
-// Demo data
-const DEMO_AN=[
-  {coloring:"Rich orange & white fur",eyes:"Large amber eyes, gentle gaze",clothing:"Traditional floral yukata",accessories:"Wicker basket, headscarf",build:"Small, rounded, soft",style:"Studio Ghibli 2D animation",traits:["Curious","Warm","Gentle"],consistencyNote:"Always show the orange-white cat with floral headscarf in warm golden lighting"},
-  {coloring:"Navy blue plumage, white belly",eyes:"Sharp round black eyes",clothing:"Navy captain's coat, brass buttons",accessories:"Brass telescope, map scroll",build:"Stocky upright penguin",style:"2D cartoon bold flat design",traits:["Bold","Adventurous","Loyal"],consistencyNote:"Always show the navy penguin in crisp high-contrast light with clear silhouette"},
-  {coloring:"Soft lavender fur, white tips",eyes:"Wide purple eyes, sleepy look",clothing:"Oversized knitted sweater, tiny glasses",accessories:"Stack of books, steaming tea cup",build:"Tiny, round, cozy",style:"Pastel watercolor illustration",traits:["Thoughtful","Cozy","Wise"],consistencyNote:"Always show the lavender character in warm soft light with dreamy pastel background"},
-];
-
-const DEMO_STORIES=[
-  [{title:"The First Morning",desc:"The character wakes up early, full of excitement. The kitchen smells of fresh dough as they tie their apron and prepare the first ingredients.",camera:"Wide shot, warm morning sunlight through window",mood:"Hopeful",duration:"5s"},
-   {title:"The First Challenge",desc:"The first attempt goes wrong — the dough sticks and the recipe is hard to read. They frown but refuse to give up.",camera:"Medium close-up, soft frustrated expression",mood:"Determined",duration:"5s"},
-   {title:"An Unexpected Helper",desc:"An elderly neighbor knocks with a family recipe. The character listens carefully, eyes glowing with gratitude.",camera:"Over-shoulder shot, warm candlelight",mood:"Grateful",duration:"5s"},
-   {title:"The Breakthrough",desc:"The oven opens — golden-brown, perfectly baked results. The character beams and raises both arms in joy.",camera:"Low angle, steam rising, warm amber light",mood:"Triumphant",duration:"5s"},
-   {title:"Celebrating Together",desc:"The whole neighborhood gathers. The character shares fresh bread and smiles happily at the crowd.",camera:"Wide pull-back, golden hour, all characters together",mood:"Joyful",duration:"6s"}],
-  [{title:"Setting Out",desc:"At the harbor with a small backpack — wide open sea, the wind sweeps back their hair.",camera:"Wide establishing shot, dramatic sky",mood:"Adventurous",duration:"5s"},
-   {title:"Storm at Sea",desc:"Dark clouds roll in. The character grips the helm and navigates crashing waves with calm steady eyes.",camera:"Dynamic tracking shot, handheld style",mood:"Tense",duration:"5s"},
-   {title:"The Mysterious Island",desc:"The fog lifts to reveal a lush unknown island. They leap into the shallows and wade ashore.",camera:"Slow push-in, mysterious morning mist",mood:"Awed",duration:"6s"},
-   {title:"The Hidden Treasure",desc:"With bare hands they dig under an ancient tree, striking a rusted chest glowing with golden light.",camera:"Close-up on hands, treasure reveal",mood:"Excited",duration:"5s"},
-   {title:"Return as a Hero",desc:"They return, chest in hand, greeted by cheering friends in the evening glow.",camera:"Wide pull-back, golden sunset",mood:"Triumphant",duration:"6s"}],
-  [{title:"A Quiet Start",desc:"By the window with a steaming cup of tea, deep in a thick book. Autumn leaves drift past outside.",camera:"Static medium shot, cozy interior",mood:"Peaceful",duration:"5s"},
-   {title:"The Big Idea",desc:"Suddenly a leap — a brilliant idea! Notes fly, sketches form, eyes light up with excitement.",camera:"Dynamic pan, papers flying",mood:"Excited",duration:"5s"},
-   {title:"Hard Work",desc:"Late at night, surrounded by drafts, working with intense focus. Serious and determined.",camera:"Close-up on focused expression, lamp light",mood:"Focused",duration:"5s"},
-   {title:"The Moment of Truth",desc:"The finished result is presented to a small audience. The silence before the applause stretches out.",camera:"Medium shot, anticipation",mood:"Nervous",duration:"5s"},
-   {title:"Recognition & Joy",desc:"Applause fills the room. A slight bow, a wide genuine smile.",camera:"Wide shot, warm group lighting",mood:"Joyful",duration:"6s"}],
-];
-
-function demoAnalysis(){return{...DEMO_AN[Math.floor(Math.random()*DEMO_AN.length)]};}
-function demoStory(idea){
-  const kw=idea.toLowerCase();
-  const i=(kw.includes("bak")||kw.includes("bread")||kw.includes("kitchen"))?0:
-           (kw.includes("sea")||kw.includes("travel")||kw.includes("adventure")||kw.includes("island"))?1:
-           Math.floor(Math.random()*DEMO_STORIES.length);
-  return DEMO_STORIES[i].map((s,j)=>({scene:j+1,...s}));
+function buildWorkflow(prompt,model="animatediff"){
+  return JSON.stringify({"1":{"inputs":{"ckpt_name":"v1-5-pruned-emaonly.ckpt"},"class_type":"CheckpointLoaderSimple"},"3":{"inputs":{"text":prompt,"clip":["1",1]},"class_type":"CLIPTextEncode"},"4":{"inputs":{"text":"blurry, ugly, watermark","clip":["1",1]},"class_type":"CLIPTextEncode"},"5":{"inputs":{"seed":Math.floor(Math.random()*999999),"steps":20,"cfg":7,"sampler_name":"euler_ancestral","scheduler":"normal","denoise":1,"model":["1",0],"positive":["3",0],"negative":["4",0]},"class_type":"KSampler"}},null,2);
 }
 
-async function aiAnalyzeChar(name,desc){
-  if(G.mode==="demo") return demoAnalysis();
-  const p=`Analyze this character for AI video generation consistency.
-Character: ${name}
-Description: ${desc}
-Respond ONLY with valid JSON (no markdown):
-{"coloring":"...","eyes":"...","clothing":"...","accessories":"...","build":"...","style":"...","traits":["t1","t2","t3"],"consistencyNote":"..."}`;
-  const t=G.mode==="local"?await callOllama(p):await callCloud(p);
-  return G.mode==="local"?extractJSON(t):parseJSON(t);
-}
+// ── Primitives ────────────────────────────────────────────────────────────────
+const Pill=({s})=>{const m={done:"Done",processing:"Processing",queued:"Queued",error:"Error"};return<span className={`pill ${s||"queued"}`}><span className="pill-dot"/>{m[s]||"Queued"}</span>;};
+const Btn=({ch,v="def",sz="md",onClick,disabled,style:st,cls=""})=><button className={`btn ${v} ${sz} ${cls}`} onClick={onClick} disabled={disabled} style={st}>{ch}</button>;
+const Fld=({lbl,children,cls=""})=><div className={`fld ${cls}`}>{lbl&&<label>{lbl}</label>}{children}</div>;
+const Inp=({lbl,val,set,ph,type="text",cls=""})=><Fld lbl={lbl} cls={cls}><input type={type} className="inp" value={val} onChange={e=>set(e.target.value)} placeholder={ph}/></Fld>;
+const TA=({lbl,val,set,ph,rows=3,cls=""})=><Fld lbl={lbl} cls={cls}><textarea className="inp" value={val} onChange={e=>set(e.target.value)} placeholder={ph} rows={rows}/></Fld>;
+const Sel=({lbl,val,set,opts,cls=""})=><Fld lbl={lbl} cls={cls}><select className="inp" value={val} onChange={e=>set(e.target.value)}>{opts.map(o=><option key={o.v} value={o.v}>{o.l}</option>)}</select></Fld>;
+const Card=({ch,cls="",onClick,style:st})=><div className={`card ${onClick?"click":""} ${cls}`} onClick={onClick} style={st}>{ch}</div>;
+const SH=({title,action})=><div className="shdr"><h2>{title}</h2>{action}</div>;
 
-async function aiGenerateStory(char,idea){
-  if(G.mode==="demo") return demoStory(idea);
-  const p=`You are an AI video story writer for animated short-form content.
-Character: ${char.name} — ${char.description}
-Story idea: "${idea}"
-${char.name} must appear identically in ALL 5 scenes.
-Respond ONLY with a raw JSON array (no markdown, no preamble):
-[{"scene":1,"title":"...","description":"2-3 vivid sentences","camera":"...","mood":"...","duration":"5s"}]`;
-  const t=G.mode==="local"?await callOllama(p):await callCloud(p,1400);
-  return G.mode==="local"?extractJSON(t):parseJSON(t);
-}
+function fmtT(s){const m=Math.floor(s/60);const sc=s%60;return m>0?`${m}m ${sc.toString().padStart(2,"0")}s`:`${sc}s`;}
+function stage(p){if(p<5)return"Queued…";if(p<15)return"Initializing model…";if(p<35)return"Generating keyframes…";if(p<58)return"Compositing scene…";if(p<78)return"Rendering output…";if(p<94)return"Encoding video…";if(p<100)return"Almost ready!";return"Done";}
 
-// ── Processing Timer Component ───────────────────────────────────────────────
-function getStage(pct){
-  if(pct<5) return "Queued — waiting for GPU...";
-  if(pct<15) return "Initializing model...";
-  if(pct<35) return "Generating keyframes...";
-  if(pct<58) return "Compositing scene...";
-  if(pct<78) return "Rendering output...";
-  if(pct<94) return "Encoding video...";
-  if(pct<100) return "Almost ready!";
-  return "✓ Done";
-}
-
-function fmt(secs){
-  const m=Math.floor(secs/60), s=secs%60;
-  return m>0?`${m}m ${s.toString().padStart(2,"0")}s`:`${s}s`;
-}
-
-function ProcessingTimer({video,onComplete}){
+function PTimer({video,onDone}){
   const total=video.estimatedSecs||180;
-  const [elapsed,setElapsed]=useState(()=>Math.floor((Date.now()-video.createdAt)/1000));
-
+  const [el,setEl]=useState(()=>Math.floor((Date.now()-(video.createdAt||Date.now()))/1000));
   useEffect(()=>{
-    if(video.status!=="processing") return;
-    const iv=setInterval(()=>{
-      const e=Math.floor((Date.now()-video.createdAt)/1000);
-      setElapsed(e);
-      if(e>=total){clearInterval(iv);onComplete&&onComplete(video.id);}
-    },1000);
+    if(video.status!=="processing")return;
+    const iv=setInterval(()=>{const e=Math.floor((Date.now()-(video.createdAt||Date.now()))/1000);setEl(e);if(e>=total){clearInterval(iv);onDone&&onDone(video.id);}},1000);
     return()=>clearInterval(iv);
   },[video.id,total,video.status]);
-
-  const pct=Math.min(99,Math.floor((elapsed/total)*100));
-  const remaining=Math.max(0,total-elapsed);
-
+  const pct=Math.min(99,Math.floor((el/total)*100));
+  const rem=Math.max(0,total-el);
   return(
     <div className="pt">
-      <div className="pt-stage"><div className="pt-stage-dot"/>{getStage(pct)}</div>
-      <div className="pt-track"><div className="pt-fill" style={{width:`${pct}%`}}/></div>
-      <div className="pt-meta">
-        <span className="pt-pct">{pct}%</span>
-        <span className="pt-remain">{remaining>0?`${fmt(remaining)} remaining`:"Finalizing..."}</span>
-      </div>
-      <div className="pt-elapsed">Started {fmt(elapsed)} ago · Est. total: {fmt(total)}</div>
+      <div className="pt-stage"><div className="pt-dot"/>{stage(pct)}</div>
+      <div className="pt-track"><div className="pt-fill" style={{width:pct+"%"}}/></div>
+      <div className="pt-meta"><span className="pt-pct">{pct}%</span><span className="pt-rem">{rem>0?fmtT(rem)+" remaining":"Finalizing…"}</span></div>
+      <div className="pt-elapsed">Started {fmtT(el)} ago · Est: {fmtT(total)} · {video.model}</div>
     </div>
   );
 }
 
-// ── Processing Card (full view in History) ──────────────────────────────────
-function ProcessingCard({video,onComplete,setVideos}){
-  const doImport=()=>{
-    importVideoFile((url,name)=>{
-      if(setVideos) setVideos(p=>p.map(v=>v.id===video.id?{...v,status:"done",videoUrl:url,localFile:name}:v));
-      if(onComplete) onComplete(video.id);
-    });
-  };
+function VModal({video,onClose}){
+  useEffect(()=>{const h=e=>{if(e.key==="Escape")onClose();};document.addEventListener("keydown",h);return()=>document.removeEventListener("keydown",h);},[]);
+  const fn=`${(video.char||"video").replace(/\s/g,"-").toLowerCase()}-${video.id}`;
   return(
-    <div className="proc-card">
-      <div className="proc-card-header">
-        <div className="proc-card-avatar" style={{background:`${video.charColor}18`,border:`1px solid ${video.charColor}33`}}>◈</div>
-        <div className="proc-card-info">
-          <div className="proc-card-scene">{video.scene}</div>
-          <div className="proc-card-meta" style={{color:video.charColor}}>{video.char} · {video.ratio} · {video.dur} · {video.model}</div>
-        </div>
-        <button className="dl-link" style={{fontSize:11,flexShrink:0}} onClick={doImport}>📁 Import file</button>
-      </div>
-      <ProcessingTimer video={video} onComplete={onComplete}/>
-      <div style={{padding:"8px 14px 10px",background:"var(--bg-3)"}}>
-        <div style={{fontSize:11,color:"var(--t3)"}}>
-          {video.localModel
-            ? `Generated in ComfyUI with ${video.localModel}? Click "Import file" to attach the MP4.`
-            : "Waiting for cloud API result. Click "Import file" if you have the MP4 ready."}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-
-
-// ── ComfyUI API ──────────────────────────────────────────────────────────────
-// Builds a minimal AnimateDiff / SVD workflow and queues it
-async function callComfyUI(prompt, modelId){
-  const port=G.comfyPort||"8188";
-  const base=`http://localhost:${port}`;
-
-  // Minimal workflow – user must have the model installed in ComfyUI
-  // This is a text-to-video via AnimateDiff prompt node
-  const workflow={
-    "1":{"class_type":"CLIPTextEncode","inputs":{"clip":["4",1],"text":prompt}},
-    "2":{"class_type":"CLIPTextEncode","inputs":{"clip":["4",1],"text":"blurry, low quality, deformed"}},
-    "3":{"class_type":"KSampler","inputs":{"cfg":7,"denoise":1,"latent_image":["5",0],"model":["4",0],"negative":["2",0],"positive":["1",0],"sampler_name":"euler","scheduler":"normal","seed":Math.floor(Math.random()*99999),"steps":20}},
-    "4":{"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":"v1-5-pruned-emaonly.safetensors"}},
-    "5":{"class_type":"EmptyLatentImage","inputs":{"batch_size":1,"height":512,"width":512}},
-    "6":{"class_type":"VAEDecode","inputs":{"samples":["3",0],"vae":["4",2]}},
-    "7":{"class_type":"SaveImage","inputs":{"filename_prefix":"ai_studio","images":["6",0]}},
-  };
-
-  let queueRes;
-  try{
-    queueRes=await fetch(`${base}/api/prompt`,{
-      method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({prompt:workflow})
-    });
-  }catch(e){
-    throw new Error(`ComfyUI not reachable at ${base}.\n\nStart with: python main.py --enable-cors-header\nAnd open this page locally, not via HTTPS.`);
-  }
-  if(!queueRes.ok) throw new Error(`ComfyUI queue error: ${queueRes.status}`);
-  const {prompt_id}=await queueRes.json();
-  return prompt_id;
-}
-
-async function pollComfyUI(promptId){
-  const base=`http://localhost:${G.comfyPort||8188}`;
-  for(let i=0;i<120;i++){
-    await new Promise(r=>setTimeout(r,3000));
-    try{
-      const r=await fetch(`${base}/api/history/${promptId}`);
-      const d=await r.json();
-      if(d[promptId]?.outputs){
-        const outputs=d[promptId].outputs;
-        // Find first image/video output
-        for(const nodeId of Object.keys(outputs)){
-          const node=outputs[nodeId];
-          if(node.images?.length){
-            const img=node.images[0];
-            return `${base}/view?filename=${img.filename}&type=${img.type||"output"}`;
-          }
-          if(node.videos?.length){
-            const vid=node.videos[0];
-            return `${base}/view?filename=${vid.filename}&type=${vid.type||"output"}`;
-          }
-        }
-      }
-    }catch{}
-  }
-  throw new Error("ComfyUI generation timed out after 6 minutes.");
-}
-
-// ── Import local video file ──────────────────────────────────────────────────
-function importVideoFile(onImport){
-  const input=document.createElement("input");
-  input.type="file";input.accept="video/*,video/mp4,video/webm,video/mov";
-  input.onchange=e=>{
-    const file=e.target.files?.[0];
-    if(!file)return;
-    const url=URL.createObjectURL(file);
-    onImport(url, file.name);
-  };
-  document.body.appendChild(input);
-  input.click();
-  document.body.removeChild(input);
-}
-
-// ── Video Download Helper ────────────────────────────────────────────────────
-function triggerDownload(url,filename){
-  const a=document.createElement("a");
-  a.href=url;a.download=filename||"video.mp4";a.target="_blank";
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
-}
-
-// ── Video Modal ───────────────────────────────────────────────────────────────
-function VideoModal({video,onClose}){
-  const formats=[
-    {label:"⬇ Download MP4",suffix:"mp4",primary:true},
-    {label:"⬇ TikTok (9:16)",suffix:"tiktok.mp4",primary:false},
-    {label:"⬇ Instagram Reels",suffix:"reels.mp4",primary:false},
-    {label:"⬇ YouTube Shorts",suffix:"shorts.mp4",primary:false},
-  ];
-  useEffect(()=>{
-    const close=e=>{if(e.key==="Escape")onClose();};
-    document.addEventListener("keydown",close);
-    return()=>document.removeEventListener("keydown",close);
-  },[]);
-  const filename=`${video.char.replace(/\s/g,"-").toLowerCase()}-${video.id}`;
-  return(
-    <div className="vmodal-overlay" onClick={onClose}>
-      <div className="vmodal" onClick={e=>e.stopPropagation()} style={{position:"relative"}}>
-        <button className="vmodal-close" onClick={onClose}>✕</button>
+    <div className="vmod-ov" onClick={onClose}>
+      <div className="vmod" onClick={e=>e.stopPropagation()}>
+        <button className="vmod-close" onClick={onClose}>✕</button>
         {video.videoUrl
-          ?<video className="vmodal-video" src={video.videoUrl} controls autoPlay playsInline/>
-          :<div className="vmodal-no-video">
-            <div style={{fontSize:36,opacity:.15}}>▶</div>
-            <div>{video.status==="processing"?"⏳ Video is still generating…":"No video file yet"}</div>
-            {video.status!=="processing"&&<div style={{fontSize:11,color:"var(--t3)",textAlign:"center",maxWidth:300}}>Add Kling / Runway / Luma API keys in Settings to generate real videos. Demo mode uses sample files.</div>}
-          </div>}
-        <div className="vmodal-body">
-          <div className="vmodal-title">{video.scene}</div>
-          <div className="vmodal-meta">
+          ?<video src={video.videoUrl} controls autoPlay playsInline/>
+          :<div className="vmod-nobody"><div style={{fontSize:34,opacity:.15}}>▶</div><p>{video.status==="processing"?"Video is still generating…":"No video file yet"}</p><span>Add API keys in Settings to generate real videos.</span></div>}
+        <div className="vmod-body">
+          <div className="vmod-title">{video.scene}</div>
+          <div className="vmod-meta">
             <span style={{color:video.charColor,fontWeight:600}}>{video.char}</span>
             <span>{video.ratio}</span><span>{video.dur}</span><span>{video.model}</span>
-            <span style={{color:"var(--t3)"}}>{video.ts}</span>
           </div>
-          {video.videoUrl&&<div className="vmodal-actions">
-            <a className="dl-link pri" href={video.videoUrl} download={`${filename}.mp4`} target="_blank">⬇ Download MP4</a>
-            <a className="dl-link" href={video.videoUrl} download={`${filename}-tiktok.mp4`} target="_blank">TikTok</a>
-            <a className="dl-link" href={video.videoUrl} download={`${filename}-reels.mp4`} target="_blank">Reels</a>
-            <a className="dl-link" href={video.videoUrl} download={`${filename}-shorts.mp4`} target="_blank">Shorts</a>
-            <button className="dl-link" onClick={()=>{navigator.clipboard?.writeText(video.videoUrl||"");}} style={{cursor:"pointer"}}>📋 Copy URL</button>
-          </div>}
-          {!video.videoUrl&&video.status!=="processing"&&<div style={{fontSize:12,color:"var(--t3)",padding:"10px 14px",background:"var(--bg-3)",borderRadius:"var(--r-md)"}}>
-            To get real downloadable videos: switch to Cloud mode in Settings and add your API keys (Kling AI / Runway / Luma Dream).
+          {video.videoUrl&&<div className="vmod-acts">
+            <a className="dlbtn pri" href={video.videoUrl} download={fn+".mp4"} target="_blank" rel="noreferrer">Download MP4</a>
+            <a className="dlbtn" href={video.videoUrl} download={fn+"-tiktok.mp4"} target="_blank" rel="noreferrer">TikTok</a>
+            <a className="dlbtn" href={video.videoUrl} download={fn+"-reels.mp4"} target="_blank" rel="noreferrer">Reels</a>
+            <a className="dlbtn" href={video.videoUrl} download={fn+"-shorts.mp4"} target="_blank" rel="noreferrer">Shorts</a>
+            <button className="dlbtn" onClick={()=>navigator.clipboard?.writeText(video.videoUrl||"")}>Copy URL</button>
           </div>}
         </div>
       </div>
@@ -792,57 +468,28 @@ function VideoModal({video,onClose}){
   );
 }
 
-// ── Primitives ───────────────────────────────────────────────────────────────
-const Pill=({status})=>{const m={done:"Done",processing:"Processing",queued:"Queued",error:"Error"};return<span className={`pill ${status||"queued"}`}><span className="pill-dot"/>{m[status]||"Queued"}</span>;};
-const Btn=({children,v="def",sz="md",onClick,disabled,style:s,cls=""})=><button className={`btn ${v} ${sz} ${cls}`} onClick={onClick} disabled={disabled} style={s}>{children}</button>;
-const Field=({label,children,cls=""})=><div className={`field ${cls}`}>{label&&<label>{label}</label>}{children}</div>;
-const Inp=({label,value,onChange,ph,type="text",cls=""})=><Field label={label} cls={cls}><input type={type} className="finp" value={value} onChange={e=>onChange(e.target.value)} placeholder={ph}/></Field>;
-const TA=({label,value,onChange,ph,rows=3,cls=""})=><Field label={label} cls={cls}><textarea className="finp" value={value} onChange={e=>onChange(e.target.value)} placeholder={ph} rows={rows}/></Field>;
-const Sel=({label,value,onChange,opts,cls=""})=><Field label={label} cls={cls}><select className="finp" value={value} onChange={e=>onChange(e.target.value)}>{opts.map(o=><option key={o.v} value={o.v}>{o.l}</option>)}</select></Field>;
-const Card=({children,cls="",onClick,style:s})=><div className={`card ${onClick?"click":""} ${cls}`} onClick={onClick} style={s}>{children}</div>;
-const SHdr=({title,action})=><div className="sec-hdr"><h2>{title}</h2>{action}</div>;
-
-const ModeBanner=({mode})=>{
-  const m={cloud:{icon:"☁️",text:"Cloud AI active (Anthropic + Kling / Runway / Luma)"},local:{icon:"🖥️",text:"Local AI active (Ollama + ComfyUI) — works only when opened locally"},demo:{icon:"🎭",text:"Demo Mode — realistic sample data, no API key or local setup required"}}[mode]||{};
-  return<div className={`mode-banner ${mode}`}><span style={{fontSize:16}}>{m.icon}</span><span>{m.text}</span></div>;
-};
-
-function VThumb({v,showExport,onComplete}){
+function VThumb({v,showExport,onDone}){
   const [modal,setModal]=useState(false);
   return(
     <>
-    {modal&&<VideoModal video={v} onClose={()=>setModal(false)}/>}
+    {modal&&<VModal video={v} onClose={()=>setModal(false)}/>}
     <Card cls="vt">
-      <div className="vt-pre" style={{background:`linear-gradient(140deg,${v.charColor}22 0%,var(--bg-3) 100%)`}}>
-        {v.status==="done"&&v.videoUrl
-          ?<video src={v.videoUrl} className="vt-video-bg" muted playsInline/>
-          :null}
-        <div className="vt-play-wrap" style={{zIndex:1,cursor:v.status==="done"?"pointer":"default"}} onClick={v.status==="done"?()=>setModal(true):undefined}>
-          <div className="vt-play" style={{background:v.status==="done"?"rgba(245,158,11,.75)":"rgba(0,0,0,.45)"}}>▶</div>
-        </div>
-        <div className="vt-stat"><Pill status={v.status}/></div>
+      <div className="vt-pre" style={{background:`linear-gradient(140deg,${v.charColor}22 0%,var(--bg3) 100%)`}}>
+        {v.videoUrl&&<video className="vt-bg" src={v.videoUrl} muted playsInline/>}
+        <div className="vt-play" onClick={v.status==="done"?()=>setModal(true):undefined} style={{cursor:v.status==="done"?"pointer":"default"}}>▶</div>
+        <div className="vt-stat"><Pill s={v.status}/></div>
         <div className="vt-meta">{v.ratio} · {v.dur}</div>
-        {v.localModel&&<div className="vt-lmodel">🖥️ {v.localModel}</div>}
+        {v.localModel&&<div className="vt-lm">local: {v.localModel}</div>}
       </div>
-      {v.status==="processing"&&<ProcessingTimer video={v} onComplete={onComplete}/>}
+      {v.status==="processing"&&<PTimer video={v} onDone={onDone}/>}
       <div className="vt-body">
-        <div className="vt-scene" style={{cursor:v.status==="done"?"pointer":"default"}} onClick={v.status==="done"?()=>setModal(true):undefined}>{v.scene}</div>
+        <div className="vt-scene" onClick={v.status==="done"?()=>setModal(true):undefined}>{v.scene}</div>
         <div className="vt-foot"><span style={{color:v.charColor,fontWeight:600}}>{v.char}</span><span className="vt-ts">{v.ts}</span></div>
-        {showExport&&v.status==="done"&&<div style={{display:"flex",gap:6,marginTop:9}}>
-          <button className="dl-link" style={{flex:1}} onClick={()=>setModal(true)}>▶ Play</button>
+        {showExport&&v.status==="done"&&<div style={{display:"flex",gap:6,marginTop:8}}>
+          <button className="dlbtn" style={{flex:1}} onClick={()=>setModal(true)}>▶ Play</button>
           {v.videoUrl
-            ?<a className="dl-link" style={{flex:1}} href={v.videoUrl} download={`${v.char}-${v.id}.mp4`} target="_blank">⬇ Download</a>
-            :<button className="dl-link" style={{flex:1}} onClick={()=>setModal(true)}>⬇ Download</button>}
-        </div>}
-        {showExport&&(v.status==="processing"||v.status==="queued")&&<div style={{marginTop:9}}>
-          <button className="dl-link" style={{width:"100%",justifyContent:"center",color:"var(--green)",borderColor:"var(--green-border)",background:"var(--green-bg)"}}
-            onClick={()=>importVideoFile((url,name)=>{if(onComplete){onComplete(v.id);} setModal(false);})}>
-            📁 Import finished video…
-          </button>
-          <div style={{fontSize:10,color:"var(--t3)",marginTop:4,textAlign:"center"}}>Generated externally? Import the MP4 file here.</div>
-        </div>}
-        {v.status==="done"&&!showExport&&v.videoUrl&&<div style={{marginTop:8}}>
-          <button className="dl-link" style={{width:"100%",justifyContent:"center"}} onClick={()=>setModal(true)}>▶ Play video</button>
+            ?<a className="dlbtn" style={{flex:1}} href={v.videoUrl} download={`${v.char}-${v.id}.mp4`} target="_blank" rel="noreferrer">Download</a>
+            :<button className="dlbtn" style={{flex:1}} onClick={()=>setModal(true)}>Download</button>}
         </div>}
       </div>
     </Card>
@@ -850,540 +497,402 @@ function VThumb({v,showExport,onComplete}){
   );
 }
 
-// ── DASHBOARD ────────────────────────────────────────────────────────────────
-function Dashboard({videos,chars,onNavigate,mode,onVideoComplete}){
-  const processing=videos.filter(v=>v.status==="processing");
+const MBanner=({mode})=>{const m={cloud:{icon:"☁️",txt:"Cloud AI active (Anthropic + Kling / Runway / Luma)"},local:{icon:"🖥️",txt:"Local AI active (Ollama + ComfyUI) — open locally only"},demo:{icon:"🎭",txt:"Demo Mode — sample data, no API key needed"}}[mode]||{};return<div className={`mbanner ${mode}`}><span style={{fontSize:16}}>{m.icon}</span><span>{m.txt}</span></div>;};
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+function Dashboard({videos,chars,nav,mode,onDone}){
+  const proc=videos.filter(v=>v.status==="processing");
   const stats=[
     {l:"Characters",v:chars.length,sub:`${chars.filter(c=>c.locked).length} locked`,c:"#f59e0b"},
     {l:"Videos",v:videos.length,sub:"+3 this week",c:"#4f9cf9"},
-    {l:"Story Series",v:chars.reduce((a,c)=>a+(c.series||0),0),sub:"scenes total",c:"#a78bfa"},
-    {l:"Processing",v:processing.length,sub:"Click to view",c:"#22d3a5"},
+    {l:"Story Series",v:chars.reduce((a,c)=>a+(c.series||0),0),sub:"total",c:"#a78bfa"},
+    {l:"Processing",v:proc.length,sub:"Click to view",c:"#22d3a5"},
   ];
   const acts=[
-    {t:"Story Series",d:"Generate 5 linked scenes from one idea",i:"◇",p:"story",c:"#a78bfa",bg:"var(--purple-bg)"},
-    {t:"Add Character",d:"Upload reference image & analyze",i:"◈",p:"characters",c:"#f59e0b",bg:"var(--gold-bg)"},
-    {t:"Generate Video",d:"Create a single scene with full control",i:"▶",p:"video",c:"#4f9cf9",bg:"var(--blue-bg)"},
+    {t:"Story Series",d:"5 scenes from one idea",i:"◇",p:"story",c:"#a78bfa",bg:"var(--purpleb)"},
+    {t:"Add Character",d:"Upload + analyze image",i:"◈",p:"chars",c:"#f59e0b",bg:"var(--goldb)"},
+    {t:"Generate Video",d:"Single scene, full control",i:"▶",p:"video",c:"#4f9cf9",bg:"var(--blueb)"},
   ];
   return(
     <div className="page">
-      <div className="page-hdr"><div><h1>Dashboard</h1><p className="page-sub">Your creative studio at a glance</p></div><Btn v="pri" onClick={()=>onNavigate("video")}>+ New Video</Btn></div>
-      <ModeBanner mode={mode}/>
-      <div className="stats-grid">{stats.map(s=><Card key={s.l} style={{padding:"16px 18px"}} onClick={s.l==="Processing"?()=>onNavigate("history"):undefined} cls={s.l==="Processing"?"click":""}><div className="stat-lbl">{s.l}</div><div className="stat-val" style={{color:s.c}}>{s.v}</div><div className="stat-sub">{s.sub}</div></Card>)}</div>
-
-      {/* Active processing videos */}
-      {processing.length>0&&<>
-        <SHdr title={`🔄 Currently Processing (${processing.length})`} action={<Btn v="gho" sz="sm" onClick={()=>onNavigate("history")}>View all →</Btn>}/>
-        {processing.slice(0,2).map(v=><ProcessingCard key={v.id} video={v} onComplete={onVideoComplete} setVideos={setVideos}/>)}
+      <div className="phdr"><div><h1>Dashboard</h1><p className="psub">Your creative studio at a glance</p></div><Btn ch="+ New Video" v="pri" onClick={()=>nav("video")}/></div>
+      <MBanner mode={mode}/>
+      <div className="stats-g">{stats.map(s=><Card key={s.l} ch={<><div className="stat-lbl">{s.l}</div><div className="stat-v" style={{color:s.c}}>{s.v}</div><div className="stat-sub">{s.sub}</div></>} style={{padding:"14px 16px"}} onClick={s.l==="Processing"?()=>nav("hist"):undefined} cls={s.l==="Processing"?"click":""}/>)}</div>
+      {proc.length>0&&<>
+        <SH title={`Processing (${proc.length})`} action={<Btn ch="View all" v="gho" sz="sm" onClick={()=>nav("hist")}/>}/>
+        {proc.slice(0,2).map(v=><Card key={v.id} cls="" ch={<><div style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",borderBottom:"1px solid var(--brd)"}}><div style={{width:38,height:38,borderRadius:10,background:`${v.charColor}18`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>◈</div><div style={{flex:1,minWidth:0}}><div style={{fontSize:13,color:"var(--t1)",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{v.scene}</div><div style={{fontSize:11,color:v.charColor}}>{v.char}</div></div><div style={{fontSize:11,color:"var(--t3)",background:"var(--bg3)",padding:"2px 8px",borderRadius:6}}>{v.model}</div></div><PTimer video={v} onDone={onDone}/></>} style={{marginBottom:8}}/>)}
       </>}
-
-      <SHdr title="Quick Actions"/>
-      <div className="act-grid mb18">{acts.map(a=><Card key={a.t} onClick={()=>onNavigate(a.p)} cls="click"><div className="act-icon" style={{color:a.c,background:a.bg}}>{a.i}</div><div className="act-title">{a.t}</div><div className="act-desc">{a.d}</div></Card>)}</div>
-      <SHdr title="Recent Videos" action={<Btn v="gho" sz="sm" onClick={()=>onNavigate("history")}>All →</Btn>}/>
-      <div className="vid-grid mb18">{videos.filter(v=>v.status==="done").slice(0,3).map(v=><VThumb key={v.id} v={v}/>)}</div>
-      <SHdr title="Characters" action={<Btn v="gho" sz="sm" onClick={()=>onNavigate("characters")}>Manage →</Btn>}/>
-      <div className="char-mini-grid">{chars.map(c=><Card key={c.id} cls="char-mini"><div className="char-mini-av" style={{background:`${c.color}18`,border:`1px solid ${c.color}33`}}>◈</div><div style={{flex:1,minWidth:0}}><div className="char-mini-name">{c.name}{c.locked&&<span className="badge b-gold">LOCKED</span>}</div><div className="char-mini-desc">{c.description}</div><div className="char-mini-stats">{c.videos} videos · {c.series} series</div></div></Card>)}</div>
+      <SH title="Quick Actions"/>
+      <div className="act-g" style={{marginBottom:18}}>{acts.map(a=><Card key={a.t} onClick={()=>nav(a.p)} cls="click" ch={<><div className="act-ic" style={{color:a.c,background:a.bg}}>{a.i}</div><div className="act-tt">{a.t}</div><div className="act-ds">{a.d}</div></>}/>)}</div>
+      <SH title="Recent Videos" action={<Btn ch="All →" v="gho" sz="sm" onClick={()=>nav("hist")}/>}/>
+      <div className="vg3" style={{marginBottom:18}}>{videos.filter(v=>v.status==="done").slice(0,3).map(v=><VThumb key={v.id} v={v} onDone={onDone}/>)}</div>
+      <SH title="Characters" action={<Btn ch="Manage →" v="gho" sz="sm" onClick={()=>nav("chars")}/>}/>
+      <div className="cm2">{chars.map(c=><Card key={c.id} cls="char-mini" ch={<div style={{display:"flex",alignItems:"center",gap:11}}><div className="cm-av" style={{background:`${c.color}18`,border:`1px solid ${c.color}33`}}>◈</div><div style={{flex:1,minWidth:0}}><div style={{display:"flex",alignItems:"center",gap:6,fontFamily:"var(--fd)",fontSize:13,fontWeight:700,color:"var(--t1)",marginBottom:3}}>{c.name}{c.locked&&<span className="bdg gold">LOCKED</span>}</div><div style={{fontSize:11,color:"var(--t2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.description}</div><div style={{fontSize:10,color:"var(--t3)",marginTop:3}}>{c.videos} videos · {c.series} series</div></div></div>}/>)}</div>
     </div>
   );
 }
 
-// ── CHARACTER MANAGER ────────────────────────────────────────────────────────
-function CharacterManager({chars,setChars,mode}){
-  const [showAdd,setShowAdd]=useState(false);
+// ── Character Manager ─────────────────────────────────────────────────────────
+function CharMgr({chars,setChars,mode}){
+  const [show,setShow]=useState(false);
   const [name,setName]=useState("");const [desc,setDesc]=useState("");
-  const [analyzing,setAnalyzing]=useState(false);const [analysis,setAnalysis]=useState(null);const [err,setErr]=useState(null);
-  const analyze=async()=>{
-    if(!name||!desc)return;
-    setAnalyzing(true);setAnalysis(null);setErr(null);
-    try{setAnalysis(await aiAnalyzeChar(name,desc));}catch(e){setErr(e.message);}
-    setAnalyzing(false);
-  };
-  const save=()=>{
-    if(!name||!analysis)return;
-    setChars(p=>[...p,{id:Date.now(),name,description:desc,locked:false,color:"#a78bfa",traits:analysis.traits||[],style:analysis.style||"Animated",coloring:analysis.coloring||"—",eyes:analysis.eyes||"—",clothing:analysis.clothing||"—",accessories:analysis.accessories||"—",build:analysis.build||"—",videos:0,series:0}]);
-    setShowAdd(false);setName("");setDesc("");setAnalysis(null);
-  };
+  const [busy,setBusy]=useState(false);const [res,setRes]=useState(null);const [err,setErr]=useState(null);
+  const analyze=async()=>{if(!name||!desc)return;setBusy(true);setRes(null);setErr(null);try{setRes(await aiAnalyze(name,desc));}catch(e){setErr(e.message);}setBusy(false);};
+  const save=()=>{if(!name||!res)return;setChars(p=>[...p,{id:Date.now(),name,description:desc,locked:false,color:"#a78bfa",traits:res.traits||[],style:res.style||"Animated",coloring:res.coloring||"—",eyes:res.eyes||"—",clothing:res.clothing||"—",accessories:res.accessories||"—",build:res.build||"—",videos:0,series:0}]);setShow(false);setName("");setDesc("");setRes(null);};
   return(
     <div className="page">
-      <div className="page-hdr"><div><h1>Character Manager</h1><p className="page-sub">Build and manage AI-consistent character profiles</p></div><Btn v="pri" onClick={()=>setShowAdd(p=>!p)}>+ Add Character</Btn></div>
-      <ModeBanner mode={mode}/>
-      {showAdd&&<Card cls="gold mb20" style={{animation:"scaleIn .2s ease"}}>
-        <h3 className="mb16">New Character Profile</h3>
-        <div className="upload-zone"><div style={{fontSize:26,opacity:.25,marginBottom:7}}>⬆</div><p style={{color:"var(--t2)",fontSize:13,marginBottom:3}}>Drop reference images here</p><span style={{color:"var(--t3)",fontSize:11,display:"block",marginBottom:11}}>PNG, JPG — multiple views recommended</span><Btn sz="sm">Browse Files</Btn></div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:13,marginBottom:14}}>
-          <Inp label="Character Name" value={name} onChange={setName} ph="e.g. Mochi"/>
-          <Inp label="Visual Description" value={desc} onChange={setDesc} ph="Describe appearance, clothing, colors, style in detail…"/>
-        </div>
-        {analyzing&&<div className="analyzing-bar"><div className="spinner" style={{width:17,height:17}}/>{mode==="local"?"Ollama analyzing…":mode==="demo"?"Running demo analysis…":"Claude analyzing…"}</div>}
-        {analysis&&<div className="analysis-box" style={{animation:"fadeIn .3s ease"}}>
-          <div style={{fontSize:11,color:"var(--gold)",fontWeight:700,textTransform:"uppercase",letterSpacing:".07em",marginBottom:12}}>✓ Analysis Complete</div>
-          <div className="analysis-grid">{[["Coloring",analysis.coloring],["Eyes",analysis.eyes],["Clothing",analysis.clothing],["Accessories",analysis.accessories],["Build",analysis.build],["Style",analysis.style]].map(([k,v])=><div key={k} className="analysis-item"><div className="analysis-key">{k}</div><div className="analysis-val">{v}</div></div>)}</div>
-          {analysis.consistencyNote&&<div style={{fontSize:12,color:"var(--t2)",fontStyle:"italic",background:"var(--bg-3)",padding:"9px 12px",borderRadius:"var(--r-sm)",lineHeight:1.7,marginBottom:10}}>"{analysis.consistencyNote}"</div>}
-          <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>{(analysis.traits||[]).map(t=><span key={t} className="badge b-gold">{t}</span>)}</div>
-        </div>}
-        {err&&<div className="error-box">{err}</div>}
-        <div style={{display:"flex",gap:9,justifyContent:"flex-end",marginTop:14}}>
-          <Btn v="gho" onClick={()=>{setShowAdd(false);setAnalysis(null);setErr(null);}}>Cancel</Btn>
-          <Btn onClick={analyze} disabled={analyzing||!desc||!name}>{analyzing?"⟳ Analyzing…":"◈ Analyze Character"}</Btn>
-          {analysis&&<Btn v="pri" onClick={save}>Save Character</Btn>}
-        </div>
-      </Card>}
-      {chars.length===0&&<div style={{padding:"48px 24px",textAlign:"center"}}><div style={{fontSize:38,opacity:.15,marginBottom:11}}>◈</div><p style={{fontSize:13,color:"var(--t3)"}}>No characters yet — add your first to get started</p></div>}
-      <div className="char-grid">{chars.map(c=>{
+      <div className="phdr"><div><h1>Character Manager</h1><p className="psub">Build AI-consistent character profiles</p></div><Btn ch="+ Add Character" v="pri" onClick={()=>setShow(p=>!p)}/></div>
+      <MBanner mode={mode}/>
+      {show&&<Card cls="gold" style={{marginBottom:18,animation:"fadeIn .2s ease"}} ch={<>
+        <h3 style={{marginBottom:14}}>New Character Profile</h3>
+        <div className="upz"><div style={{fontSize:24,opacity:.22,marginBottom:6}}>⬆</div><p style={{color:"var(--t2)",fontSize:13,marginBottom:3}}>Drop reference images here</p><span style={{color:"var(--t3)",fontSize:11,display:"block",marginBottom:10}}>PNG, JPG — multiple views recommended</span><Btn ch="Browse Files" sz="sm"/></div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:12,marginBottom:13}}><Inp lbl="Name" val={name} set={setName} ph="e.g. Mochi"/><Inp lbl="Visual Description" val={desc} set={setDesc} ph="Describe appearance, clothing, colors, style in detail…"/></div>
+        {busy&&<div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"var(--bg3)",borderRadius:"var(--r)",marginBottom:12,color:"var(--t2)",fontSize:13}}><div className="spin" style={{width:16,height:16}}/>{mode==="local"?"Ollama analyzing…":mode==="demo"?"Running demo analysis…":"Claude analyzing…"}</div>}
+        {res&&<div className="anb" style={{animation:"fadeIn .3s ease"}}><div style={{fontSize:11,color:"var(--gold)",fontWeight:700,textTransform:"uppercase",letterSpacing:".07em",marginBottom:11}}>Analysis Complete</div><div className="ang">{[["Coloring",res.coloring],["Eyes",res.eyes],["Clothing",res.clothing],["Accessories",res.accessories],["Build",res.build],["Style",res.style]].map(([k,v])=><div key={k} className="ani"><div className="ank">{k}</div><div className="anv">{v}</div></div>)}</div>{res.consistencyNote&&<div style={{fontSize:12,color:"var(--t2)",fontStyle:"italic",background:"var(--bg3)",padding:"9px 12px",borderRadius:8,lineHeight:1.7,marginBottom:10}}>"{res.consistencyNote}"</div>}<div style={{display:"flex",gap:5,flexWrap:"wrap"}}>{(res.traits||[]).map(t=><span key={t} className="bdg gold">{t}</span>)}</div></div>}
+        {err&&<div className="err-box">{err}</div>}
+        <div style={{display:"flex",gap:8,justifyContent:"flex-end",marginTop:13}}><Btn ch="Cancel" v="gho" onClick={()=>{setShow(false);setRes(null);setErr(null);}}/><Btn ch={busy?"Analyzing…":"Analyze Character"} onClick={analyze} disabled={busy||!desc||!name}/>{res&&<Btn ch="Save Character" v="pri" onClick={save}/>}</div>
+      </>}/>}
+      {chars.length===0&&<div className="empty"><div className="empty-ic">◈</div><p>No characters yet</p></div>}
+      <div className="chg2">{chars.map(c=>{
         const tl=()=>setChars(p=>p.map(x=>x.id===c.id?{...x,locked:!x.locked}:x));
         const dl=()=>setChars(p=>p.filter(x=>x.id!==c.id));
-        return<Card key={c.id} style={{border:`1px solid ${c.locked?c.color+"44":"var(--border)"}`,background:c.locked?`${c.color}06`:"var(--bg-2)"}}>
-          <div className="char-card-hdr">
-            <div className="char-card-id"><div className="char-card-av" style={{background:`${c.color}1a`,border:`1px solid ${c.color}33`}}>◈</div><div><div className="char-card-name">{c.name}</div><div className="char-card-style">{c.style}</div></div></div>
-            <div className="char-card-ctrl"><button className={`lock-btn ${c.locked?"on":""}`} onClick={tl}>{c.locked?"🔒 LOCKED":"🔓 LOCK"}</button><button className="del-btn" onClick={dl}>✕</button></div>
+        return<Card key={c.id} style={{border:`1px solid ${c.locked?c.color+"44":"var(--brd)"}`,background:c.locked?`${c.color}06`:"var(--bg2)"}} ch={<>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:11}}>
+            <div style={{display:"flex",alignItems:"center",gap:11}}><div style={{width:46,height:46,borderRadius:12,background:`${c.color}1a`,border:`1px solid ${c.color}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:21}}>◈</div><div><div style={{fontFamily:"var(--fd)",fontSize:15,fontWeight:800,color:"var(--t1)"}}>{c.name}</div><div style={{fontSize:11,color:"var(--t2)",marginTop:1}}>{c.style}</div></div></div>
+            <div style={{display:"flex",gap:7,alignItems:"center"}}><button style={{padding:"4px 10px",borderRadius:20,fontSize:10,fontWeight:700,cursor:"pointer",border:"none",background:c.locked?"var(--goldb)":"var(--bg4)",color:c.locked?"var(--gold)":"var(--t3)"}} onClick={tl}>{c.locked?"LOCKED":"LOCK"}</button><button style={{background:"none",border:"none",color:"var(--t3)",cursor:"pointer",fontSize:13,padding:"2px"}} onClick={dl}>✕</button></div>
           </div>
-          <p className="char-desc">{c.description}</p>
-          <div className="trait-grid">{[["Coloring",c.coloring],["Eyes",c.eyes],["Clothing",c.clothing]].map(([k,v])=><div key={k} className="trait-item"><div className="trait-key">{k}</div><div className="trait-val">{v}</div></div>)}</div>
-          <div className="char-foot"><div className="char-tags">{(c.traits||[]).slice(0,3).map(t=><span key={t} className="char-tag" style={{color:c.color,background:`${c.color}18`}}>{t}</span>)}</div><span style={{fontSize:11,color:"var(--t3)"}}>{c.videos} videos</span></div>
-        </Card>;
+          <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.7,marginBottom:11}}>{c.description}</p>
+          <div className="tg">{[["Coloring",c.coloring],["Eyes",c.eyes],["Clothing",c.clothing]].map(([k,v])=><div key={k} className="ti"><div className="tk">{k}</div><div className="tv">{v}</div></div>)}</div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><div style={{display:"flex",gap:4,flexWrap:"wrap"}}>{(c.traits||[]).slice(0,3).map(t=><span key={t} style={{fontSize:10,color:c.color,background:`${c.color}18`,padding:"2px 8px",borderRadius:20,fontWeight:600}}>{t}</span>)}</div><span style={{fontSize:11,color:"var(--t3)"}}>{c.videos} videos</span></div>
+        </>}/>;
       })}</div>
     </div>
   );
 }
 
-// ── VIDEO CREATOR ────────────────────────────────────────────────────────────
-function VideoCreator({chars,setVideos,mode}){
-  const [charId,setCharId]=useState(chars[0]?.id||1);
-  const [scene,setScene]=useState("");const [camera,setCamera]=useState("");
+// ── Video Creator ─────────────────────────────────────────────────────────────
+function VideoCr({chars,setVideos,mode}){
+  const [cid,setCid]=useState(chars[0]?.id||1);
+  const [scene,setScene]=useState("");const [cam,setCam]=useState("");
   const [style,setStyle]=useState("studio-ghibli");const [dur,setDur]=useState("5");
-  const [ratio,setRatio]=useState("9:16");const [cloudModel,setCloudModel]=useState("kling");
-  const [localVidModel,setLocalVidModel]=useState("animatediff");
-  const [gen,setGen]=useState(false);const [result,setResult]=useState(null);const [copied,setCopied]=useState(false);const [showResultModal,setShowResultModal]=useState(false);const [genErr,setGenErr]=useState(null);const [genStatus,setGenStatus]=useState(null);
-  const sc=chars.find(c=>c.id===Number(charId))||chars[0];
-  const modelName=mode==="local"?LOCAL_VIDEO_MODELS.find(m=>m.id===localVidModel)?.name:CLOUD_VID.find(m=>m.v===cloudModel)?.l||cloudModel;
-  const estimatedSecs=MODEL_TIMES[modelName]||180;
-  const prompt=sc&&scene?`[Character Consistency: ${sc.name} — ${sc.description}. Coloring: ${sc.coloring}. Eyes: ${sc.eyes}. Clothing: ${sc.clothing}, ${sc.accessories}.] Scene: ${scene}${camera?` Camera: ${camera}.`:""} Style: ${style}. Duration: ${dur}s. Ratio: ${ratio}.`:"";
-  const ratioAR={"16:9":"16/9","9:16":"9/16","1:1":"1/1","4:5":"4/5"}[ratio]||"9/16";
-  const copy=()=>{navigator.clipboard?.writeText(prompt);setCopied(true);setTimeout(()=>setCopied(false),2000);};
-  const openComfy=()=>window.open(`http://localhost:${G.comfyPort||8188}`,"_blank");
-  const generate=async()=>{
-    if(!scene||!sc)return;
-    setGen(true);setResult(null);setGenErr(null);
-    const videoId=Date.now();
-    const nv={id:videoId,charId:sc.id,char:sc.name,charColor:sc.color,scene,dur:`${dur}s`,ratio,
-      status:mode==="demo"?"done":"processing",
-      model:modelName,localModel:mode==="local"?modelName:null,
-      ts:"just now",prompt,createdAt:Date.now(),estimatedSecs,
-      videoUrl:mode==="demo"?randomSampleVideo():null};
-    if(mode==="demo"){
-      await new Promise(r=>setTimeout(r,800));
-      setVideos(p=>[nv,...p]);setResult(nv);setGen(false);
-      return;
-    }
-    if(mode==="local"){
-      // Try real ComfyUI call, fallback to import
-      try{
-        setGenStatus("Sending to ComfyUI…");
-        const promptId=await callComfyUI(prompt,localVidModel);
-        setVideos(p=>[nv,...p]);setResult(nv);
-        setGenStatus("Generating… polling ComfyUI…");
-        const videoUrl=await pollComfyUI(promptId);
-        setVideos(p=>p.map(v=>v.id===videoId?{...v,status:"done",videoUrl}:v));
-        setResult(r=>r?{...r,status:"done",videoUrl}:r);
-        setGenStatus(null);
-      }catch(e){
-        setGenErr(e.message);
-        // Still add to history so user can import manually
-        setVideos(p=>[{...nv,status:"queued"},...p]);setResult({...nv,status:"queued"});
-        setGenStatus(null);
-      }
-      setGen(false);return;
-    }
-    // Cloud mode – add as processing, user must poll manually
-    await new Promise(r=>setTimeout(r,600));
-    setVideos(p=>[nv,...p]);setResult(nv);setGen(false);
-  };
+  const [ratio,setRatio]=useState("9:16");const [cmod,setCmod]=useState("kling");
+  const [lvm,setLvm]=useState("animatediff");
+  const [gen,setGen]=useState(false);const [result,setResult]=useState(null);
+  const [rmod,setRmod]=useState(false);const [cop,setCop]=useState(false);
+  const sc=chars.find(c=>c.id===Number(cid))||chars[0];
+  const mname=mode==="local"?LVIDS.find(m=>m.id===lvm)?.name:CVID.find(m=>m.v===cmod)?.l||cmod;
+  const esec=MTIMES[mname]||180;
+  const prompt=sc&&scene?`[Character Consistency: ${sc.name} - ${sc.description}. Coloring: ${sc.coloring}. Eyes: ${sc.eyes}. Clothing: ${sc.clothing}, ${sc.accessories}.] Scene: ${scene}${cam?` Camera: ${cam}.`:""} Style: ${style}. Duration: ${dur}s. Ratio: ${ratio}.`:"";
+  const rAR={"16:9":"16/9","9:16":"9/16","1:1":"1/1","4:5":"4/5"}[ratio]||"9/16";
+  const copy=()=>{navigator.clipboard?.writeText(prompt);setCop(true);setTimeout(()=>setCop(false),2000);};
+  const generate=async()=>{if(!scene||!sc)return;setGen(true);setResult(null);await new Promise(r=>setTimeout(r,mode==="demo"?800:1200));const nv={id:Date.now(),charId:sc.id,char:sc.name,charColor:sc.color,scene,dur:`${dur}s`,ratio,status:mode==="demo"?"done":"processing",model:mname,localModel:mode==="local"?mname:null,ts:"just now",createdAt:Date.now(),estimatedSecs:esec,videoUrl:mode==="demo"?randVid():null};setVideos(p=>[nv,...p]);setResult(nv);setGen(false);};
   return(
     <div className="page">
-      {showResultModal&&result&&<VideoModal video={result} onClose={()=>setShowResultModal(false)}/>}
-      <div className="page-hdr"><div><h1>Video Creator</h1><p className="page-sub">Generate videos with locked character consistency</p></div></div>
-      <ModeBanner mode={mode}/>
-      <div className="vc-layout">
-        <div className="vc-form">
-          <Card>
-            <Field label="Character"><div className="char-picker">{chars.map(c=><button key={c.id} className="char-btn" onClick={()=>setCharId(c.id)} style={Number(charId)===c.id?{borderColor:c.color,background:`${c.color}0e`}:{}}><div className="char-btn-av" style={{background:`${c.color}20`}}>◈</div><div><div className="char-btn-name">{c.name}</div><div className="char-btn-lock" style={{color:c.locked?"var(--gold)":"var(--t3)"}}>{c.locked?"🔒 Locked":"Unlocked"}</div></div></button>)}</div></Field>
-          </Card>
-          <Card>
-            <TA label="Scene Description" value={scene} onChange={setScene} rows={4} cls="mb14" ph="What is the character doing? Where? What mood, lighting, details…"/>
-            <Inp label="Camera Instruction (optional)" value={camera} onChange={setCamera} cls="mb14" ph="e.g. Slow push-in, warm golden-hour light, shallow depth of field"/>
-            <div className="vc-opts">
-              <Sel label="Style" value={style} onChange={setStyle} opts={STYLES}/>
-              <Sel label="Duration" value={dur} onChange={setDur} opts={DURS}/>
-              <Sel label="Ratio" value={ratio} onChange={setRatio} opts={RATIOS}/>
-              {mode!=="local"&&<Sel label="AI Model" value={cloudModel} onChange={setCloudModel} opts={CLOUD_VID}/>}
-              {mode==="local"&&<div/>}
-            </div>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginTop:12,padding:"8px 12px",background:"var(--bg-3)",borderRadius:"var(--r-md)"}}>
-              <span style={{fontSize:12,color:"var(--t2)"}}>⏱ Estimated generation time:</span>
-              <span style={{fontSize:12,fontWeight:700,color:"var(--gold)"}}>{fmt(estimatedSecs)}</span>
-            </div>
-            {mode==="local"&&<div className="local-panel">
-              {location.protocol==="https:"&&<div style={{background:"var(--red-bg)",border:"1px solid rgba(252,136,136,.3)",borderRadius:"var(--r-md)",padding:"10px 13px",marginBottom:10,fontSize:12,color:"var(--red)"}}>
-                🔒 <strong>HTTPS detected</strong> — GitHub Pages blocks local connections.<br/>
-                <span style={{color:"var(--t2)"}}>Download index.html → run <code style={{fontFamily:"var(--fm)",background:"var(--bg-0)",padding:"1px 5px",borderRadius:3}}>python -m http.server 8080</code> → open localhost:8080</span>
-              </div>}
-              <div style={{fontSize:11,color:"var(--green)",fontWeight:700,textTransform:"uppercase",letterSpacing:".07em",marginBottom:10}}>🖥️ Local Video Model</div>
-              <div className="local-models">{LOCAL_VIDEO_MODELS.map(m=><button key={m.id} className={`lm-btn ${localVidModel===m.id?"active":""}`} onClick={()=>setLocalVidModel(m.id)}><span className="lm-icon">{m.icon}</span><div><div className="lm-name">{m.name}</div><div className="lm-desc">{m.desc}</div></div><span className="lm-time">{m.time}</span>{localVidModel===m.id&&<span style={{color:"var(--green)",fontSize:14,marginLeft:4}}>✓</span>}</button>)}</div>
-              <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
-                <Btn v="grn" sz="sm" onClick={openComfy} style={{flex:1}}>🔗 Open ComfyUI</Btn>
-                <Btn v="def" sz="sm" onClick={copy} style={{flex:1}}>{copied?"✓ Copied!":"📋 Copy Prompt"}</Btn>
-                <Btn v="def" sz="sm" onClick={()=>{const w=buildComfyWorkflow(prompt,localVidModel);navigator.clipboard?.writeText(w);alert("ComfyUI workflow JSON copied!\n\nIn ComfyUI: Menu → Load (paste) → Queue Prompt");}} style={{flex:1}} disabled={!prompt}>📋 Copy Workflow JSON</Btn>
-              </div>
-              <div style={{marginTop:8,fontSize:11,color:"var(--t3)",lineHeight:1.7}}>
-                <strong style={{color:"var(--t2)"}}>How to use:</strong><br/>
-                1. Click "Open ComfyUI" → opens localhost:{G.comfyPort||8188}<br/>
-                2. Click "Copy Workflow JSON" → paste into ComfyUI (Load button)<br/>
-                3. In ComfyUI: adjust model name → Queue Prompt<br/>
-                4. Download result from ComfyUI output folder
-              </div>
-            </div>}
-          </Card>
-          {prompt&&<Card style={{background:"var(--bg-3)"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:7}}>
-              <div className="vc-lbl" style={{margin:0}}>Auto-built Prompt</div>
-              <Btn v="gho" sz="sm" onClick={copy}>{copied?"✓ Copied!":"📋 Copy"}</Btn>
-            </div>
-            <div className="prompt-prev">{prompt}</div>
-          </Card>}
-          {genStatus&&<div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",background:"var(--green-bg)",border:"1px solid var(--green-border)",borderRadius:"var(--r-md)",fontSize:12,color:"var(--green)"}}><div className="spinner" style={{width:14,height:14}}/>{genStatus}</div>}
-          {genErr&&<div className="error-box" style={{marginBottom:0}}>
-            <div style={{fontWeight:700,marginBottom:6}}>⚠ Local Generation Error</div>
-            <pre style={{fontSize:11,whiteSpace:"pre-wrap",color:"var(--red)",lineHeight:1.7}}>{genErr}</pre>
-            <div style={{marginTop:12,paddingTop:10,borderTop:"1px solid rgba(252,136,136,.2)"}}>
-              <div style={{fontSize:12,color:"var(--t2)",marginBottom:8}}>💡 Alternative: Generate in ComfyUI manually, then import the file:</div>
-              {result&&<button className="dl-link grn" style={{cursor:"pointer"}} onClick={()=>importVideoFile((url,name)=>{setVideos(p=>p.map(v=>v.id===result.id?{...v,status:"done",videoUrl:url,localFile:name}:v));setResult(r=>r?{...r,status:"done",videoUrl:url}:r);setGenErr(null);})}>📁 Import video file…</button>}
-            </div>
-          </div>}
-          <Btn v="pri" sz="lg" onClick={generate} disabled={gen||!scene} style={{width:"100%"}}>
-            {gen?`⟳ ${genStatus||"Submitting…"}`:mode==="local"?"🖥️ Generate Locally":mode==="demo"?"🎭 Create Demo Video":"▶ Generate Video"}
-          </Btn>
+      {rmod&&result&&<VModal video={result} onClose={()=>setRmod(false)}/>}
+      <div className="phdr"><div><h1>Video Creator</h1><p className="psub">Generate videos with locked character consistency</p></div></div>
+      <MBanner mode={mode}/>
+      <div className="vcl">
+        <div className="vcf">
+          <Card ch={<Fld lbl="Character"><div className="cpick">{chars.map(c=><button key={c.id} className="cbtn" onClick={()=>setCid(c.id)} style={Number(cid)===c.id?{borderColor:c.color,background:`${c.color}0e`}:{}}><div className="cbtn-av" style={{background:`${c.color}20`}}>◈</div><div><div className="cbtn-nm">{c.name}</div><div className="cbtn-lk" style={{color:c.locked?"var(--gold)":"var(--t3)"}}>{c.locked?"Locked":"Unlocked"}</div></div></button>)}</div></Fld>}/>
+          <Card ch={<><TA lbl="Scene Description" val={scene} set={setScene} rows={4} cls="" ph="What is the character doing? Where? Mood, lighting, details…"/><div style={{marginBottom:13}}/><Inp lbl="Camera Instruction (optional)" val={cam} set={setCam} ph="e.g. Slow push-in, warm golden-hour light"/><div style={{marginBottom:13}}/><div className="vcopts"><Sel lbl="Style" val={style} set={setStyle} opts={STYLES}/><Sel lbl="Duration" val={dur} set={setDur} opts={DURS}/><Sel lbl="Ratio" val={ratio} set={setRatio} opts={RATIOS}/>{mode!=="local"&&<Sel lbl="AI Model" val={cmod} set={setCmod} opts={CVID}/>}{mode==="local"&&<div/>}</div><div style={{display:"flex",alignItems:"center",gap:8,marginTop:11,padding:"7px 11px",background:"var(--bg3)",borderRadius:"var(--r)"}}><span style={{fontSize:12,color:"var(--t2)"}}>Est. generation:</span><span style={{fontSize:12,fontWeight:700,color:"var(--gold)"}}>{fmtT(esec)}</span></div>{mode==="local"&&<div className="lp"><div style={{fontSize:10,color:"var(--green)",fontWeight:700,textTransform:"uppercase",letterSpacing:".07em",marginBottom:9}}>Local Video Model</div>{location.protocol==="https:"&&<div style={{background:"var(--redb)",border:"1px solid rgba(252,136,136,.25)",borderRadius:"var(--r)",padding:"9px 12px",marginBottom:9,fontSize:12,color:"var(--red)"}}>HTTPS blocks localhost. Download file and run: python -m http.server 8080</div>}<div className="lms">{LVIDS.map(m=><button key={m.id} className={`lmb ${lvm===m.id?"on":""}`} onClick={()=>setLvm(m.id)}><span className="lmb-ic">{m.icon}</span><div><div className="lmb-nm">{m.name}</div><div className="lmb-ds">{m.desc}</div></div><span className="lmb-t">{m.time}</span>{lvm===m.id&&<span style={{color:"var(--green)",fontSize:13,marginLeft:4}}>✓</span>}</button>)}</div><div style={{display:"flex",gap:7}}><Btn ch="Open ComfyUI" v="grn" sz="sm" onClick={()=>window.open(`http://localhost:${G.cPort||8188}`,"_blank")} cls="" style={{flex:1}}/><Btn ch={cop?"Copied!":"Copy Prompt"} sz="sm" onClick={copy} style={{flex:1}}/><Btn ch="Copy Workflow JSON" sz="sm" onClick={()=>{navigator.clipboard?.writeText(buildWorkflow(prompt,lvm));alert("Workflow JSON copied! Paste it into ComfyUI.");}} disabled={!prompt} style={{flex:1}}/></div></div>}</>}/>
+          {prompt&&<Card cls="" style={{background:"var(--bg3)"}} ch={<><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:7}}><div className="vclbl" style={{margin:0}}>Auto-built Prompt</div><Btn ch={cop?"Copied!":"Copy"} v="gho" sz="sm" onClick={copy}/></div><div className="prv-box">{prompt}</div></>}/>}
+          <Btn ch={gen?"Generating…":mode==="local"?"Generate Locally":mode==="demo"?"Create Demo Video":"Generate Video"} v="pri" sz="lg" onClick={generate} disabled={gen||!scene} style={{width:"100%"}}/>
         </div>
-        <div className="vc-sidebar">
-          <div className="vc-preview" style={{aspectRatio:ratioAR}}>
-            {gen?<><div className="spinner"/><span>Submitting to {modelName}…</span></>
-              :result&&result.status==="processing"?<><div style={{fontSize:13,color:"var(--t1)",fontWeight:600,marginBottom:4}}>Video submitted!</div><div style={{width:"80%"}}><ProcessingTimer video={result}/></div></>
-              :result&&result.status==="done"?<><div style={{width:54,height:54,borderRadius:"50%",background:"var(--gold-bg)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,color:"var(--gold)",cursor:"pointer"}} onClick={()=>setShowResultModal(true)}>▶</div><div style={{fontWeight:600,color:"var(--t1)",fontSize:13}}>Ready!</div><Pill status="done"/><button className="dl-link pri" onClick={()=>setShowResultModal(true)}>▶ Play + Download</button></>
-              :<><div style={{fontSize:34,opacity:.1}}>▶</div><span>Preview will appear here</span></>}
+        <div className="vcsb">
+          <div className="vcprev" style={{aspectRatio:rAR}}>
+            {gen?<><div className="spin" style={{width:34,height:34}}/><span>{mode==="local"?"ComfyUI processing…":mode==="demo"?"Creating demo…":"AI processing…"}</span></>
+              :result&&result.status==="processing"?<div style={{width:"82%",textAlign:"center"}}><div style={{fontWeight:600,color:"var(--t1)",fontSize:13,marginBottom:6}}>Video submitted!</div><PTimer video={result} onDone={()=>setResult(p=>p?{...p,status:"done",videoUrl:randVid()}:p)}/></div>
+              :result&&result.status==="done"?<><div style={{width:50,height:50,borderRadius:"50%",background:"var(--goldb)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:19,color:"var(--gold)",cursor:"pointer"}} onClick={()=>setRmod(true)}>▶</div><div style={{fontWeight:600,color:"var(--t1)",fontSize:13}}>Ready!</div><Pill s="done"/><button className="dlbtn" style={{marginTop:4}} onClick={()=>setRmod(true)}>Play + Download</button></>
+              :<><div style={{fontSize:32,opacity:.1}}>▶</div><span>Preview appears here</span></>}
           </div>
-          {sc&&<Card>
-            <div className="vc-lbl">Character Profile</div>
-            <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:10}}>
-              <div style={{width:36,height:36,borderRadius:9,background:`${sc.color}1a`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>◈</div>
-              <div><div style={{fontWeight:700,color:"var(--t1)",fontSize:13,fontFamily:"var(--fd)"}}>{sc.name}</div>{sc.locked&&<div style={{fontSize:10,color:"var(--gold)"}}>🔒 Consistency active</div>}</div>
-            </div>
-            {[["Coloring",sc.coloring],["Eyes",sc.eyes],["Clothing",sc.clothing]].map(([k,v])=><div key={k} className="vc-row"><span>{k}</span><span>{v}</span></div>)}
-          </Card>}
-          <Card>
-            <div className="vc-lbl">Export Formats</div>
-            {[["MP4 (1080p)","Universal"],["TikTok","9:16 optimized"],["Instagram Reels","4:5 crop"],["YouTube Shorts","With subtitles"]].map(([f,h])=><div key={f} className="exp-row"><span>{f}</span><span>{h}</span></div>)}
-          </Card>
+          {sc&&<Card ch={<><div className="vclbl">Character Profile</div><div style={{display:"flex",alignItems:"center",gap:9,marginBottom:9}}><div style={{width:34,height:34,borderRadius:9,background:`${sc.color}1a`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>◈</div><div><div style={{fontWeight:700,color:"var(--t1)",fontSize:13,fontFamily:"var(--fd)"}}>{sc.name}</div>{sc.locked&&<div style={{fontSize:10,color:"var(--gold)"}}>Consistency active</div>}</div></div>{[["Coloring",sc.coloring],["Eyes",sc.eyes],["Clothing",sc.clothing]].map(([k,v])=><div key={k} className="vcrow"><span>{k}</span><span>{v}</span></div>)}</>}/>}
+          <Card ch={<><div className="vclbl">Export Formats</div>{[["MP4 (1080p)","Universal"],["TikTok","9:16"],["Reels","4:5"],["YouTube Shorts","Subtitles"]].map(([f,h])=><div key={f} className="exrow"><span>{f}</span><span>{h}</span></div>)}</>}/>
         </div>
       </div>
     </div>
   );
 }
 
-// ── STORY CREATOR ────────────────────────────────────────────────────────────
-function StoryCreator({chars,mode}){
-  const [charId,setCharId]=useState(String(chars[0]?.id||1));
+// ── Story Creator ─────────────────────────────────────────────────────────────
+function StoryCr({chars,mode}){
+  const [cid,setCid]=useState(String(chars[0]?.id||1));
   const [idea,setIdea]=useState("");const [scenes,setScenes]=useState([]);
-  const [loading,setLoading]=useState(false);const [err,setErr]=useState(null);const [editIdx,setEditIdx]=useState(null);
-  const sc=chars.find(c=>c.id===Number(charId))||chars[0];
-  const generate=async()=>{
-    if(!idea||!sc)return;
-    setLoading(true);setErr(null);setScenes([]);
-    try{setScenes(await aiGenerateStory(sc,idea));}catch(e){setErr(e.message);}
-    setLoading(false);
-  };
+  const [busy,setBusy]=useState(false);const [err,setErr]=useState(null);const [ei,setEi]=useState(null);
+  const sc=chars.find(c=>c.id===Number(cid))||chars[0];
+  const gen=async()=>{if(!idea||!sc)return;setBusy(true);setErr(null);setScenes([]);try{setScenes(await aiStory(sc,idea));}catch(e){setErr(e.message);}setBusy(false);};
   const upd=(i,f,v)=>setScenes(p=>p.map((s,j)=>j===i?{...s,[f]:v}:s));
   return(
     <div className="page">
-      <div className="page-hdr"><div><h1>Story Creator</h1><p className="page-sub">One idea → 5 connected scenes with the same character</p></div></div>
-      <ModeBanner mode={mode}/>
-      <Card cls="mb20">
-        <div className="story-bar">
-          <Sel label="Character" value={charId} onChange={setCharId} opts={chars.map(c=>({v:String(c.id),l:`${c.name}${c.locked?" 🔒":""}` }))}/>
-          <Inp label="Story Idea" value={idea} onChange={setIdea} ph='"Mochi opens a bakery and befriends the whole neighbourhood" — one line is enough'/>
-          <Btn v="pri" sz="lg" onClick={generate} disabled={loading||!idea} style={{alignSelf:"flex-end",whiteSpace:"nowrap"}}>{loading?"⟳ Generating…":mode==="demo"?"🎭 Demo Story":"◇ Create Story"}</Btn>
-        </div>
-      </Card>
-      {err&&<div className="error-box">{err}</div>}
-      {loading&&<div style={{display:"flex",flexDirection:"column",gap:11}}>{[1,2,3,4,5].map(i=><div key={i} className="skeleton" style={{height:90}}/>)}</div>}
+      <div className="phdr"><div><h1>Story Creator</h1><p className="psub">One idea — 5 connected scenes, same character throughout</p></div></div>
+      <MBanner mode={mode}/>
+      <Card cls="" style={{marginBottom:18}} ch={<div className="stbar"><Sel lbl="Character" val={cid} set={setCid} opts={chars.map(c=>({v:String(c.id),l:c.name+(c.locked?" 🔒":"")}))}/><Inp lbl="Story Idea" val={idea} set={setIdea} ph='"Mochi opens a bakery and befriends the whole neighbourhood"'/><Btn ch={busy?"Generating…":mode==="demo"?"Demo Story":"Create Story"} v="pri" sz="lg" onClick={gen} disabled={busy||!idea} style={{alignSelf:"flex-end",whiteSpace:"nowrap"}}/></div>}/>
+      {err&&<div className="err-box">{err}</div>}
+      {busy&&<div style={{display:"flex",flexDirection:"column",gap:10}}>{[1,2,3,4,5].map(i=><div key={i} className="skel" style={{height:88}}/>)}</div>}
       {scenes.length>0&&<>
-        <div className="story-hdr">
-          <div className="story-title">Story: <span>"{idea}"</span></div>
-          <div style={{display:"flex",gap:9}}><Btn sz="sm">⬇ Export Prompts</Btn><Btn v="pri" sz="sm">▶ Generate All 5 Videos</Btn></div>
-        </div>
-        <div className="scenes-list">{scenes.map((s,i)=><Card key={i} cls="scene-card">
-          <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
-            <div className="scene-num" style={{color:SC[i],background:`${SC[i]}18`,border:`1px solid ${SC[i]}33`}}>{s.scene}</div>
-            {i<scenes.length-1&&<div className="scene-conn"/>}
-          </div>
-          <div>{editIdx===i
-            ?<div style={{display:"flex",flexDirection:"column",gap:9}}><Inp value={s.title} onChange={v=>upd(i,"title",v)}/><TA value={s.description} onChange={v=>upd(i,"description",v)} rows={3}/><Btn sz="sm" onClick={()=>setEditIdx(null)}>✓ Done</Btn></div>
-            :<><div className="scene-title">{s.title}</div><div className="scene-desc">{s.description}</div>
-              <div className="scene-tags">
-                <span className="scene-tag scene-tag-gray">📷 {s.camera}</span>
-                <span className="scene-tag" style={{color:SC[i],background:`${SC[i]}12`}}>✦ {s.mood}</span>
-                <span className="scene-tag scene-tag-gray">⏱ {s.duration}</span>
-              </div></>}
-          </div>
-          <div className="scene-actions"><Btn v="pri" sz="sm">▶ Generate</Btn><Btn sz="sm" onClick={()=>setEditIdx(editIdx===i?null:i)}>✎ Edit</Btn></div>
-        </Card>)}</div>
-        <div className="consist-box"><span style={{fontSize:20}}>🔒</span><div><div style={{fontSize:13,fontWeight:700,color:"var(--gold)",marginBottom:3}}>Character Consistency Active</div><div style={{fontSize:12,color:"var(--t2)",lineHeight:1.6}}>{sc?.name}'s full visual profile is embedded in every scene prompt — same face, clothing, and style across all 5 videos.</div></div></div>
+        <div className="sthdr"><div className="sttl">Story: <span>"{idea}"</span></div><div style={{display:"flex",gap:8}}><Btn ch="Export Prompts" sz="sm"/><Btn ch="Generate All 5" v="pri" sz="sm"/></div></div>
+        <div className="sclist">{scenes.map((s,i)=><Card key={i} cls="sc-card" ch={<>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}><div className="sc-num" style={{color:SC[i],background:`${SC[i]}18`,border:`1px solid ${SC[i]}33`}}>{s.scene}</div>{i<scenes.length-1&&<div className="sc-conn"/>}</div>
+          <div>{ei===i?<div style={{display:"flex",flexDirection:"column",gap:8}}><Inp val={s.title} set={v=>upd(i,"title",v)}/><TA val={s.description} set={v=>upd(i,"description",v)} rows={3}/><Btn ch="Done" sz="sm" onClick={()=>setEi(null)}/></div>:<><div className="sc-tt">{s.title}</div><div className="sc-ds">{s.description}</div><div className="sc-tags"><span className="sc-tag sc-tg">{s.camera}</span><span className="sc-tag" style={{color:SC[i],background:`${SC[i]}12`}}>{s.mood}</span><span className="sc-tag sc-tg">{s.duration}</span></div></>}</div>
+          <div className="sc-acts"><Btn ch="Generate" v="pri" sz="sm"/><Btn ch="Edit" sz="sm" onClick={()=>setEi(ei===i?null:i)}/></div>
+        </>}/>)}</div>
+        <div className="cb-box"><span style={{fontSize:18}}>🔒</span><div><div style={{fontSize:13,fontWeight:700,color:"var(--gold)",marginBottom:3}}>Character Consistency Active</div><div style={{fontSize:12,color:"var(--t2)",lineHeight:1.6}}>{sc?.name}'s full visual profile is embedded in every scene prompt.</div></div></div>
       </>}
     </div>
   );
 }
 
-// ── HISTORY ──────────────────────────────────────────────────────────────────
-function History({videos,chars,onVideoComplete}){
-  const [filter,setFilter]=useState("all");const [sort,setSort]=useState("newest");
-  const filtered=videos.filter(v=>filter==="all"||v.char===filter).sort((a,b)=>sort==="newest"?b.id-a.id:a.id-b.id);
-  const processing=filtered.filter(v=>v.status==="processing");
+// ── History ───────────────────────────────────────────────────────────────────
+function History({videos,chars,onDone}){
+  const [fil,setFil]=useState("all");const [srt,setSrt]=useState("newest");
+  const filtered=videos.filter(v=>fil==="all"||v.char===fil).sort((a,b)=>srt==="newest"?b.id-a.id:a.id-b.id);
+  const proc=filtered.filter(v=>v.status==="processing");
   const done=filtered.filter(v=>v.status!=="processing");
   return(
     <div className="page">
-      <div className="page-hdr"><div><h1>Video History</h1><p className="page-sub">{videos.length} videos generated</p></div></div>
-      <div className="hist-filters">
-        <div className="filter-pills">{["all",...chars.map(c=>c.name)].map(f=><button key={f} className={`fpill ${filter===f?"on":""}`} onClick={()=>setFilter(f)}>{f==="all"?"All Videos":f}</button>)}</div>
-        <Sel value={sort} onChange={setSort} opts={[{v:"newest",l:"Newest first"},{v:"oldest",l:"Oldest first"}]} cls=""/>
+      <div className="phdr"><div><h1>Video History</h1><p className="psub">{videos.length} videos generated</p></div></div>
+      <div className="hf">
+        <div className="fps">{["all",...chars.map(c=>c.name)].map(f=><button key={f} className={`fp ${fil===f?"on":""}`} onClick={()=>setFil(f)}>{f==="all"?"All Videos":f}</button>)}</div>
+        <Sel val={srt} set={setSrt} opts={[{v:"newest",l:"Newest first"},{v:"oldest",l:"Oldest first"}]} cls=""/>
       </div>
-
-      {/* Processing section */}
-      {processing.length>0&&<>
-        <div style={{fontSize:12,color:"var(--gold)",fontWeight:700,textTransform:"uppercase",letterSpacing:".07em",marginBottom:12,display:"flex",alignItems:"center",gap:7}}>
-          <div style={{width:7,height:7,borderRadius:"50%",background:"var(--gold)",animation:"pulse 1.2s infinite"}}/> Processing ({processing.length})
-        </div>
-        {processing.map(v=><ProcessingCard key={v.id} video={v} onComplete={onVideoComplete} setVideos={setVideos}/>)}
-        <div style={{height:1,background:"var(--border)",margin:"20px 0"}}/>
+      {proc.length>0&&<>
+        <div style={{fontSize:11,color:"var(--gold)",fontWeight:700,textTransform:"uppercase",letterSpacing:".07em",marginBottom:11,display:"flex",alignItems:"center",gap:6}}><div style={{width:6,height:6,borderRadius:"50%",background:"var(--gold)",animation:"pulse 1.2s infinite"}}/>Processing ({proc.length})</div>
+        {proc.map(v=><Card key={v.id} style={{marginBottom:8}} ch={<><div style={{display:"flex",alignItems:"center",gap:11,padding:"12px 14px",borderBottom:"1px solid var(--brd)"}}><div style={{width:38,height:38,borderRadius:10,background:`${v.charColor}18`,border:`1px solid ${v.charColor}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>◈</div><div style={{flex:1,minWidth:0}}><div style={{fontSize:13,color:"var(--t1)",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{v.scene}</div><div style={{fontSize:11,color:v.charColor}}>{v.char} · {v.ratio} · {v.dur}</div></div><div style={{fontSize:11,color:"var(--t3)",background:"var(--bg3)",padding:"2px 8px",borderRadius:6}}>{v.model}</div></div><PTimer video={v} onDone={onDone}/></>}/>)}
+        <div style={{height:1,background:"var(--brd)",margin:"18px 0"}}/>
       </>}
-
-      {done.length===0&&processing.length===0&&<div style={{padding:"48px 24px",textAlign:"center"}}><div style={{fontSize:38,opacity:.15,marginBottom:11}}>▶</div><p style={{fontSize:13,color:"var(--t3)"}}>No videos yet — generate your first video to see it here</p></div>}
-      <div className="hist-grid">{done.map(v=><VThumb key={v.id} v={v} showExport onComplete={onVideoComplete}/>)}</div>
+      {done.length===0&&proc.length===0&&<div className="empty"><div className="empty-ic">▶</div><p>No videos yet — generate your first video</p></div>}
+      <div className="vg3">{done.map(v=><VThumb key={v.id} v={v} showExport onDone={onDone}/>)}</div>
     </div>
   );
 }
 
-// ── TOGGLE ────────────────────────────────────────────────────────────────────
-function Toggle({label,def}){const [on,setOn]=useState(def);return<div className="toggle-row"><span>{label}</span><button className={`tog ${on?"on":""}`} onClick={()=>setOn(p=>!p)}><div className="tog-knob"/></button></div>;}
+// ── Toggle ────────────────────────────────────────────────────────────────────
+function Tog({lbl,def}){const [on,setOn]=useState(def);return<div className="srow"><span>{lbl}</span><button className={`tog ${on?"on":""}`} onClick={()=>setOn(p=>!p)}><div className="tok"/></button></div>;}
 
-// ── SETTINGS ──────────────────────────────────────────────────────────────────
+// ── Toggle ────────────────────────────────────────────────────────────────────
+function Tog({lbl,def}){const [on,setOn]=useState(def);return<div className="srow"><span>{lbl}</span><button className={`tog ${on?"on":""}`} onClick={()=>setOn(p=>!p)}><div className="tok"/></button></div>;}
+
+// ── Settings ──────────────────────────────────────────────────────────────────
 function Settings({mode,setMode}){
-  const [anthropic,setAnthropic]=useState(G.anthropic);
-  const [ollamaUrl,setOllamaUrl]=useState(G.ollamaUrl);
-  const [ollamaModel,setOllamaModel]=useState(G.ollamaModel);
-  const [comfyPort,setComfyPort]=useState(G.comfyPort);
-  const [ollamaSt,setOllamaSt]=useState("idle");const [comfySt,setComfySt]=useState("idle");const [ollamaModels,setOllamaModels]=useState([]);
+  const [key,setKey]=useState(G.key);
+  const [oUrl,setOUrl]=useState(G.oUrl);
+  const [oMod,setOMod]=useState(G.oModel);
+  const [cPort,setCPort]=useState(G.cPort);
+  const [os,setOs]=useState("idle");
+  const [cs,setCs]=useState("idle");
   const [saved,setSaved]=useState(false);
-  const testOllamaConn=async()=>{
-    setOllamaSt("testing");G.ollamaUrl=ollamaUrl;G.ollamaModel=ollamaModel;
-    try{
-      const r=await fetch(`${ollamaUrl}/api/tags`,{signal:AbortSignal.timeout(4000)});
-      if(!r.ok){setOllamaSt("fail");return;}
-      const d=await r.json();
-      const models=(d.models||[]).map(m=>m.name||"");
-      setOllamaModels(models);
-      const hasModel=models.some(m=>m.startsWith(ollamaModel));
-      setOllamaSt(hasModel?"ok":"no_model");
-    }catch{setOllamaSt("fail");}
-  };
-  const testComfyConn=async()=>{setComfySt("testing");const r=await testComfy(comfyPort);setComfySt(r);};
+  const tO=async()=>{setOs("testing");const r=await testOllama();setOs(r);};
+  const tC=async()=>{setCs("testing");const r=await testComfy(cPort);setCs(r);};
   const save=()=>{
-    Object.assign(G,{mode,anthropic,ollamaUrl,ollamaModel,comfyPort});
-    ["ai_mode","anthropic_key","ollama_url","ollama_model","comfy_port"].forEach((k,i)=>localStorage.setItem(k,[mode,anthropic,ollamaUrl,ollamaModel,comfyPort][i]));
+    Object.assign(G,{mode,key,oUrl,oModel:oMod,cPort});
+    localStorage.setItem("ai_mode",mode);
+    localStorage.setItem("anthropic_key",key);
+    localStorage.setItem("ollama_url",oUrl);
+    localStorage.setItem("ollama_model",oMod);
+    localStorage.setItem("comfy_port",cPort);
     setSaved(true);setTimeout(()=>setSaved(false),2200);
   };
-  const dot=s=><div className={`conn-dot ${s}`}/>;
+  const dot=s=>{
+    const c=typeof s==="object"&&s.ok?"ok":s==="testing"?"testing":s==="idle"?"idle":"fail";
+    return<div className={"cdot "+c}/>;
+  };
   const gc="var(--green)";
+  const modes=[
+    {k:"cloud",ic:"☁️",tt:"Cloud APIs",ds:"Best quality — API keys required",cls:"c-cloud"},
+    {k:"local",ic:"🖥️",tt:"Local (Ollama + ComfyUI)",ds:"100% private — GPU recommended",cls:"c-local"},
+    {k:"demo",ic:"🎭",tt:"Demo Mode",ds:"No setup — works everywhere",cls:"c-demo"},
+  ];
   return(
     <div className="page">
-      <div className="page-hdr"><div><h1>Settings</h1><p className="page-sub">AI mode, API keys, and consistency engine</p></div></div>
-      <div className="settings-wrap">
-        <Card>
-          <h3 className="mb18">🤖 Choose AI Mode</h3>
-          <div className="mode-grid">
-            {[
-              {k:"cloud",icon:"☁️",title:"Cloud APIs",desc:"Best quality — API keys required",cls:"sel-cloud"},
-              {k:"local",icon:"🖥️",title:"Local (Ollama + ComfyUI)",desc:"100% private — local only, GPU recommended",cls:"sel-local"},
-              {k:"demo",icon:"🎭",title:"Demo Mode",desc:"No setup — works everywhere",cls:"sel-demo"},
-            ].map(m=><button key={m.k} className={`mode-card ${mode===m.k?m.cls:""}`} onClick={()=>{setMode(m.k);G.mode=m.k;}}>
-              <div className="mode-card-icon">{m.icon}</div>
-              <div className="mode-card-title">{m.title}</div>
-              <div className="mode-card-desc">{m.desc}</div>
-            </button>)}
-          </div>
+      <div className="phdr"><div><h1>Settings</h1><p className="psub">AI mode, API keys, consistency engine</p></div></div>
+      <div className="sw">
+        <Card ch={<>
+          <h3 style={{marginBottom:16}}>Choose AI Mode</h3>
+          <div className="mg">{modes.map(m=><button key={m.k} className={"mc "+(mode===m.k?m.cls:"")} onClick={()=>{setMode(m.k);G.mode=m.k;}}><div className="mc-ic">{m.ic}</div><div className="mc-tt">{m.tt}</div><div className="mc-ds">{m.ds}</div></button>)}</div>
 
           {mode==="cloud"&&<div style={{animation:"fadeIn .3s ease"}}>
-            <div style={{fontSize:12,color:"var(--blue)",fontWeight:600,marginBottom:13}}>☁️ Cloud Configuration</div>
-            <div className="mb14">
-              <Inp label="Anthropic API Key (Character Analysis + Story Generator)" type="password" value={anthropic} onChange={setAnthropic} ph="sk-ant-•••••••••••••••••••••••••"/>
-              <p className="hint">console.anthropic.com → API Keys</p>
+            <div style={{fontSize:12,color:"var(--blue)",fontWeight:600,marginBottom:12}}>Cloud Configuration</div>
+            <div style={{marginBottom:13}}>
+              <Inp lbl="Anthropic API Key" type="password" val={key} set={setKey} ph="sk-ant-•••••••••••"/>
+              <p className="hint">console.anthropic.com — API Keys</p>
             </div>
-            <div style={{background:"var(--bg-3)",borderRadius:"var(--r-md)",padding:"12px 15px",fontSize:12,color:"var(--t2)",lineHeight:1.8}}>
-              For video generation you also need:<br/>
-              <strong style={{color:"var(--t1)"}}>Kling AI</strong> kling.kuaishou.com  ·  <strong style={{color:"var(--t1)"}}>Runway Gen-3</strong> app.runwayml.com  ·  <strong style={{color:"var(--t1)"}}>Luma Dream</strong> lumalabs.ai
+            <div style={{background:"var(--bg3)",borderRadius:"var(--r)",padding:"11px 14px",fontSize:12,color:"var(--t2)",lineHeight:1.8}}>
+              For video generation also add: <strong style={{color:"var(--t1)"}}>Kling AI</strong> · <strong style={{color:"var(--t1)"}}>Runway Gen-3</strong> · <strong style={{color:"var(--t1)"}}>Luma Dream</strong>
             </div>
           </div>}
 
           {mode==="local"&&<div style={{animation:"fadeIn .3s ease"}}>
-            <div style={{fontSize:12,color:gc,fontWeight:600,marginBottom:12}}>🖥️ Local Configuration</div>
+            <div style={{fontSize:12,color:gc,fontWeight:600,marginBottom:12}}>Local Configuration</div>
             {location.protocol==="https:"
-              ?<div style={{background:"var(--red-bg)",border:"1px solid rgba(252,136,136,.3)",borderRadius:"var(--r-lg)",padding:"14px 18px",marginBottom:14}}>
-                <div style={{fontSize:13,fontWeight:700,color:"var(--red)",marginBottom:6}}>🔒 You are on HTTPS — Local mode is blocked</div>
-                <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.8}}>
-                  Browsers block connections to localhost from HTTPS pages for security reasons.<br/><br/>
-                  <strong style={{color:"var(--t1)"}}>Solution — run the file locally:</strong><br/>
-                  1. Download <code style={{fontFamily:"var(--fm)",background:"var(--bg-0)",padding:"1px 5px",borderRadius:3}}>index.html</code><br/>
-                  2. Open terminal in that folder<br/>
-                  3. Run: <code style={{fontFamily:"var(--fm)",background:"var(--bg-0)",padding:"1px 5px",borderRadius:3}}>python -m http.server 8080</code><br/>
-                  4. Open: <code style={{fontFamily:"var(--fm)",background:"var(--bg-0)",padding:"1px 5px",borderRadius:3}}>http://localhost:8080</code>
-                </div>
+              ?<div style={{background:"var(--redb)",border:"1px solid rgba(252,136,136,.25)",borderRadius:"var(--r)",padding:"13px 16px",marginBottom:13,fontSize:12,color:"var(--red)"}}>
+                <strong>HTTPS blocks localhost connections.</strong><br/>
+                Download index.html and run:<br/>
+                <code className="code">python -m http.server 8080</code>
+                Then open http://localhost:8080
               </div>
-              :<div className="warn-box">⚠️ Local mode only works from <strong>http://</strong> — not GitHub Pages. Start with: <code style={{background:"var(--bg-0)",padding:"1px 6px",borderRadius:4,fontFamily:"var(--fm)"}}>python -m http.server 8080</code></div>}
-            <div style={{fontWeight:700,color:"var(--t1)",fontSize:14,marginBottom:11}}>📝 Step 1 — Text AI: Ollama</div>
+              :<div className="warn-box">Local mode needs http:// — not GitHub Pages. Start with: <code className="code">python -m http.server 8080</code></div>}
+
+            <div style={{fontWeight:700,color:"var(--t1)",fontSize:13,marginBottom:10}}>Step 1 — Text AI: Ollama</div>
             {[
-              {n:1,t:"Install Ollama",d:<>Visit <a href="https://ollama.com" target="_blank" style={{color:gc}}>ollama.com</a> and download the app</>},
-              {n:2,t:"Download a model",d:<><code className="code-line">ollama pull llama3.2</code></>},
-              {n:3,t:"Start Ollama with CORS",d:<><code className="code-line">OLLAMA_ORIGINS=* ollama serve</code></>},
-            ].map(s=><div key={s.n} className="setup-step"><div className="step-num" style={{background:`${gc}18`,color:gc}}>{s.n}</div><div className="step-body"><div className="step-title">{s.t}</div><div className="step-desc">{s.d}</div></div></div>)}
-            <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:12,margin:"12px 0 4px"}}>
-              <Inp label="Ollama URL" value={ollamaUrl} onChange={setOllamaUrl} ph="http://localhost:11434"/>
-              <Sel label="Model" value={ollamaModel} onChange={setOllamaModel} opts={OLLAMA_MODELS}/>
+              {n:1,t:"Install Ollama",d:<>Visit <a href="https://ollama.com" target="_blank" rel="noreferrer" style={{color:gc}}>ollama.com</a> and download</>},
+              {n:2,t:"Download a model",d:<><code className="code">ollama pull llama3.2</code></>},
+              {n:3,t:"Start with CORS",d:<><code className="code">OLLAMA_ORIGINS=* ollama serve</code></>},
+            ].map(s=><div key={s.n} className="step"><div className="step-n" style={{background:gc+"18",color:gc}}>{s.n}</div><div><div className="step-tt">{s.t}</div><div className="step-ds">{s.d}</div></div></div>)}
+
+            <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:11,margin:"11px 0 4px"}}>
+              <Inp lbl="Ollama URL" val={oUrl} set={setOUrl} ph="http://localhost:11434"/>
+              <Sel lbl="Model" val={oMod} set={setOMod} opts={OMODELS}/>
             </div>
-            <div className="conn-test">{dot(ollamaSt==="testing"?"testing":ollamaSt)}<span style={{fontSize:12,color:"var(--t2)",flex:1}}>
-      {ollamaSt==="idle"&&"Not tested yet"}
-      {ollamaSt==="testing"&&"Connecting…"}
-      {ollamaSt==="ok"&&<span style={{color:"var(--green)"}}>✓ Ollama running · Model <strong>{ollamaModel}</strong> ready</span>}
-      {ollamaSt==="no_model"&&<span style={{color:"var(--gold)"}}>⚠ Ollama running but <strong>{ollamaModel}</strong> not found. Run: <code style={{fontFamily:"var(--fm)"}}>ollama pull {ollamaModel}</code>{ollamaModels.length>0&&` Available: ${ollamaModels.slice(0,3).join(", ")}`}</span>}
-      {ollamaSt==="fail"&&<span style={{color:"var(--red)"}}>✗ Not reachable. Run: <code style={{fontFamily:"var(--fm)"}}>OLLAMA_ORIGINS=* ollama serve</code></span>}
-    </span><Btn v="grn" sz="sm" onClick={testOllamaConn} disabled={ollamaSt==="testing"}>Test</Btn></div>
-            <div style={{fontWeight:700,color:"var(--t1)",fontSize:14,margin:"20px 0 11px"}}>🎬 Step 2 — Video AI: ComfyUI</div>
+            <div className="conn">
+              {dot(os)}
+              <span style={{fontSize:12,color:"var(--t2)",flex:1}}>
+                {os==="idle"?"Not tested yet"
+                  :os==="testing"?"Connecting…"
+                  :typeof os==="object"&&os.ok?"Connected — models: "+(os.models.slice(0,3).join(", ")||"none installed")
+                  :os&&os.err==="https"?"HTTPS blocks localhost — run locally"
+                  :os&&os.err==="unreachable"?"Not reachable — run: OLLAMA_ORIGINS=* ollama serve"
+                  :"Error — check terminal"}
+              </span>
+              <Btn ch="Test" v="grn" sz="sm" onClick={tO} disabled={os==="testing"}/>
+            </div>
+
+            <div style={{fontWeight:700,color:"var(--t1)",fontSize:13,margin:"18px 0 10px"}}>Step 2 — Video AI: ComfyUI</div>
             {[
-              {n:1,t:"Install ComfyUI",d:<><a href="https://github.com/comfyanonymous/ComfyUI" target="_blank" style={{color:gc}}>github.com/comfyanonymous/ComfyUI</a> — Python 3.10+, NVIDIA GPU recommended</>},
-              {n:2,t:"Download a video model",d:"AnimateDiff, SVD, CogVideoX, LTX-Video or Wan2.1 as .safetensors into models/"},
-              {n:3,t:"Start ComfyUI with CORS",d:<><code className="code-line">python main.py --enable-cors-header</code></>},
-              {n:4,t:"Copy & paste prompt",d:'Video Creator → build prompt → "📋 Copy Prompt" → paste into ComfyUI → generate'},
-            ].map(s=><div key={s.n} className="setup-step"><div className="step-num" style={{background:`${gc}18`,color:gc}}>{s.n}</div><div className="step-body"><div className="step-title">{s.t}</div><div className="step-desc">{s.d}</div></div></div>)}
-            <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:12,margin:"12px 0 4px"}}>
-              <Inp label="ComfyUI Port" value={comfyPort} onChange={setComfyPort} ph="8188"/>
-              <Btn v="grn" onClick={testComfyConn} disabled={comfySt==="testing"} style={{alignSelf:"flex-end",width:"100%"}}>Test Connection</Btn>
+              {n:1,t:"Install ComfyUI",d:<><a href="https://github.com/comfyanonymous/ComfyUI" target="_blank" rel="noreferrer" style={{color:gc}}>github.com/comfyanonymous/ComfyUI</a></>},
+              {n:2,t:"Download video model",d:"AnimateDiff, LTX-Video, CogVideoX or Wan2.1"},
+              {n:3,t:"Start with CORS",d:<><code className="code">python main.py --enable-cors-header</code></>},
+              {n:4,t:"Copy + paste prompt",d:'Video Creator → Copy Prompt → paste in ComfyUI'},
+            ].map(s=><div key={s.n} className="step"><div className="step-n" style={{background:gc+"18",color:gc}}>{s.n}</div><div><div className="step-tt">{s.t}</div><div className="step-ds">{s.d}</div></div></div>)}
+
+            <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:11,margin:"11px 0 4px"}}>
+              <Inp lbl="ComfyUI Port" val={cPort} set={setCPort} ph="8188"/>
+              <Btn ch="Test Connection" v="grn" onClick={tC} disabled={cs==="testing"} style={{alignSelf:"flex-end",width:"100%"}}/>
             </div>
-            <div className="conn-test">
-      {dot(typeof comfySt==="object"?"ok":comfySt==="testing"?"testing":comfySt==="idle"?"idle":"fail")}
-      <span style={{fontSize:12,color:"var(--t2)",flex:1,lineHeight:1.5}}>
-        {comfySt==="idle"?"Not tested yet — click Test"
-         :comfySt==="testing"?"Connecting to ComfyUI…"
-         :comfySt==="https"?"🔒 HTTPS blocks localhost. Run the file locally."
-         :comfySt==="timeout"?"⏱ Timeout — ComfyUI probably not running"
-         :comfySt==="unreachable"?"✗ Not reachable — run: python main.py --enable-cors-header"
-         :typeof comfySt==="object"&&comfySt.ok
-           ?`✓ ComfyUI running — ${comfySt.gpu}`
-           :`✗ Error`}
-      </span>
-      <Btn v="blu" sz="sm" onClick={()=>window.open(`http://localhost:${comfyPort}`,"_blank")}>Open ↗</Btn>
-    </div>
+            <div className="conn">
+              {dot(cs)}
+              <span style={{fontSize:12,color:"var(--t2)",flex:1}}>
+                {cs==="idle"?"Not tested yet"
+                  :cs==="testing"?"Connecting…"
+                  :typeof cs==="object"&&cs.ok?"ComfyUI running — "+cs.gpu
+                  :cs&&cs.err==="https"?"HTTPS blocks localhost"
+                  :cs&&cs.err==="unreachable"?"Not reachable — run with --enable-cors-header"
+                  :"Error — check terminal"}
+              </span>
+              <Btn ch="Open" v="blu" sz="sm" onClick={()=>window.open("http://localhost:"+cPort,"_blank")}/>
+            </div>
           </div>}
 
           {mode==="demo"&&<div style={{animation:"fadeIn .3s ease"}}>
-            <Card cls="purple" style={{padding:"15px 18px"}}>
-              <div style={{fontSize:13,fontWeight:700,color:"var(--purple)",marginBottom:8}}>🎭 Demo Mode — no setup required</div>
+            <Card cls="purple" style={{padding:"13px 16px"}} ch={<>
+              <div style={{fontSize:13,fontWeight:700,color:"var(--purple)",marginBottom:7}}>Demo Mode — no setup required</div>
               <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.9}}>
-                ✓ Works everywhere — including GitHub Pages<br/>
-                ✓ No API key needed<br/>
-                ✓ No local installation<br/>
-                ✓ Realistic character analyses & story scenes<br/>
-                ✓ Processing timer with live countdown<br/>
-                ✗ Content is sample data, not real AI output
+                Works on GitHub Pages and everywhere<br/>
+                No API key needed<br/>
+                Realistic character analyses and story scenes<br/>
+                Sample videos for playback and download<br/>
+                Live processing countdown timer
               </div>
-            </Card>
+            </>}/>
           </div>}
-        </Card>
+        </>}/>
 
-        <Card>
-          <h3 className="mb12">🔒 Character Consistency Engine</h3>
-          <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.8,marginBottom:16}}>When Character Lock is active, the engine embeds the full visual profile into every prompt — same face, colours, and clothing across every generated video.</p>
-          <Toggle label="Auto-embed character profile in all prompts" def={true}/>
-          <Toggle label="Warn when generating without a locked character" def={true}/>
-          <Toggle label="Include style consistency clause in prompt" def={true}/>
-          <Toggle label="Auto-lock characters after first generated video" def={false}/>
-          <Toggle label="Show prompt preview before each generation" def={true}/>
-        </Card>
+        <Card ch={<>
+          <h3 style={{marginBottom:11}}>Character Consistency Engine</h3>
+          <p style={{fontSize:12,color:"var(--t2)",lineHeight:1.8,marginBottom:14}}>When Character Lock is active, the engine embeds the full visual profile into every prompt — same face, colours, clothing across every video.</p>
+          <div className="ss">
+            <Tog lbl="Auto-embed character profile in all prompts" def={true}/>
+            <Tog lbl="Warn when generating without locked character" def={true}/>
+            <Tog lbl="Include style consistency clause" def={true}/>
+            <Tog lbl="Auto-lock after first generated video" def={false}/>
+            <Tog lbl="Show prompt preview before generation" def={true}/>
+          </div>
+        </>}/>
 
-        <Card>
-          <h3 className="mb12">⬇ Export Preferences</h3>
-          <Toggle label="Auto-generate subtitles on export" def={false}/>
-          <Toggle label="Watermark with studio logo" def={false}/>
-          <Toggle label="Save source prompts with each export" def={true}/>
-        </Card>
+        <Card ch={<>
+          <h3 style={{marginBottom:11}}>Export Preferences</h3>
+          <div className="ss">
+            <Tog lbl="Auto-generate subtitles on export" def={false}/>
+            <Tog lbl="Watermark with studio logo" def={false}/>
+            <Tog lbl="Save source prompts with each export" def={true}/>
+          </div>
+        </>}/>
 
-        <Btn v="pri" sz="lg" onClick={save} style={{width:240}}>{saved?"✓ Saved!":"Save Settings"}</Btn>
+        <Btn ch={saved?"Saved!":"Save Settings"} v="pri" sz="lg" onClick={save} style={{width:220}}/>
       </div>
     </div>
   );
 }
 
-// ── SIDEBAR ───────────────────────────────────────────────────────────────────
-function Sidebar({page,onNavigate,lockedChar,mode,setMode,processingCount}){
-  const mm={cloud:{cls:"cloud",icon:"☁️",label:"Cloud AI"},local:{cls:"local",icon:"🖥️",label:"Local (Ollama)"},demo:{cls:"demo",icon:"🎭",label:"Demo Mode"}};
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+function Sidebar({page,nav,locked,mode,setMode,procCount}){
+  const mm={
+    cloud:{cls:"cloud",ic:"☁️",lbl:"Cloud AI"},
+    local:{cls:"local",ic:"🖥️",lbl:"Local (Ollama)"},
+    demo:{cls:"demo",ic:"🎭",lbl:"Demo Mode"},
+  };
   const m=mm[mode]||mm.demo;
-  const next={cloud:"local",local:"demo",demo:"cloud"}[mode];
+  const nx={cloud:"local",local:"demo",demo:"cloud"}[mode];
   return(
     <aside className="sb">
-      <div className="sb-logo"><div className="sb-logo-icon">▶</div><div><div className="sb-logo-t1">AI Character</div><div className="sb-logo-t2">VIDEO STUDIO</div></div></div>
-      <nav className="sb-nav">{NAV.map(item=><button key={item.id} className={`sb-item ${page===item.id?"active":""}`} onClick={()=>onNavigate(item.id)}><span style={{fontSize:14,opacity:page===item.id?1:.6}}>{item.icon}</span><span>{item.label}</span>{item.badge&&<span className="sb-badge">{item.badge}</span>}</button>)}</nav>
+      <div className="sb-logo">
+        <div className="sb-icon">▶</div>
+        <div><div className="sb-t1">AI Character</div><div className="sb-t2">VIDEO STUDIO</div></div>
+      </div>
+      <nav className="sb-nav">
+        {NAV.map(n=><button key={n.id} className={"sb-item "+(page===n.id?"on":"")} onClick={()=>nav(n.id)}>
+          <span style={{fontSize:14,opacity:page===n.id?1:.6}}>{n.icon}</span>
+          <span>{n.label}</span>
+          {n.badge&&<span className="sb-bge">{n.badge}</span>}
+        </button>)}
+      </nav>
       <div className="sb-foot">
-        {processingCount>0&&<button className="sb-processing" onClick={()=>onNavigate("history")}><div className="sb-processing-dot"/><span>{processingCount} video{processingCount>1?"s":""} processing…</span></button>}
-        <button className={`sb-mode-btn ${m.cls}`} onClick={()=>{const nm=next;G.mode=nm;setMode(nm);}} title="Switch AI mode"><span>{m.icon}</span><span style={{flex:1}}>{m.label}</span><span style={{opacity:.5,fontSize:9}}>▼</span></button>
-        <div className={`sb-lock ${lockedChar?"on":""}`}>
-          <div className="sb-lock-lbl">{lockedChar?"🔒 Character locked":"No character locked"}</div>
-          {lockedChar&&<div className="sb-lock-name">{lockedChar.name}</div>}
-          <div className="sb-lock-hint">{lockedChar?"Embedded in all prompts":"Lock a character for consistency"}</div>
+        {procCount>0&&<button className="sb-proc" onClick={()=>nav("hist")}>
+          <div className="sb-proc-dot"/>
+          {procCount} video{procCount>1?"s":""} processing…
+        </button>}
+        <button className={"sb-mode "+m.cls} onClick={()=>{G.mode=nx;setMode(nx);}} title="Switch AI mode">
+          <span>{m.ic}</span><span style={{flex:1}}>{m.lbl}</span><span style={{opacity:.5,fontSize:9}}>switch</span>
+        </button>
+        <div className={"sb-lock "+(locked?"on":"")}>
+          <div className="sb-lk-lbl">{locked?"Character locked":"No character locked"}</div>
+          {locked&&<div className="sb-lk-name">{locked.name}</div>}
+          <div className="sb-lk-hint">{locked?"Embedded in all prompts":"Lock a character for consistency"}</div>
         </div>
       </div>
     </aside>
   );
 }
 
-// ── APP ROOT ──────────────────────────────────────────────────────────────────
+// ── App ───────────────────────────────────────────────────────────────────────
 function App(){
-  const [page,setPage]=useState("dashboard");
-  const [chars,setChars]=useState(INIT_CHARS);
-  const [videos,setVideos]=useState(INIT_VIDEOS);
+  const [page,setPage]=useState("dash");
+  const [chars,setChars]=useState(ICHARS);
+  const [videos,setVideos]=useState(IVIDS);
   const [mode,setMode]=useState(G.mode);
-
-  const lockedChar=chars.find(c=>c.locked)||null;
-  const processingCount=videos.filter(v=>v.status==="processing").length;
-
-  const onVideoComplete=id=>{
-    setVideos(p=>p.map(v=>v.id===id?{...v,status:"done",ts:"just now",videoUrl:randomSampleVideo()}:v));
-  };
-
-  const props={chars,setChars,videos,setVideos,onNavigate:setPage,mode,onVideoComplete};
+  const locked=chars.find(c=>c.locked)||null;
+  const procCount=videos.filter(v=>v.status==="processing").length;
+  const onDone=id=>setVideos(p=>p.map(v=>v.id===id?{...v,status:"done",ts:"just now",videoUrl:randVid()}:v));
+  const props={chars,setChars,videos,setVideos,nav:setPage,mode,onDone};
   const pages={
-    dashboard:<Dashboard {...props} onVideoComplete={onVideoComplete}/>,
-    characters:<CharacterManager {...props}/>,
-    video:<VideoCreator {...props}/>,
-    story:<StoryCreator {...props}/>,
-    history:<History {...props} onVideoComplete={onVideoComplete}/>,
-    settings:<Settings mode={mode} setMode={setMode}/>,
+    dash:<Dashboard {...props}/>,
+    chars:<CharMgr {...props}/>,
+    video:<VideoCr {...props}/>,
+    story:<StoryCr {...props}/>,
+    hist:<History {...props}/>,
+    set:<Settings mode={mode} setMode={setMode}/>,
   };
   return(
     <div className="shell">
-      <Sidebar page={page} onNavigate={setPage} lockedChar={lockedChar} mode={mode} setMode={setMode} processingCount={processingCount}/>
-      <main className="main">{pages[page]||pages.dashboard}</main>
+      <Sidebar page={page} nav={setPage} locked={locked} mode={mode} setMode={setMode} procCount={procCount}/>
+      <main className="main">{pages[page]||pages.dash}</main>
     </div>
   );
 }
-try {
+
+try{
   ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
-} catch(err) {
-  const d = document.getElementById("error-display");
-  if(d){ d.style.display="block"; d.textContent = "❌ Render Error:\n\n" + err.message + "\n\n" + (err.stack||""); }
+}catch(e){
+  const d=document.getElementById("error-screen");
+  if(d){d.style.display="block";d.textContent="Render Error:\n"+e.message+"\n\n"+(e.stack||"");}
 }
 </script>
 </body>
