@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AI Character Video Studio Pro — Project Index</title>
+<style>
+  :root{--bg:#0b0c10;--surface:#13151c;--surface2:#1a1d27;--border:rgba(255,255,255,0.07);--border-h:rgba(255,255,255,0.15);--text:#e8eaf0;--muted:#7a7f96;--accent:#7c6eff;--accent-s:rgba(124,110,255,0.12);--green:#3de89e;--green-s:rgba(61,232,158,0.1);--amber:#f5a623;--amber-s:rgba(245,166,35,0.1);--teal:#2dd4bf;--teal-s:rgba(45,212,191,0.1);--pink:#f472b6;--pink-s:rgba(244,114,182,0.1);--cyan:#38bdf8}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;font-size:14px;line-height:1.6;min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(124,110,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(124,110,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+  .wrap{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:0 24px 80px}
+  header{padding:52px 0 40px;border-bottom:1px solid var(--border);margin-bottom:40px}
+  .logo-row{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+  .logo-icon{width:46px;height:46px;border-radius:12px;background:var(--accent-s);border:1px solid rgba(124,110,255,0.3);display:flex;align-items:center;justify-content:center;font-size:22px}
+  h1{font-size:26px;font-weight:600;letter-spacing:-.5px;color:#fff}
+  .tagline{font-size:14px;color:var(--muted);max-width:620px;margin-bottom:22px}
+  .stats-row{display:flex;gap:28px;flex-wrap:wrap}
+  .stat{display:flex;flex-direction:column;gap:2px}
+  .stat-num{font-size:22px;font-weight:700;color:var(--accent)}
+  .stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .phase-bar{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:40px}
+  .phase-card{padding:14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);position:relative;overflow:hidden}
+  .phase-card.done{border-color:rgba(61,232,158,0.25);background:rgba(61,232,158,0.04)}
+  .phase-card.active{border-color:rgba(124,110,255,0.35);background:var(--accent-s)}
+  .phase-card.pending{opacity:.5}
+  .phase-num{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .phase-name{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px}
+  .phase-weeks{font-size:10px;color:var(--muted)}
+  .phase-status{position:absolute;top:10px;right:10px;font-size:14px}
+  .section{margin-bottom:36px}
+  .section-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+  .section-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+  .section-title{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .section-count{margin-left:auto;font-size:11px;color:var(--muted);background:var(--surface2);padding:2px 8px;border-radius:100px;border:1px solid var(--border)}
+  .sp1{font-size:10px;padding:2px 7px;border-radius:100px;border:1px solid rgba(61,232,158,.3);color:var(--green);background:var(--green-s);font-weight:600;margin-left:6px}
+  .sp2{font-size:10px;padding:2px 7px;border-radius:100px;border:1px solid rgba(124,110,255,.3);color:var(--accent);background:var(--accent-s);font-weight:600;margin-left:6px}
+  .file-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:7px}
+  .file-item{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:9px;border:1px solid var(--border);background:var(--surface);text-decoration:none;transition:border-color .15s,background .15s}
+  .file-item:hover{border-color:var(--border-h);background:var(--surface2)}
+  .file-item-icon{font-size:17px;flex-shrink:0;width:30px;height:30px;display:flex;align-items:center;justify-content:center}
+  .file-item-info{flex:1;min-width:0}
+  .file-item-name{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .file-item-path{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:monospace}
+  .badge{font-size:9px;font-weight:700;letter-spacing:.04em;padding:2px 6px;border-radius:100px;flex-shrink:0;white-space:nowrap;border:1px solid}
+  .b-core{background:var(--accent-s);color:var(--accent);border-color:rgba(124,110,255,.25)}
+  .b-db{background:var(--green-s);color:var(--green);border-color:rgba(61,232,158,.25)}
+  .b-ai{background:var(--teal-s);color:var(--teal);border-color:rgba(45,212,191,.25)}
+  .b-infra{background:var(--amber-s);color:var(--amber);border-color:rgba(245,166,35,.25)}
+  .b-plan{background:var(--surface2);color:var(--muted);border-color:var(--border)}
+  .pipeline{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:32px;font-size:11px}
+  .pipe-step{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:5px 10px;white-space:nowrap}
+  .pipe-step.ai{border-color:rgba(45,212,191,.3);color:var(--teal)}
+  .pipe-step.done{border-color:rgba(124,110,255,.3);color:var(--accent)}
+  .pipe-arrow{color:var(--muted)}
+  .code-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;font-family:monospace;font-size:12px;line-height:2;color:var(--muted)}
+  footer{border-top:1px solid var(--border);padding-top:20px;margin-top:40px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;color:var(--muted);font-size:11px}
+  .tech-pills{display:flex;flex-wrap:wrap;gap:5px}
+  .tech-pill{padding:2px 9px;border-radius:100px;border:1px solid var(--border);background:var(--surface);font-size:10px;color:var(--muted)}
+  @media(max-width:800px){.phase-bar{grid-template-columns:repeat(3,1fr)}.file-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="logo-row"><div class="logo-icon">&#127916;</div><h1>AI Character Video Studio Pro</h1></div>
+  <p class="tagline">Enterprise-Webplattform &#183; Konsistente KI-Videos &#183; Lokal &#183; Open-Source &#183; Character DNA &#183; Story Generator &#183; Voice Cloning</p>
+  <div class="stats-row">
+    <div class="stat"><span class="stat-num">4</span><span class="stat-label">Phasen fertig</span></div>
+    <div class="stat"><span class="stat-num">88</span><span class="stat-label">Dateien</span></div>
+    <div class="stat"><span class="stat-num">14+</span><span class="stat-label">KI-Modelle</span></div>
+    <div class="stat"><span class="stat-num">6</span><span class="stat-label">Phasen gesamt</span></div>
+  </div>
+</header>
+
+<div class="section">
+  <div class="section-header"><div class="section-icon">&#128197;</div><span class="section-title">Implementierungsstatus</span></div>
+  <div class="phase-bar">
+    <div class="phase-card done"><div class="phase-num">Phase 1</div><div class="phase-name">Fundament</div><div class="phase-weeks">Docker &#183; DB &#183; Schema</div><div class="phase-status">&#9989;</div></div>
+    <div class="phase-card done"><div class="phase-num">Phase 2</div><div class="phase-name">Backend + AI</div><div class="phase-weeks">NestJS &#183; Python Worker</div><div class="phase-status">&#9989;</div></div>
+    <div class="phase-card done"><div class="phase-num">Phase 3</div><div class="phase-name">Character DNA</div><div class="phase-weeks">IP-Adapter &#183; PuLID</div><div class="phase-status">&#9989;</div></div>
+    <div class="phase-card done"><div class="phase-num">Phase 4</div><div class="phase-name">Video Pipeline</div><div class="phase-weeks">Wan 2.2 &#183; BullMQ</div><div class="phase-status">&#9989;</div></div>
+    <div class="phase-card active"><div class="phase-num">Phase 5</div><div class="phase-name">Frontend</div><div class="phase-weeks">Next.js 15</div><div class="phase-status">&#128260;</div></div>
+    <div class="phase-card pending"><div class="phase-num">Phase 6</div><div class="phase-name">Infra</div><div class="phase-weeks">K8s &#183; TensorRT</div><div class="phase-status">&#9203;</div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-header"><div class="section-icon">&#9889;</div><span class="section-title">KI-Pipeline (End-to-End)</span></div>
+  <div class="pipeline">
+    <div class="pipe-step done">&#128248; Upload</div><div class="pipe-arrow">&#8594;</div>
+    <div class="pipe-step ai">Florence-2 + Qwen2.5-VL</div><div class="pipe-arrow">&#8594;</div>
+    <div class="pipe-step ai">InsightFace 512d</div><div class="pipe-arrow">&#8594;</div>
+    <div class="pipe-step ai">CLIP 768d</div><div class="pipe-arrow">&#8594;</div>
+    <div class="pipe-step ai">DINOv2 1024d</div><div class="pipe-arrow">&#8594;</div>
+    <div class="pipe-step done">Qdrant &#8594; Character DNA &#10003;</div>
+    <div style="flex-basis:100%"></div>
+    <div class="pipe-step done">&#128161; Story-Idee</div><div class="pipe-arrow">&#8594;</div>
+    <div class="pipe-step ai">Qwen3 LLM</div><div class="pipe-arrow">&#8594;</div>
+    <div class="pipe-step done">20 Szenen</div><div class="pipe-arrow">&#8594;</div>
+    <div class="pipe-step ai">&#128274; Lock Engine (Auto: PuLID/InstantID/IP-Adapter)</div><div class="pipe-arrow">&#8594;</div>
+    <div class="pipe-step ai">Wan 2.2 Video</div><div class="pipe-arrow">&#8594;</div>
+    <div class="pipe-step ai">XTTS-v2 Voice</div><div class="pipe-arrow">&#8594;</div>
+    <div class="pipe-step done">FFmpeg &#8594; MP4 &#10003;</div>
+    <div style="flex-basis:100%"></div>
+    <div class="pipe-step done">&#128250; Alle Szenen fertig?</div><div class="pipe-arrow">&#8594;</div>
+    <div class="pipe-step ai">Watcher-Job (alle 5s)</div><div class="pipe-arrow">&#8594;</div>
+    <div class="pipe-step done">Story-Clips zusammenfuegen</div><div class="pipe-arrow">&#8594;</div>
+    <div class="pipe-step ai">Export Center</div><div class="pipe-arrow">&#8594;</div>
+    <div class="pipe-step done">TikTok/Reels/Shorts 9:16 &#10003;</div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-header"><div class="section-icon" style="background:var(--green-s)">&#127959;</div><span class="section-title">Phase 1 &#8212; Fundament</span><span class="sp1">&#9989; FERTIG</span><span class="section-count">11 Dateien</span></div>
+  <div class="file-grid">
+    <a class="file-item" href="index.html"><div class="file-item-icon">&#128197;</div><div class="file-item-info"><div class="file-item-name">index.html</div><div class="file-item-path">/ &#183; Projekt-Uebersicht (diese Seite)</div></div><span class="badge b-core">CORE</span></a>
+    <a class="file-item" href="README.md"><div class="file-item-icon">&#128196;</div><div class="file-item-info"><div class="file-item-name">README.md</div><div class="file-item-path">/ &#183; Projektvision &amp; Spezifikation</div></div><span class="badge b-core">CORE</span></a>
+    <a class="file-item" href=".env.example"><div class="file-item-icon">&#128273;</div><div class="file-item-info"><div class="file-item-name">.env.example</div><div class="file-item-path">/ &#183; Alle Umgebungsvariablen</div></div><span class="badge b-core">CORE</span></a>
+    <a class="file-item" href="docker-compose.yml"><div class="file-item-icon">&#128011;</div><div class="file-item-info"><div class="file-item-name">docker-compose.yml</div><div class="file-item-path">/ &#183; 7 Services: Postgres, Redis, Qdrant, Backend, Frontend, AI, Nginx</div></div><span class="badge b-infra">INFRA</span></a>
+    <a class="file-item" href="infrastructure/database/schema.prisma"><div class="file-item-icon">&#128311;</div><div class="file-item-info"><div class="file-item-name">schema.prisma</div><div class="file-item-path">infrastructure/database/ &#183; 13 Tabellen, alle Enums</div></div><span class="badge b-db">DB</span></a>
+    <a class="file-item" href="infrastructure/database/seed.ts"><div class="file-item-icon">&#127807;</div><div class="file-item-info"><div class="file-item-name">seed.ts</div><div class="file-item-path">infrastructure/database/ &#183; Demo: Mika die Katze + 5 Szenen Story</div></div><span class="badge b-db">DB</span></a>
+    <a class="file-item" href="infrastructure/docker/backend.Dockerfile"><div class="file-item-icon">&#128230;</div><div class="file-item-info"><div class="file-item-name">backend.Dockerfile</div><div class="file-item-path">infrastructure/docker/ &#183; Node.js 22, 4-Stage Build</div></div><span class="badge b-infra">INFRA</span></a>
+    <a class="file-item" href="infrastructure/docker/ai-worker.Dockerfile"><div class="file-item-icon">&#128230;</div><div class="file-item-info"><div class="file-item-name">ai-worker.Dockerfile</div><div class="file-item-path">infrastructure/docker/ &#183; CUDA 12.4 + PyTorch 2.5</div></div><span class="badge b-infra">INFRA</span></a>
+    <a class="file-item" href="infrastructure/docker/frontend.Dockerfile"><div class="file-item-icon">&#128230;</div><div class="file-item-info"><div class="file-item-name">frontend.Dockerfile</div><div class="file-item-path">infrastructure/docker/ &#183; Next.js 15 Standalone</div></div><span class="badge b-infra">INFRA</span></a>
+    <a class="file-item" href="infrastructure/qdrant/collections.ts"><div class="file-item-icon">&#129518;</div><div class="file-item-info"><div class="file-item-name">collections.ts</div><div class="file-item-path">infrastructure/qdrant/ &#183; Face/Style/Body Collections</div></div><span class="badge b-db">DB</span></a>
+    <a class="file-item" href="infrastructure/redis/config.ts"><div class="file-item-icon">&#9889;</div><div class="file-item-info"><div class="file-item-name">config.ts</div><div class="file-item-path">infrastructure/redis/ &#183; BullMQ Queue Config</div></div><span class="badge b-infra">INFRA</span></a>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-header"><div class="section-icon" style="background:var(--accent-s)">&#9881;&#65039;</div><span class="section-title">Phase 2A &#8212; NestJS Backend</span><span class="sp2">&#9989; FERTIG</span><span class="section-count">10 Dateien</span></div>
+  <div class="file-grid">
+    <a class="file-item" href="apps/backend/src/main.ts"><div class="file-item-icon">&#128640;</div><div class="file-item-info"><div class="file-item-name">main.ts</div><div class="file-item-path">apps/backend/src/ &#183; Bootstrap, Swagger, CORS, WebSocket</div></div><span class="badge b-core">CORE</span></a>
+    <a class="file-item" href="apps/backend/src/app.module.ts"><div class="file-item-icon">&#129513;</div><div class="file-item-info"><div class="file-item-name">app.module.ts</div><div class="file-item-path">apps/backend/src/ &#183; Root Module, alle Imports</div></div><span class="badge b-core">CORE</span></a>
+    <a class="file-item" href="apps/backend/src/prisma/prisma.service.ts"><div class="file-item-icon">&#128311;</div><div class="file-item-info"><div class="file-item-name">prisma.service.ts</div><div class="file-item-path">src/prisma/ &#183; Global DB Service + Module</div></div><span class="badge b-db">DB</span></a>
+    <a class="file-item" href="apps/backend/src/modules/auth/auth.module.ts"><div class="file-item-icon">&#128272;</div><div class="file-item-info"><div class="file-item-name">auth.module.ts</div><div class="file-item-path">modules/auth/ &#183; JWT Login/Register, Guards, Strategy, DTOs</div></div><span class="badge b-core">CORE</span></a>
+    <a class="file-item" href="apps/backend/src/modules/characters/characters.module.ts"><div class="file-item-icon">&#127917;</div><div class="file-item-info"><div class="file-item-name">characters.module.ts</div><div class="file-item-path">modules/characters/ &#183; Upload, DNA-Trigger, Lock Toggle, Embeddings</div></div><span class="badge b-core">CORE</span></a>
+    <a class="file-item" href="apps/backend/src/modules/stories/stories.module.ts"><div class="file-item-icon">&#128218;</div><div class="file-item-info"><div class="file-item-name">stories.module.ts</div><div class="file-item-path">modules/stories/ &#183; KI-Generator, Szenen-Editor, DTOs</div></div><span class="badge b-core">CORE</span></a>
+    <a class="file-item" href="apps/backend/src/modules/videos/videos.module.ts"><div class="file-item-icon">&#127916;</div><div class="file-item-info"><div class="file-item-name">videos.module.ts</div><div class="file-item-path">modules/videos/ &#183; History, Versionen, Pagination</div></div><span class="badge b-core">CORE</span></a>
+    <a class="file-item" href="apps/backend/src/modules/render/render.module.ts"><div class="file-item-icon">&#128187;</div><div class="file-item-info"><div class="file-item-name">render.module.ts</div><div class="file-item-path">modules/render/ &#183; BullMQ Queue + 5-Step Processor</div></div><span class="badge b-core">CORE</span></a>
+    <a class="file-item" href="apps/backend/src/modules/voice/voice.module.ts"><div class="file-item-icon">&#127897;</div><div class="file-item-info"><div class="file-item-name">voice.module.ts</div><div class="file-item-path">modules/voice/ &#183; Clone, Synthesize, Profiles, DTOs</div></div><span class="badge b-core">CORE</span></a>
+    <a class="file-item" href="apps/backend/src/gateways/render.gateway.ts"><div class="file-item-icon">&#128268;</div><div class="file-item-info"><div class="file-item-name">render.gateway.ts</div><div class="file-item-path">src/gateways/ &#183; WebSocket Live-Status pro User + Job</div></div><span class="badge b-core">CORE</span></a>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-header"><div class="section-icon" style="background:var(--teal-s)">&#129302;</div><span class="section-title">Phase 2B &#8212; Python AI Worker</span><span class="sp2">&#9989; FERTIG</span><span class="section-count">9 Dateien</span></div>
+  <div class="file-grid">
+    <a class="file-item" href="apps/ai-worker/main.py"><div class="file-item-icon">&#128013;</div><div class="file-item-info"><div class="file-item-name">main.py</div><div class="file-item-path">apps/ai-worker/ &#183; FastAPI App, Lifespan, Router-Einbindung</div></div><span class="badge b-ai">KI</span></a>
+    <a class="file-item" href="apps/ai-worker/models/model_manager.py"><div class="file-item-icon">&#9881;&#65039;</div><div class="file-item-info"><div class="file-item-name">model_manager.py</div><div class="file-item-path">models/ &#183; GPU-Zuweisung, Lazy-Loading, VRAM-Management</div></div><span class="badge b-ai">KI</span></a>
+    <a class="file-item" href="apps/ai-worker/pipelines/character_dna.py"><div class="file-item-icon">&#129518;</div><div class="file-item-info"><div class="file-item-name">character_dna.py</div><div class="file-item-path">pipelines/ &#183; Florence-2 + InsightFace + CLIP + DINOv2 &#8594; Qdrant</div></div><span class="badge b-ai">KI</span></a>
+    <a class="file-item" href="apps/ai-worker/pipelines/image_gen.py"><div class="file-item-icon">&#128444;</div><div class="file-item-info"><div class="file-item-name">image_gen.py</div><div class="file-item-path">pipelines/ &#183; FLUX.1 Dev + IP-Adapter Character Lock</div></div><span class="badge b-ai">KI</span></a>
+    <a class="file-item" href="apps/ai-worker/pipelines/video_gen.py"><div class="file-item-icon">&#127916;</div><div class="file-item-info"><div class="file-item-name">video_gen.py</div><div class="file-item-path">pipelines/ &#183; Wan 2.2 / LTX / CogVideoX + FFmpeg Assembly</div></div><span class="badge b-ai">KI</span></a>
+    <a class="file-item" href="apps/ai-worker/pipelines/story_gen.py"><div class="file-item-icon">&#128218;</div><div class="file-item-info"><div class="file-item-name">story_gen.py</div><div class="file-item-path">pipelines/ &#183; Qwen3 / DeepSeek / Llama 4 &#183; VoiceGen ebenfalls hier</div></div><span class="badge b-ai">KI</span></a>
+    <a class="file-item" href="apps/ai-worker/routers/character.py"><div class="file-item-icon">&#128739;</div><div class="file-item-info"><div class="file-item-name">routers/ (5 Router)</div><div class="file-item-path">character &#183; image &#183; video &#183; story &#183; voice &#183; assembly</div></div><span class="badge b-ai">KI</span></a>
+    <a class="file-item" href="apps/ai-worker/requirements.txt"><div class="file-item-icon">&#128230;</div><div class="file-item-info"><div class="file-item-name">requirements.txt</div><div class="file-item-path">apps/ai-worker/ &#183; 25 Pakete: TTS, InsightFace, diffusers, qdrant</div></div><span class="badge b-plan">DEP</span></a>
+    <a class="file-item" href="apps/backend/package.json"><div class="file-item-icon">&#128230;</div><div class="file-item-info"><div class="file-item-name">package.json</div><div class="file-item-path">apps/backend/ &#183; NestJS + BullMQ + Prisma + Socket.io</div></div><span class="badge b-plan">DEP</span></a>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-header"><div class="section-icon" style="background:var(--green-s)">&#128272;</div><span class="section-title">Phase 3 &#8212; Character Consistency Engine</span><span class="sp1">&#9989; FERTIG</span><span class="section-count">5 Dateien</span></div>
+  <div class="file-grid">
+    <a class="file-item" href="apps/ai-worker/pipelines/character_lock.py"><div class="file-item-icon">&#128274;</div><div class="file-item-info"><div class="file-item-name">character_lock.py</div><div class="file-item-path">pipelines/ &#183; PuLID + InstantID + ConsisID + PhotoMaker V2 + Auto-Select</div></div><span class="badge b-ai">KI</span></a>
+    <a class="file-item" href="apps/ai-worker/pipelines/image_analysis.py"><div class="file-item-icon">&#128269;</div><div class="file-item-info"><div class="file-item-name">image_analysis.py</div><div class="file-item-path">pipelines/ &#183; Qwen2.5-VL + InternVL strukturierte JSON-Analyse</div></div><span class="badge b-ai">KI</span></a>
+    <a class="file-item" href="apps/ai-worker/routers/lock.py"><div class="file-item-icon">&#128739;</div><div class="file-item-info"><div class="file-item-name">routers/lock.py</div><div class="file-item-path">/character-lock/apply &#183; /validate &#183; /deep-analyze</div></div><span class="badge b-ai">KI</span></a>
+    <a class="file-item" href="infrastructure/qdrant/collections.ts"><div class="file-item-icon">&#129518;</div><div class="file-item-info"><div class="file-item-name">collections.ts</div><div class="file-item-path">infrastructure/qdrant/ &#183; 5 Collections inkl. Identity Tokens</div></div><span class="badge b-db">DB</span></a>
+    <a class="file-item" href="infrastructure/redis/config.ts"><div class="file-item-icon">&#9889;</div><div class="file-item-info"><div class="file-item-name">config.ts</div><div class="file-item-path">infrastructure/redis/ &#183; 5 Queues, Cache-Keys, TTLs</div></div><span class="badge b-infra">INFRA</span></a>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-header"><div class="section-icon" style="background:var(--green-s)">&#127916;</div><span class="section-title">Phase 4 &#8212; Video-Pipeline &amp; Orchestrierung</span><span class="sp1">&#9989; FERTIG</span><span class="section-count">7 Dateien</span></div>
+  <div class="file-grid">
+    <a class="file-item" href="apps/ai-worker/pipelines/prompt_builder.py"><div class="file-item-icon">&#9999;&#65039;</div><div class="file-item-info"><div class="file-item-name">prompt_builder.py</div><div class="file-item-path">pipelines/ &#183; Template + LLM-Veredelung &#8594; 6 Prompt-Typen</div></div><span class="badge b-ai">KI</span></a>
+    <a class="file-item" href="apps/ai-worker/routers/prompts.py"><div class="file-item-icon">&#128739;</div><div class="file-item-info"><div class="file-item-name">routers/prompts.py</div><div class="file-item-path">/build-prompts &#183; template|refine Modus</div></div><span class="badge b-ai">KI</span></a>
+    <a class="file-item" href="apps/backend/src/modules/render/story-render.service.ts"><div class="file-item-icon">&#127916;</div><div class="file-item-info"><div class="file-item-name">story-render.service.ts</div><div class="file-item-path">modules/render/ &#183; Multi-Szenen-Orchestrierung + Auto-Assembly</div></div><span class="badge b-core">CORE</span></a>
+    <a class="file-item" href="apps/backend/src/modules/render/dto/start-story-render.dto.ts"><div class="file-item-icon">&#128196;</div><div class="file-item-info"><div class="file-item-name">start-story-render.dto.ts</div><div class="file-item-path">modules/render/dto/ &#183; Story-Render Request</div></div><span class="badge b-core">CORE</span></a>
+    <a class="file-item" href="apps/backend/src/common/export/export.module.ts"><div class="file-item-icon">&#128228;</div><div class="file-item-info"><div class="file-item-name">export.module.ts</div><div class="file-item-path">common/export/ &#183; TikTok, Reels, Shorts Presets</div></div><span class="badge b-core">CORE</span></a>
+    <a class="file-item" href="apps/ai-worker/pipelines/character_lock.py"><div class="file-item-icon">&#128274;</div><div class="file-item-info"><div class="file-item-name">image_gen.py (erweitert)</div><div class="file-item-path">pipelines/ &#183; Lock Engine bei isLocked automatisch aktiv</div></div><span class="badge b-ai">UPDATE</span></a>
+    <a class="file-item" href="apps/backend/src/modules/render/render.module.ts"><div class="file-item-icon">&#128268;</div><div class="file-item-info"><div class="file-item-name">render.processor.ts (erweitert)</div><div class="file-item-path">processors/ &#183; Echte DB-Daten + WebSocket Live-Updates verdrahtet</div></div><span class="badge b-core">UPDATE</span></a>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-header"><div class="section-icon" style="background:var(--accent-s)">&#127916;</div><span class="section-title">Phase 5 &#8212; Frontend (Schritt 1: Fundament)</span><span class="sp2">&#128260; IN ARBEIT</span><span class="section-count">13 Dateien</span></div>
+  <div class="file-grid">
+    <a class="file-item" href="apps/frontend/app/globals.css"><div class="file-item-icon">&#127916;</div><div class="file-item-info"><div class="file-item-name">globals.css</div><div class="file-item-path">app/ &#183; Design-Tokens "Tungsten Reel" + Sprocket-Rail Signature</div></div><span class="badge b-core">DESIGN</span></a>
+    <a class="file-item" href="apps/frontend/tailwind.config.ts"><div class="file-item-icon">&#127912;</div><div class="file-item-info"><div class="file-item-name">tailwind.config.ts</div><div class="file-item-path">/ &#183; Bindet CSS-Variablen in Tailwind ein</div></div><span class="badge b-core">DESIGN</span></a>
+    <a class="file-item" href="apps/frontend/app/layout.tsx"><div class="file-item-icon">&#129517;</div><div class="file-item-info"><div class="file-item-name">layout.tsx</div><div class="file-item-path">app/ &#183; Root Layout, Google Fonts, Sidebar-Shell</div></div><span class="badge b-core">CORE</span></a>
+    <a class="file-item" href="apps/frontend/app/providers.tsx"><div class="file-item-icon">&#128268;</div><div class="file-item-info"><div class="file-item-name">providers.tsx</div><div class="file-item-path">app/ &#183; TanStack Query Provider</div></div><span class="badge b-core">CORE</span></a>
+    <a class="file-item" href="apps/frontend/app/page.tsx"><div class="file-item-icon">&#127968;</div><div class="file-item-info"><div class="file-item-name">page.tsx (Dashboard)</div><div class="file-item-path">app/ &#183; Stats, Live-Render-Status, Charaktere, Videos</div></div><span class="badge b-ui">UI</span></a>
+    <a class="file-item" href="apps/frontend/components/layout/Sidebar.tsx"><div class="file-item-icon">&#129517;</div><div class="file-item-info"><div class="file-item-name">Sidebar.tsx</div><div class="file-item-path">components/layout/ &#183; Nav + Sprocket-Rail + GPU-Status</div></div><span class="badge b-ui">UI</span></a>
+    <a class="file-item" href="apps/frontend/components/layout/TopBar.tsx"><div class="file-item-icon">&#128202;</div><div class="file-item-info"><div class="file-item-name">TopBar.tsx</div><div class="file-item-path">components/layout/ &#183; Live GPU/VRAM-HUD aus AI-Worker /health</div></div><span class="badge b-ui">UI</span></a>
+    <a class="file-item" href="apps/frontend/components/ui/FilmstripProgress.tsx"><div class="file-item-icon">&#127909;</div><div class="file-item-info"><div class="file-item-name">FilmstripProgress.tsx</div><div class="file-item-path">components/ui/ &#183; Signature-Fortschrittsanzeige (Filmstreifen-Frames)</div></div><span class="badge b-ui">UI</span></a>
+    <a class="file-item" href="apps/frontend/lib/api-client.ts"><div class="file-item-icon">&#128268;</div><div class="file-item-info"><div class="file-item-name">api-client.ts</div><div class="file-item-path">lib/ &#183; Typisierter Client fuer alle Backend-Endpunkte</div></div><span class="badge b-core">CORE</span></a>
+    <a class="file-item" href="apps/frontend/hooks/use-render-socket.ts"><div class="file-item-icon">&#128225;</div><div class="file-item-info"><div class="file-item-name">use-render-socket.ts</div><div class="file-item-path">hooks/ &#183; WebSocket Live-Updates fuer Render-Jobs</div></div><span class="badge b-core">CORE</span></a>
+    <a class="file-item" href="apps/frontend/store/use-auth-store.ts"><div class="file-item-icon">&#128274;</div><div class="file-item-info"><div class="file-item-name">use-auth-store.ts</div><div class="file-item-path">store/ &#183; Zustand Auth-State mit Persist</div></div><span class="badge b-core">CORE</span></a>
+    <a class="file-item" href="apps/frontend/package.json"><div class="file-item-icon">&#128230;</div><div class="file-item-info"><div class="file-item-name">package.json</div><div class="file-item-path">/ &#183; Next.js 15, React 19, TanStack Query, Zustand, Radix</div></div><span class="badge b-plan">DEP</span></a>
+    <a class="file-item" href="apps/frontend/next.config.js"><div class="file-item-icon">&#9881;&#65039;</div><div class="file-item-info"><div class="file-item-name">next.config.js + tsconfig + postcss</div><div class="file-item-path">/ &#183; Standalone-Build, Pfad-Alias @/*</div></div><span class="badge b-plan">CFG</span></a>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-header"><div class="section-icon" style="background:var(--amber-s)">&#9203;</div><span class="section-title">Phase 5 (Schritt 2) &amp; Phase 6 &#8212; Naechste Schritte</span><span class="section-count">23+ Dateien</span></div>
+  <div class="file-grid">
+    <a class="file-item" href="apps/frontend/app/characters/page.tsx"><div class="file-item-icon">&#127917;</div><div class="file-item-info"><div class="file-item-name">characters/page.tsx</div><div class="file-item-path">Phase 5 &#183; Character Library + Upload + DNA-Viewer</div></div><span class="badge b-plan">P5</span></a>
+    <a class="file-item" href="apps/frontend/app/characters/[id]/page.tsx"><div class="file-item-icon">&#129516;</div><div class="file-item-info"><div class="file-item-name">characters/[id]/page.tsx</div><div class="file-item-path">Phase 5 &#183; DNA-Profil-Detailansicht, Lock-Toggle</div></div><span class="badge b-plan">P5</span></a>
+    <a class="file-item" href="apps/frontend/app/stories/new/page.tsx"><div class="file-item-icon">&#10024;</div><div class="file-item-info"><div class="file-item-name">stories/new/page.tsx</div><div class="file-item-path">Phase 5 &#183; Story Generator UI mit Live-Vorschau</div></div><span class="badge b-plan">P5</span></a>
+    <a class="file-item" href="apps/frontend/app/stories/[id]/page.tsx"><div class="file-item-icon">&#128218;</div><div class="file-item-info"><div class="file-item-name">stories/[id]/page.tsx</div><div class="file-item-path">Phase 5 &#183; Szenen-Editor mit Story-Render-Fortschritt</div></div><span class="badge b-plan">P5</span></a>
+    <a class="file-item" href="apps/frontend/app/create/page.tsx"><div class="file-item-icon">&#127916;</div><div class="file-item-info"><div class="file-item-name">create/page.tsx</div><div class="file-item-path">Phase 5 &#183; Video Creator + Prompt Builder</div></div><span class="badge b-plan">P5</span></a>
+    <a class="file-item" href="apps/frontend/app/history/page.tsx"><div class="file-item-icon">&#128336;</div><div class="file-item-info"><div class="file-item-name">history/page.tsx</div><div class="file-item-path">Phase 5 &#183; Video History + Versionsvergleich + Export</div></div><span class="badge b-plan">P5</span></a>
+    <a class="file-item" href="apps/frontend/app/settings/page.tsx"><div class="file-item-icon">&#9881;&#65039;</div><div class="file-item-info"><div class="file-item-name">settings/page.tsx</div><div class="file-item-path">Phase 5 &#183; Modelle, GPU, User-Verwaltung</div></div><span class="badge b-plan">P5</span></a>
+    <a class="file-item" href="infrastructure/k8s/deployments/"><div class="file-item-icon">&#9878;&#65039;</div><div class="file-item-info"><div class="file-item-name">k8s/deployments/</div><div class="file-item-path">Phase 6 &#183; Kubernetes Manifeste fuer alle Services</div></div><span class="badge b-plan">P6</span></a>
+    <a class="file-item" href="infrastructure/k8s/gpu-node-config.yaml"><div class="file-item-icon">&#128187;</div><div class="file-item-info"><div class="file-item-name">gpu-node-config.yaml</div><div class="file-item-path">Phase 6 &#183; RTX 4090/5090/PRO 6000 Node-Selector</div></div><span class="badge b-plan">P6</span></a>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-header"><div class="section-icon">&#128640;</div><span class="section-title">Quick Start</span></div>
+  <div class="code-block">
+    <span style="color:var(--muted)"># 1. Environment konfigurieren</span><br>
+    <span style="color:var(--green)">cp</span> .env.example .env<br><br>
+    <span style="color:var(--muted)"># 2. Datenbank + Qdrant + Redis starten</span><br>
+    <span style="color:var(--green)">docker compose up</span> -d postgres redis qdrant<br><br>
+    <span style="color:var(--muted)"># 3. Prisma Migrations + Seed</span><br>
+    <span style="color:var(--green)">cd</span> apps/backend &amp;&amp; npx prisma migrate dev --name init &amp;&amp; npx prisma db seed<br><br>
+    <span style="color:var(--muted)"># 4. Alle Services starten</span><br>
+    <span style="color:var(--green)">docker compose up</span> --build<br><br>
+    <span style="color:var(--muted)"># 5. Oeffnen:</span><br>
+    <span style="color:var(--cyan)">http://localhost:3000</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--muted)"># Frontend (Next.js)</span><br>
+    <span style="color:var(--cyan)">http://localhost:3001/api/docs</span>&nbsp;<span style="color:var(--muted)"># Swagger REST API</span><br>
+    <span style="color:var(--cyan)">http://localhost:8000/docs</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--muted)"># AI Worker FastAPI</span><br>
+    <span style="color:var(--cyan)">http://localhost:6333/dashboard</span><span style="color:var(--muted)"># Qdrant Dashboard</span>
+  </div>
+</div>
+
+<footer>
+  <span>AI Character Video Studio Pro &middot; Phase 4/6 abgeschlossen</span>
+  <div class="tech-pills">
+    <span class="tech-pill">Next.js 15</span><span class="tech-pill">NestJS</span><span class="tech-pill">FastAPI</span>
+    <span class="tech-pill">Prisma</span><span class="tech-pill">Qdrant</span><span class="tech-pill">FLUX.1</span>
+    <span class="tech-pill">Wan 2.2</span><span class="tech-pill">InsightFace</span><span class="tech-pill">CLIP</span>
+    <span class="tech-pill">XTTS-v2</span><span class="tech-pill">Qwen3</span><span class="tech-pill">BullMQ</span>
+    <span class="tech-pill">Docker</span><span class="tech-pill">Kubernetes</span>
+  </div>
+</footer>
+
+</div>
+</body>
+</html>
