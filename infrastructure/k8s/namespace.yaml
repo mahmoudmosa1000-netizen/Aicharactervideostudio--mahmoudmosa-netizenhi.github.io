@@ -1,0 +1,70 @@
+# ============================================================
+#  infrastructure/k8s/namespace.yaml
+#  Eigener Namespace isoliert Ressourcen, RBAC und Quotas
+# ============================================================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ai-studio
+  labels:
+    app.kubernetes.io/part-of: ai-character-video-studio
+
+---
+# ── Resource Quota — verhindert dass ein Tenant den Cluster sprengt ──
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: ai-studio-quota
+  namespace: ai-studio
+spec:
+  hard:
+    requests.nvidia.com/gpu: "8"
+    requests.cpu: "64"
+    requests.memory: 256Gi
+    persistentvolumeclaims: "20"
+
+---
+# ============================================================
+#  ConfigMap — nicht-sensitive Konfiguration
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ai-studio-config
+  namespace: ai-studio
+data:
+  NODE_ENV: "production"
+  FRONTEND_URL: "https://studio.example.com"
+  NEXT_PUBLIC_API_URL: "https://api.studio.example.com"
+  NEXT_PUBLIC_WS_URL: "wss://api.studio.example.com"
+  VIDEO_MODEL: "wan2.2"
+  IMAGE_MODEL: "flux-dev"
+  LLM_MODEL: "qwen3"
+  VOICE_MODEL: "xtts-v2"
+  QDRANT_URL: "http://qdrant:6333"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  UPLOAD_PATH: "/uploads"
+  OUTPUT_PATH: "/outputs"
+  MODEL_CACHE_DIR: "/model-cache"
+
+---
+# ============================================================
+#  Secret — TEMPLATE. Niemals echte Werte committen!
+#  In Produktion: über External Secrets Operator / Vault / KMS befüllen.
+#  Lokal: kubectl create secret generic ai-studio-secrets
+#         --from-env-file=.env -n ai-studio
+# ============================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ai-studio-secrets
+  namespace: ai-studio
+type: Opaque
+stringData:
+  DATABASE_URL: "postgresql://studio:CHANGE_ME@postgres:5432/studio"
+  REDIS_PASSWORD: "CHANGE_ME"
+  QDRANT_API_KEY: "CHANGE_ME"
+  JWT_SECRET: "CHANGE_ME_MIN_64_CHARS"
+  POSTGRES_PASSWORD: "CHANGE_ME"

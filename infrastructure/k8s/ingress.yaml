@@ -1,0 +1,35 @@
+# ============================================================
+#  infrastructure/k8s/ingress.yaml
+#  Externer Zugriff via NGINX Ingress Controller + TLS
+# ============================================================
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ai-studio-ingress
+  namespace: ai-studio
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "200m"   # Große Bild-Uploads erlauben
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600" # Render-Requests können lange dauern
+    nginx.ingress.kubernetes.io/websocket-services: "backend"  # WebSocket für Live-Render-Status
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: ["studio.example.com", "api.studio.example.com"]
+      secretName: ai-studio-tls
+  rules:
+    - host: studio.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: frontend, port: { number: 3000 } }
+    - host: api.studio.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: backend, port: { number: 3001 } }

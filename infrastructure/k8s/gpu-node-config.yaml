@@ -1,0 +1,86 @@
+# ============================================================
+#  infrastructure/k8s/gpu-node-config.yaml
+#  GPU-Knoten-Strategie für gemischte Hardware:
+#  RTX 4090 (24GB) · RTX 5090 (32GB) · RTX PRO 6000 (96GB)
+#
+#  Konzept: Knoten werden bei der Cluster-Erstellung gelabelt
+#  (z.B. via Karpenter, eksctl oder manuell):
+#    kubectl label node <node> gpu-type=rtx-4090
+#    kubectl label node <node> gpu-type=rtx-5090
+#    kubectl label node <node> gpu-type=rtx-pro-6000
+#  Workloads wählen dann gezielt die passende Hardware aus —
+#  z.B. Wan 2.2 (sehr VRAM-hungrig) nur auf RTX PRO 6000,
+#  während InsightFace/CLIP auch auf RTX 4090 laufen.
+# ============================================================
+
+# ── PriorityClass: Render-Jobs haben Vorrang vor Batch-Analysen ──
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: ai-render-high-priority
+value: 1000
+globalDefault: false
+description: "Aktive Video-Render-Jobs — Nutzer wartet auf Ergebnis"
+
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: ai-batch-low-priority
+value: 100
+globalDefault: false
+description: "Hintergrund-Analysen (Character DNA), unterbrechbar"
+
+---
+# ============================================================
+#  RuntimeClass für NVIDIA-Knoten (setzt nvidia-container-runtime
+#  voraus, installiert via NVIDIA GPU Operator)
+# ============================================================
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: nvidia
+handler: nvidia
+
+---
+# ============================================================
+#  Dokumentation der Affinity-Strategie, die tatsächlich in
+#  deployments/ai-worker.yaml verwendet wird:
+#
+#  affinity:
+#    nodeAffinity:
+#      requiredDuringSchedulingIgnoredDuringExecution:
+#        nodeSelectorTerms:
+#          - matchExpressions:
+#              - key: nvidia.com/gpu.present
+#                operator: In
+#                values: ["true"]
+#      preferredDuringSchedulingIgnoredDuringExecution:
+#        - weight: 100
+#          preference:
+#            matchExpressions:
+#              - key: gpu-type
+#                operator: In
+#                values: ["rtx-pro-6000"]
+#        - weight: 50
+#          preference:
+#            matchExpressions:
+#              - key: gpu-type
+#                operator: In
+#                values: ["rtx-5090"]
+#
+#  Begründung: Wan 2.2 benötigt bei 4K-Auflösung oft >40GB VRAM —
+#  RTX PRO 6000 (96GB) wird bevorzugt, RTX 5090 (32GB) als
+#  Zweitwahl, RTX 4090 (24GB) als Fallback für kleinere Jobs
+#  (Bildgenerierung, Embeddings) akzeptiert.
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gpu-affinity-reference
+  namespace: ai-studio
+data:
+  strategy: |
+    rtx-pro-6000: Wan 2.2 Video-Gen bei 2K/4K, Multi-Charakter-Szenen
+    rtx-5090:     Wan 2.2 bei 720p/1080p, FLUX.1 Bildgenerierung
+    rtx-4090:     InsightFace, CLIP, DINOv2, XTTS-v2 (geringerer VRAM-Bedarf)

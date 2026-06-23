@@ -1,0 +1,127 @@
+# ============================================================
+#  infrastructure/k8s/deployments/ai-worker.yaml
+#  Python AI Worker — läuft NUR auf GPU-Knoten.
+#  Mehrere Replicas teilen sich die Render-Last über die
+#  BullMQ-Queue (Redis). Jeder Pod bekommt eine ganze GPU
+#  (KI-Modelle wie Wan 2.2 lassen sich nicht sinnvoll auf
+#  Bruchteile einer GPU aufteilen).
+# ============================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-worker
+  namespace: ai-studio
+spec:
+  replicas: 2   # Skaliert mit Anzahl verfügbarer GPU-Knoten
+  selector:
+    matchLabels: { app: ai-worker }
+  template:
+    metadata:
+      labels: { app: ai-worker }
+    spec:
+      runtimeClassName: nvidia
+      priorityClassName: ai-render-high-priority
+
+      # ── GPU-Knoten erzwingen + bevorzugt High-VRAM-Hardware ──
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: nvidia.com/gpu.present
+                    operator: In
+                    values: ["true"]
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - { key: gpu-type, operator: In, values: ["rtx-pro-6000"] }
+            - weight: 50
+              preference:
+                matchExpressions:
+                  - { key: gpu-type, operator: In, values: ["rtx-5090"] }
+
+      # Verteilt Pods über verschiedene GPU-Knoten statt alle auf einen
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels: { app: ai-worker }
+
+      containers:
+        - name: ai-worker
+          image: ai-studio/ai-worker:latest
+          ports: [{ containerPort: 8000 }]
+          envFrom:
+            - configMapRef: { name: ai-studio-config }
+            - secretRef: { name: ai-studio-secrets }
+          resources:
+            requests:
+              cpu: "4"
+              memory: "16Gi"
+              nvidia.com/gpu: "1"
+            limits:
+              cpu: "8"
+              memory: "32Gi"
+              nvidia.com/gpu: "1"
+          volumeMounts:
+            - { name: model-cache, mountPath: /model-cache }
+            - { name: uploads, mountPath: /uploads }
+            - { name: outputs, mountPath: /outputs }
+          readinessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 30   # Modell-Preload braucht Zeit
+            periodSeconds: 15
+          livenessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 3
+
+      volumes:
+        - { name: model-cache, persistentVolumeClaim: { claimName: model-cache-pvc } }
+        - { name: uploads, persistentVolumeClaim: { claimName: uploads-pvc } }
+        - { name: outputs, persistentVolumeClaim: { claimName: outputs-pvc } }
+
+---
+# ── Shared Storage (RWX — von Backend UND AI-Worker gelesen/geschrieben) ──
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: model-cache-pvc
+  namespace: ai-studio
+spec:
+  accessModes: ["ReadWriteMany"]   # Setzt einen RWX-fähigen StorageClass voraus (z.B. EFS, Filestore, NFS)
+  resources: { requests: { storage: 500Gi } }   # FLUX, Wan 2.2, Qwen3 usw. sind groß
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: uploads-pvc
+  namespace: ai-studio
+spec:
+  accessModes: ["ReadWriteMany"]
+  resources: { requests: { storage: 100Gi } }
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: outputs-pvc
+  namespace: ai-studio
+spec:
+  accessModes: ["ReadWriteMany"]
+  resources: { requests: { storage: 500Gi } }
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-worker
+  namespace: ai-studio
+spec:
+  selector: { app: ai-worker }
+  ports: [{ port: 8000, targetPort: 8000 }]

@@ -1,0 +1,110 @@
+# ============================================================
+#  infrastructure/k8s/autoscaling.yaml
+#
+#  Zwei unterschiedliche Skalierungsstrategien, weil CPU- und
+#  GPU-Workloads fundamental anders skalieren:
+#
+#  1. Backend/Frontend (CPU) → Standard HPA auf CPU-Auslastung
+#  2. AI-Worker (GPU)        → KEDA ScaledObject auf BullMQ
+#     Warteschlangenlänge — eine GPU ist oft schon bei EINEM
+#     aktiven Render-Job zu 100% ausgelastet, CPU-Metriken
+#     sagen hier nichts Sinnvolles aus. KEDA skaliert stattdessen
+#     direkt nach Anzahl wartender Jobs in Redis/BullMQ.
+#
+#  Voraussetzung für Teil 2: KEDA ist im Cluster installiert
+#  (https://keda.sh — `helm install keda kedacore/keda`)
+# ============================================================
+
+# ── HPA: Backend (NestJS) ───────────────────────────────────────
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: backend-hpa
+  namespace: ai-studio
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: backend
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: 70 }
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300   # Träges Scale-Down, vermeidet Flapping
+
+---
+# ── HPA: Frontend (Next.js) ─────────────────────────────────────
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: frontend-hpa
+  namespace: ai-studio
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: frontend
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: 75 }
+
+---
+# ============================================================
+#  KEDA ScaledObject: AI-Worker (GPU) nach Queue-Tiefe
+#  Skaliert die teuren GPU-Pods nur dann hoch, wenn tatsächlich
+#  Render-Jobs in der BullMQ "render"-Queue warten.
+# ============================================================
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: ai-worker-scaler
+  namespace: ai-studio
+spec:
+  scaleTargetRef:
+    name: ai-worker
+  minReplicaCount: 1            # Mindestens 1 GPU immer warm (Kaltstart von Wan 2.2 dauert lange)
+  maxReplicaCount: 8            # Begrenzt durch verfügbare GPU-Knoten im Cluster
+  cooldownPeriod: 300           # 5 Minuten warten bevor runterskaliert wird (teure Modell-Reloads vermeiden)
+  triggers:
+    - type: redis
+      metadata:
+        address: redis.ai-studio.svc.cluster.local:6379
+        listName: "bull:render:wait"     # BullMQ-Warteschlangen-Key
+        listLength: "2"                   # Pro 2 wartende Jobs → 1 weiterer GPU-Pod
+        passwordFromEnv: REDIS_PASSWORD
+      authenticationRef:
+        name: redis-trigger-auth
+
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: redis-trigger-auth
+  namespace: ai-studio
+spec:
+  secretTargetRef:
+    - parameter: password
+      name: ai-studio-secrets
+      key: REDIS_PASSWORD
+
+---
+# ── PodDisruptionBudget: Mindestens 1 AI-Worker bleibt während
+#    Cluster-Wartung/Node-Upgrades immer verfügbar ────────────
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ai-worker-pdb
+  namespace: ai-studio
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels: { app: ai-worker }
